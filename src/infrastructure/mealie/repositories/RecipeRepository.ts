@@ -3,13 +3,34 @@ import type {
   MealiePaginatedRecipes,
   MealieRawPaginatedRecipes,
   MealieRecipe,
+  RecipeFilters,
 } from "../../../shared/types/mealie.ts"
 import { mealieApiClient } from "../api/index.ts"
 
 export class RecipeRepository implements IRecipeRepository {
-  async getAll(page = 1, perPage = 30): Promise<MealiePaginatedRecipes> {
+  async getAll(
+    page = 1,
+    perPage = 30,
+    filters: RecipeFilters = {},
+  ): Promise<MealiePaginatedRecipes> {
+    const params = new URLSearchParams({
+      page: String(page),
+      perPage: String(perPage),
+    })
+    if (filters.search?.trim()) {
+      params.set("search", filters.search.trim())
+    }
+    if (filters.categories?.length) {
+      params.set("categories", filters.categories.join(","))
+    }
+    if (filters.tags?.length) {
+      params.set("tags", filters.tags.join(","))
+    }
+    if (filters.maxTotalTime !== undefined) {
+      params.set("maxTotalTime", String(filters.maxTotalTime))
+    }
     const raw = await mealieApiClient.get<MealieRawPaginatedRecipes>(
-      `/api/recipes?page=${page}&perPage=${perPage}`,
+      `/api/recipes?${params.toString()}`,
     )
     return {
       items: raw.items,

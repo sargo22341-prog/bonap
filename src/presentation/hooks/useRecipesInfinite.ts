@@ -1,18 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import type { MealieRecipe } from "../../shared/types/mealie.ts"
+import type { MealieRecipe, RecipeFilters } from "../../shared/types/mealie.ts"
 import { GetRecipesUseCase } from "../../application/recipe/usecases/GetRecipesUseCase.ts"
 import { RecipeRepository } from "../../infrastructure/mealie/repositories/RecipeRepository.ts"
 
 const PER_PAGE = 30
 const getRecipesUseCase = new GetRecipesUseCase(new RecipeRepository())
 
-export function useRecipesInfinite(search: string) {
+export function useRecipesInfinite(filters: RecipeFilters = {}) {
   const [recipes, setRecipes] = useState<MealieRecipe[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(true)
   const pageRef = useRef(1)
   const loadingRef = useRef(false)
+
+  // Sérialisation stable des filtres pour détecter les changements
+  const filtersKey = JSON.stringify({
+    search: filters.search ?? "",
+    categories: [...(filters.categories ?? [])].sort(),
+    tags: [...(filters.tags ?? [])].sort(),
+    maxTotalTime: filters.maxTotalTime ?? null,
+  })
 
   const reset = useCallback(() => {
     setRecipes([])
@@ -21,39 +29,52 @@ export function useRecipesInfinite(search: string) {
     pageRef.current = 1
   }, [])
 
-  const loadMore = useCallback(async () => {
-    if (loadingRef.current || !hasMore) return
-    loadingRef.current = true
-    setLoading(true)
-    try {
-      const data = await getRecipesUseCase.execute(pageRef.current, PER_PAGE)
-      setRecipes((prev) => [...prev, ...data.items])
-      setHasMore(pageRef.current < data.totalPages)
-      pageRef.current += 1
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue")
-      setHasMore(false)
-    } finally {
-      setLoading(false)
-      loadingRef.current = false
-    }
-  }, [hasMore])
+  const loadMore = useCallback(
+    async (currentFilters: RecipeFilters) => {
+      if (loadingRef.current) return
+      loadingRef.current = true
+      setLoading(true)
+      try {
+        const data = await getRecipesUseCase.execute(
+          pageRef.current,
+          PER_PAGE,
+          currentFilters,
+        )
+        setRecipes((prev) => [...prev, ...data.items])
+        setHasMore(pageRef.current < data.totalPages)
+        pageRef.current += 1
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Une erreur est survenue")
+        setHasMore(false)
+      } finally {
+        setLoading(false)
+        loadingRef.current = false
+      }
+    },
+    [],
+  )
 
-  // Rechargement quand la recherche change
+  // Filtre ref pour accéder aux filtres courants dans loadMore (évite stale closure)
+  const filtersRef = useRef<RecipeFilters>(filters)
+  filtersRef.current = filters
+
+  // Reset et rechargement quand les filtres changent
   useEffect(() => {
     reset()
-  }, [search, reset])
+  }, [filtersKey, reset])
 
   // Charge la première page après reset
   useEffect(() => {
     if (recipes.length === 0 && hasMore && !loadingRef.current) {
-      void loadMore()
+      void loadMore(filtersRef.current)
     }
   }, [recipes.length, hasMore, loadMore])
 
-  const filtered = search.trim()
-    ? recipes.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()))
-    : recipes
+  const stableLoadMore = useCallback(() => {
+    if (!loadingRef.current) {
+      void loadMore(filtersRef.current)
+    }
+  }, [loadMore])
 
-  return { recipes: filtered, loading, error, hasMore, loadMore }
+  return { recipes, loading, error, hasMore, loadMore: stableLoadMore }
 }

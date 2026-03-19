@@ -1,5 +1,8 @@
 import type { IRecipeRepository } from "../../../domain/recipe/repositories/IRecipeRepository.ts"
-import type { MealiePaginatedRecipes } from "../../../shared/types/mealie.ts"
+import type {
+  MealiePaginatedRecipes,
+  RecipeFilters,
+} from "../../../shared/types/mealie.ts"
 
 export class GetRecipesUseCase {
   private recipeRepository: IRecipeRepository
@@ -8,7 +11,11 @@ export class GetRecipesUseCase {
     this.recipeRepository = recipeRepository
   }
 
-  async execute(page?: number, perPage?: number): Promise<MealiePaginatedRecipes> {
-    return this.recipeRepository.getAll(page, perPage)
+  async execute(
+    page?: number,
+    perPage?: number,
+    filters?: RecipeFilters,
+  ): Promise<MealiePaginatedRecipes> {
+    return this.recipeRepository.getAll(page, perPage, filters)
   }
 }

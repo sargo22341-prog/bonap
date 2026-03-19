@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { Search, Loader2 } from "lucide-react"
+import { Search, Loader2, UtensilsCrossed, X } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,9 @@ import {
   DialogDescription,
 } from "./ui/dialog.tsx"
 import { Input } from "./ui/input.tsx"
+import { Badge } from "./ui/badge.tsx"
 import { useRecipesInfinite } from "../hooks/useRecipesInfinite.ts"
+import { useCategories } from "../hooks/useCategories.ts"
 import type { MealieRecipe } from "../../shared/types/mealie.ts"
 
 interface RecipePickerDialogProps {
@@ -23,13 +25,23 @@ export function RecipePickerDialog({
   onSelect,
 }: RecipePickerDialogProps) {
   const [search, setSearch] = useState("")
-  const { recipes, loading, hasMore, loadMore } = useRecipesInfinite(search)
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const sentinelRef = useRef<HTMLDivElement>(null)
 
-  // Réinitialise la recherche à la fermeture
-  useEffect(() => {
-    if (!open) setSearch("")
-  }, [open])
+  const { categories } = useCategories()
+
+  const { recipes, loading, hasMore, loadMore } = useRecipesInfinite({
+    search,
+    categories: selectedCategories,
+  })
+
+  const handleOpenChange = (value: boolean) => {
+    if (!value) {
+      setSearch("")
+      setSelectedCategories([])
+    }
+    onOpenChange(value)
+  }
 
   // IntersectionObserver pour le lazy loading
   useEffect(() => {
@@ -38,7 +50,7 @@ export function RecipePickerDialog({
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
-          void loadMore()
+          loadMore()
         }
       },
       { threshold: 0.1 },
@@ -49,12 +61,20 @@ export function RecipePickerDialog({
 
   const handleSelect = (recipe: MealieRecipe) => {
     onSelect(recipe)
-    onOpenChange(false)
+    handleOpenChange(false)
   }
 
+  const toggleCategory = (slug: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
+    )
+  }
+
+  const hasActiveFilters = search.trim() !== "" || selectedCategories.length > 0
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[80vh] flex-col sm:max-w-2xl">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Choisir une recette</DialogTitle>
           <DialogDescription>
@@ -62,21 +82,67 @@ export function RecipePickerDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher une recette..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            autoFocus
-          />
+        <div className="space-y-3">
+          {/* Barre de recherche */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher une recette..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 pr-9"
+              autoFocus
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Filtres catégories */}
+          {categories.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {categories.map((cat) => {
+                const active = selectedCategories.includes(cat.slug)
+                return (
+                  <Badge
+                    key={cat.id}
+                    variant={active ? "default" : "outline"}
+                    className="cursor-pointer select-none transition-colors"
+                    onClick={() => toggleCategory(cat.slug)}
+                  >
+                    {cat.name}
+                  </Badge>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Bouton réinitialiser */}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("")
+                setSelectedCategories([])
+              }}
+              className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+            >
+              Réinitialiser les filtres
+            </button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {recipes.length === 0 && !loading && (
-            <div className="py-8 text-center text-sm text-muted-foreground">
-              Aucune recette trouvée.
+            <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
+              <UtensilsCrossed className="h-8 w-8" />
+              <p className="text-sm">Aucune recette trouvée.</p>
             </div>
           )}
 
@@ -86,14 +152,17 @@ export function RecipePickerDialog({
                 key={recipe.id}
                 type="button"
                 onClick={() => handleSelect(recipe)}
-                className="flex flex-col items-center gap-1 rounded-md p-1.5 text-center transition-colors hover:bg-accent"
+                className="group flex flex-col gap-1.5 rounded-lg p-1.5 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <img
-                  src={`/api/media/recipes/${recipe.id}/images/min-original.webp`}
-                  alt={recipe.name}
-                  className="aspect-square w-full rounded-md object-cover"
-                />
-                <span className="line-clamp-2 w-full text-[10px] leading-tight">
+                <div className="relative aspect-square w-full overflow-hidden rounded-md bg-muted">
+                  <img
+                    src={`/api/media/recipes/${recipe.id}/images/min-original.webp`}
+                    alt={recipe.name}
+                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
+                <span className="line-clamp-2 w-full text-[11px] font-medium leading-tight">
                   {recipe.name}
                 </span>
               </button>

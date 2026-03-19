@@ -18,6 +18,19 @@ export interface MealieCategory {
   slug: string
 }
 
+export interface MealieTag {
+  id: string
+  name: string
+  slug: string
+}
+
+export interface RecipeFilters {
+  search?: string
+  categories?: string[]
+  tags?: string[]
+  maxTotalTime?: number
+}
+
 export interface MealieRecipe {
   id: string
   slug: string
