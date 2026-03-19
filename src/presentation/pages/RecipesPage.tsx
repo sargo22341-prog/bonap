@@ -1,30 +1,30 @@
-import { useRecipes } from "../hooks/useRecipes.ts"
+import { useEffect, useRef } from "react"
+import { useRecipesInfinite } from "../hooks/useRecipesInfinite.ts"
 import { RecipeCard } from "../components/RecipeCard.tsx"
-import { Button } from "../components/ui/button.tsx"
 import { Loader2, AlertCircle, UtensilsCrossed } from "lucide-react"
 
 export function RecipesPage() {
-  const {
-    recipes,
-    loading,
-    error,
-    page,
-    totalPages,
-    hasNextPage,
-    hasPreviousPage,
-    goToNextPage,
-    goToPreviousPage,
-  } = useRecipes()
+  const { recipes, loading, error, hasMore, loadMore } = useRecipesInfinite("")
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          void loadMore()
+        }
+      },
+      { threshold: 0.1 },
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore, loading, loadMore])
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Mes recettes</h1>
-
-      {loading && (
-        <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      )}
 
       {error && (
         <div className="flex flex-col items-center gap-2 py-24 text-destructive">
@@ -40,36 +40,20 @@ export function RecipesPage() {
         </div>
       )}
 
-      {!loading && !error && recipes.length > 0 && (
-        <>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {recipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
-            ))}
-          </div>
+      {recipes.length > 0 && (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {recipes.map((recipe) => (
+            <RecipeCard key={recipe.id} recipe={recipe} />
+          ))}
+        </div>
+      )}
 
-          <div className="flex items-center justify-center gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!hasPreviousPage}
-              onClick={goToPreviousPage}
-            >
-              Précédent
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {page} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!hasNextPage}
-              onClick={goToNextPage}
-            >
-              Suivant
-            </Button>
-          </div>
-        </>
+      <div ref={sentinelRef} className="h-4" />
+
+      {loading && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
       )}
     </div>
   )

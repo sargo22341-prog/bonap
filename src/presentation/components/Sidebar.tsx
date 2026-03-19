@@ -9,9 +9,11 @@ const navItems = [
 
 export function Sidebar() {
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r bg-card">
+    <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r bg-card shadow-sm">
       <div className="flex h-14 items-center border-b px-6">
-        <span className="text-lg font-bold tracking-tight">Bonap</span>
+        <span className="bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-lg font-extrabold tracking-tight text-transparent">
+          Bonap 🍽️
+        </span>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
@@ -21,10 +23,10 @@ export function Sidebar() {
             to={item.to}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )
             }
           >
