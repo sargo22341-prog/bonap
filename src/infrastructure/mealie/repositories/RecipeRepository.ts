@@ -2,6 +2,7 @@ import type { IRecipeRepository } from "../../../domain/recipe/repositories/IRec
 import type {
   MealiePaginatedRecipes,
   MealieRawPaginatedRecipes,
+  MealieRecipe,
 } from "../../../shared/types/mealie.ts"
 import { mealieApiClient } from "../api/index.ts"
 
@@ -17,5 +18,9 @@ export class RecipeRepository implements IRecipeRepository {
       perPage: raw.per_page,
       totalPages: raw.total_pages,
     }
+  }
+
+  async getBySlug(slug: string): Promise<MealieRecipe> {
+    return mealieApiClient.get<MealieRecipe>(`/api/recipes/${slug}`)
   }
 }

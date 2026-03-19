@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom"
 import { Layout } from "./presentation/components/Layout.tsx"
 import { RecipesPage } from "./presentation/pages/RecipesPage.tsx"
+import { RecipeDetailPage } from "./presentation/pages/RecipeDetailPage.tsx"
 import { PlanningPage } from "./presentation/pages/PlanningPage.tsx"
 
 function App() {
@@ -9,6 +10,7 @@ function App() {
       <Route element={<Layout />}>
         <Route index element={<Navigate to="/recipes" replace />} />
         <Route path="recipes" element={<RecipesPage />} />
+        <Route path="recipes/:slug" element={<RecipeDetailPage />} />
         <Route path="planning" element={<PlanningPage />} />
       </Route>
     </Routes>

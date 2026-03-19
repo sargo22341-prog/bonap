@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import { Card, CardContent, CardHeader } from "./ui/card.tsx"
 import type { MealieRecipe } from "../../shared/types/mealie.ts"
 
@@ -9,6 +10,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
   const imageUrl = `/api/media/recipes/${recipe.id}/images/min-original.webp`
 
   return (
+    <Link to={`/recipes/${recipe.slug}`} className="block">
     <Card className="overflow-hidden transition-shadow hover:shadow-md">
       <div className="aspect-video w-full overflow-hidden bg-muted">
         <img
@@ -39,5 +41,6 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         </CardContent>
       )}
     </Card>
+    </Link>
   )
 }
