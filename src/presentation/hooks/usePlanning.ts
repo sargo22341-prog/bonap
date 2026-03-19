@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import type { MealieMealPlan } from "../../shared/types/mealie.ts"
 import { GetWeekPlanningUseCase } from "../../application/planning/usecases/GetWeekPlanningUseCase.ts"
 import { AddMealUseCase } from "../../application/planning/usecases/AddMealUseCase.ts"
@@ -9,6 +9,9 @@ const planningRepository = new PlanningRepository()
 const getWeekPlanningUseCase = new GetWeekPlanningUseCase(planningRepository)
 const addMealUseCase = new AddMealUseCase(planningRepository)
 const deleteMealUseCase = new DeleteMealUseCase(planningRepository)
+
+// Marge de pré-chargement : on charge ±14 jours autour du centre
+const PREFETCH_MARGIN = 14
 
 function formatDate(date: Date): string {
   const y = date.getFullYear()
@@ -37,46 +40,83 @@ export function usePlanning() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch avec une marge de 1 jour de chaque côté pour couvrir tous les cas
-  const fetchPlanning = useCallback(async (center: Date, days: number) => {
-    setLoading(true)
-    setError(null)
+  // Plage déjà chargée en mémoire
+  const fetchedRange = useRef<{ start: string; end: string } | null>(null)
+  const prefetching = useRef(false)
+
+  const fetchRange = useCallback(async (start: string, end: string, silent = false) => {
+    if (!silent) {
+      setLoading(true)
+      setError(null)
+    }
     try {
-      const halfWindow = Math.floor(days / 2)
-      const startDate = formatDate(addDays(center, -halfWindow - 1))
-      const endDate = formatDate(addDays(center, halfWindow + 1))
-      const data = await getWeekPlanningUseCase.execute(startDate, endDate)
-      setMealPlans(data)
+      const data = await getWeekPlanningUseCase.execute(start, end)
+      setMealPlans((prev) => {
+        const outside = prev.filter((m) => m.date < start || m.date > end)
+        return [...outside, ...data]
+      })
+      fetchedRange.current = {
+        start: fetchedRange.current
+          ? fetchedRange.current.start < start ? fetchedRange.current.start : start
+          : start,
+        end: fetchedRange.current
+          ? fetchedRange.current.end > end ? fetchedRange.current.end : end
+          : end,
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue")
+      if (!silent) setError(err instanceof Error ? err.message : "Une erreur est survenue")
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
+      prefetching.current = false
     }
   }, [])
 
   useEffect(() => {
-    void fetchPlanning(centerDate, nbDays)
-  }, [centerDate, nbDays, fetchPlanning])
+    // Même offset que le rendu : aujourd'hui en 2ème colonne → window = [centerDate-1 .. centerDate+nbDays-2]
+    const visibleStart = formatDate(addDays(centerDate, -2))
+    const visibleEnd = formatDate(addDays(centerDate, nbDays - 1))
+
+    const cached = fetchedRange.current
+    const isCovered =
+      cached !== null && visibleStart >= cached.start && visibleEnd <= cached.end
+
+    if (!isCovered) {
+      // Hors cache : fetch bloquant avec spinner
+      const fetchStart = formatDate(addDays(centerDate, -PREFETCH_MARGIN))
+      const fetchEnd = formatDate(addDays(centerDate, PREFETCH_MARGIN))
+      void fetchRange(fetchStart, fetchEnd, false)
+      return
+    }
+
+    // Dans le cache : anticiper si on s'approche d'un bord (à moins de 3 jours)
+    if (!prefetching.current && cached) {
+      const nearStart = visibleStart <= formatDate(addDays(new Date(cached.start), 3))
+      const nearEnd = visibleEnd >= formatDate(addDays(new Date(cached.end), -3))
+
+      if (nearStart || nearEnd) {
+        prefetching.current = true
+        const fetchStart = formatDate(addDays(centerDate, -PREFETCH_MARGIN))
+        const fetchEnd = formatDate(addDays(centerDate, PREFETCH_MARGIN))
+        void fetchRange(fetchStart, fetchEnd, true)
+      }
+    }
+  }, [centerDate, nbDays, fetchRange])
 
   const goToPrevDay = () => setCenterDate((prev) => addDays(prev, -1))
   const goToNextDay = () => setCenterDate((prev) => addDays(prev, 1))
+  const goToPrevPeriod = () => setCenterDate((prev) => addDays(prev, -nbDays))
+  const goToNextPeriod = () => setCenterDate((prev) => addDays(prev, nbDays))
   const goToToday = () => setCenterDate(today())
 
-  const addMeal = useCallback(
-    async (date: string, entryType: string, recipeId: string) => {
-      await addMealUseCase.execute(date, entryType, recipeId)
-      await fetchPlanning(centerDate, nbDays)
-    },
-    [centerDate, nbDays, fetchPlanning],
-  )
+  const addMeal = useCallback(async (date: string, entryType: string, recipeId: string) => {
+    const newMeal = await addMealUseCase.execute(date, entryType, recipeId)
+    setMealPlans((prev) => [...prev, newMeal])
+  }, [])
 
-  const deleteMeal = useCallback(
-    async (id: number) => {
-      await deleteMealUseCase.execute(id)
-      await fetchPlanning(centerDate, nbDays)
-    },
-    [centerDate, nbDays, fetchPlanning],
-  )
+  const deleteMeal = useCallback(async (id: number) => {
+    setMealPlans((prev) => prev.filter((m) => m.id !== id))
+    await deleteMealUseCase.execute(id)
+  }, [])
 
   return {
     mealPlans,
@@ -87,6 +127,8 @@ export function usePlanning() {
     setNbDays,
     goToPrevDay,
     goToNextDay,
+    goToPrevPeriod,
+    goToNextPeriod,
     goToToday,
     addMeal,
     deleteMeal,

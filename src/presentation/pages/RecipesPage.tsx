@@ -77,22 +77,24 @@ export function RecipesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Mes recettes</h1>
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={resetFilters}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            Réinitialiser
-          </button>
-        )}
-      </div>
+      {/* Header sticky — compense le p-6 du Layout */}
+      <div className="sticky top-0 z-10 -mx-6 -mt-6 bg-background px-6 pt-6 pb-4 border-b border-border">
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-2xl font-bold">Mes recettes</h1>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Réinitialiser
+            </button>
+          )}
+        </div>
 
-      {/* Barre de filtres */}
-      <div className="space-y-3">
+        {/* Barre de filtres */}
+        <div className="space-y-3">
         {/* Recherche */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -167,6 +169,7 @@ export function RecipesPage() {
             })}
           </div>
         )}
+      </div>
       </div>
 
       {/* Erreur */}

@@ -3,7 +3,7 @@ import type { MealieRecipe, RecipeFilters } from "../../shared/types/mealie.ts"
 import { GetRecipesUseCase } from "../../application/recipe/usecases/GetRecipesUseCase.ts"
 import { RecipeRepository } from "../../infrastructure/mealie/repositories/RecipeRepository.ts"
 
-const PER_PAGE = 30
+const PER_PAGE = 50
 const getRecipesUseCase = new GetRecipesUseCase(new RecipeRepository())
 
 export function useRecipesInfinite(filters: RecipeFilters = {}) {

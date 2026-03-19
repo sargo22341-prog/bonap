@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ChevronLeft, ChevronRight, Plus, Loader2, AlertCircle, Copy, Eye, Trash2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Loader2, AlertCircle, Copy, Eye, Trash2 } from "lucide-react"
 import { Button } from "../components/ui/button.tsx"
 import { usePlanning } from "../hooks/usePlanning.ts"
 import { RecipePickerDialog } from "../components/RecipePickerDialog.tsx"
@@ -187,6 +187,8 @@ export function PlanningPage() {
     setNbDays,
     goToPrevDay,
     goToNextDay,
+    goToPrevPeriod,
+    goToNextPeriod,
     goToToday,
     addMeal,
     deleteMeal,
@@ -200,11 +202,8 @@ export function PlanningPage() {
     if (!open) setPreviewSlug(null)
   }
 
-  // Calcul des jours affichés — centrés sur centerDate
-  const halfWindow = Math.floor(nbDays / 2)
-  const days = Array.from({ length: nbDays }, (_, i) => {
-    return addDays(centerDate, i - halfWindow)
-  })
+  // Calcul des jours affichés — aujourd'hui en 2ème colonne (offset -1)
+  const days = Array.from({ length: nbDays }, (_, i) => addDays(centerDate, i - 1))
 
   const getMeals = (date: Date, type: string): MealieMealPlan[] => {
     const key = date.toISOString().slice(0, 10)
@@ -276,6 +275,9 @@ export function PlanningPage() {
             ))}
           </div>
 
+          <Button variant="outline" size="icon" onClick={goToPrevPeriod}>
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
           <Button variant="outline" size="icon" onClick={goToPrevDay}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -284,6 +286,9 @@ export function PlanningPage() {
           </Button>
           <Button variant="outline" size="icon" onClick={goToNextDay}>
             <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" onClick={goToNextPeriod}>
+            <ChevronsRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
