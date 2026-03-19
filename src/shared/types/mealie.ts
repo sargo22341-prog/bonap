@@ -31,11 +31,20 @@ export interface MealieRecipe {
   recipeInstructions?: MealieInstruction[]
 }
 
+export interface MealieRawPaginatedRecipes {
+  items: MealieRecipe[]
+  total: number
+  page: number
+  per_page: number
+  total_pages: number
+}
+
 export interface MealiePaginatedRecipes {
   items: MealieRecipe[]
   total: number
   page: number
   perPage: number
+  totalPages: number
 }
 
 export interface MealieMealPlan {

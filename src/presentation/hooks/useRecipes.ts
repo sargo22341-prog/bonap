@@ -19,7 +19,7 @@ export function useRecipes() {
     try {
       const data = await getRecipesUseCase.execute(p, PER_PAGE)
       setRecipes(data.items)
-      setTotalPages(Math.max(1, Math.ceil(data.total / data.perPage)))
+      setTotalPages(Math.max(1, data.totalPages))
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue")
     } finally {
