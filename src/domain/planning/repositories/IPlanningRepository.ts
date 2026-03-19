@@ -5,4 +5,10 @@ export interface IPlanningRepository {
     startDate: string,
     endDate: string,
   ): Promise<MealieMealPlan[]>
+  addMeal(entry: {
+    date: string
+    entryType: string
+    recipeId: string
+  }): Promise<MealieMealPlan>
+  deleteMeal(id: number): Promise<void>
 }

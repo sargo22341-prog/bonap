@@ -15,4 +15,19 @@ export class PlanningRepository implements IPlanningRepository {
     )
     return data.items
   }
+
+  async addMeal(entry: {
+    date: string
+    entryType: string
+    recipeId: string
+  }): Promise<MealieMealPlan> {
+    return mealieApiClient.post<MealieMealPlan>(
+      "/api/households/mealplans",
+      entry,
+    )
+  }
+
+  async deleteMeal(id: number): Promise<void> {
+    await mealieApiClient.delete(`/api/households/mealplans/${id}`)
+  }
 }

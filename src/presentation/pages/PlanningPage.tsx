@@ -1,14 +1,24 @@
-import { ChevronLeft, ChevronRight, CalendarDays, Loader2, AlertCircle } from "lucide-react"
+import { useState } from "react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays,
+  Loader2,
+  AlertCircle,
+  Plus,
+  X,
+} from "lucide-react"
 import { Button } from "../components/ui/button.tsx"
 import { usePlanning } from "../hooks/usePlanning.ts"
-import type { MealieMealPlan } from "../../shared/types/mealie.ts"
+import { RecipePickerDialog } from "../components/RecipePickerDialog.tsx"
+import type { MealieMealPlan, MealieRecipe } from "../../shared/types/mealie.ts"
 
 const DAY_LABELS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
 
 const MEAL_TYPE_ORDER = ["lunch", "dinner"] as const
 const MEAL_TYPE_LABELS: Record<string, string> = {
-  lunch: "Déjeuner",
-  dinner: "Dîner",
+  lunch: "Dejeuner",
+  dinner: "Diner",
 }
 
 function formatDayDate(date: Date): string {
@@ -30,14 +40,20 @@ function formatWeekRange(weekStart: Date): string {
   return `${startStr} - ${endStr}`
 }
 
-function MealCard({ meal }: { meal: MealieMealPlan }) {
+function MealCard({
+  meal,
+  onDelete,
+}: {
+  meal: MealieMealPlan
+  onDelete: (id: number) => void
+}) {
   const name = meal.recipe?.name ?? meal.title ?? "Sans titre"
   const imageUrl = meal.recipe
     ? `/api/media/recipes/${meal.recipe.id}/images/min-original.webp`
     : null
 
   return (
-    <div className="flex items-center gap-2 rounded-md border bg-card p-2">
+    <div className="group flex items-center gap-2 rounded-md border bg-card p-2">
       {imageUrl ? (
         <img
           src={imageUrl}
@@ -49,10 +65,34 @@ function MealCard({ meal }: { meal: MealieMealPlan }) {
           <CalendarDays className="h-4 w-4 text-muted-foreground" />
         </div>
       )}
-      <span className="line-clamp-2 text-xs font-medium leading-tight">
+      <span className="line-clamp-2 flex-1 text-xs font-medium leading-tight">
         {name}
       </span>
+      <button
+        type="button"
+        onClick={() => {
+          if (window.confirm(`Supprimer "${name}" du planning ?`)) {
+            onDelete(meal.id)
+          }
+        }}
+        className="shrink-0 rounded-sm p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+        aria-label={`Supprimer ${name}`}
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
     </div>
+  )
+}
+
+function AddMealButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center justify-center rounded-md border border-dashed p-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+    >
+      <Plus className="h-4 w-4" />
+    </button>
   )
 }
 
@@ -60,13 +100,17 @@ function DayColumn({
   dayLabel,
   dayDate,
   meals,
+  onAddMeal,
+  onDeleteMeal,
 }: {
   dayLabel: string
   dayDate: Date
   meals: MealieMealPlan[]
+  onAddMeal: (date: string, entryType: string) => void
+  onDeleteMeal: (id: number) => void
 }) {
-  const isToday =
-    new Date().toDateString() === dayDate.toDateString()
+  const isToday = new Date().toDateString() === dayDate.toDateString()
+  const dateStr = dayDate.toISOString().slice(0, 10)
 
   return (
     <div
@@ -84,23 +128,18 @@ function DayColumn({
       <div className="flex flex-col gap-1">
         {MEAL_TYPE_ORDER.map((type) => {
           const typeMeals = meals.filter((m) => m.entryType === type)
-          if (typeMeals.length === 0) return null
           return (
             <div key={type}>
               <div className="mb-0.5 text-[10px] font-medium uppercase text-muted-foreground">
                 {MEAL_TYPE_LABELS[type]}
               </div>
               {typeMeals.map((meal) => (
-                <MealCard key={meal.id} meal={meal} />
+                <MealCard key={meal.id} meal={meal} onDelete={onDeleteMeal} />
               ))}
+              <AddMealButton onClick={() => onAddMeal(dateStr, type)} />
             </div>
           )
         })}
-        {meals.length === 0 && (
-          <div className="py-4 text-center text-sm text-muted-foreground">
-            &ndash;
-          </div>
-        )}
       </div>
     </div>
   )
@@ -115,7 +154,30 @@ export function PlanningPage() {
     goToPrevWeek,
     goToNextWeek,
     goToCurrentWeek,
+    addMeal,
+    deleteMeal,
   } = usePlanning()
+
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pendingSlot, setPendingSlot] = useState<{
+    date: string
+    entryType: string
+  } | null>(null)
+
+  const handleAddMeal = (date: string, entryType: string) => {
+    setPendingSlot({ date, entryType })
+    setPickerOpen(true)
+  }
+
+  const handleRecipeSelect = async (recipe: MealieRecipe) => {
+    if (!pendingSlot) return
+    await addMeal(pendingSlot.date, pendingSlot.entryType, recipe.id)
+    setPendingSlot(null)
+  }
+
+  const handleDeleteMeal = async (id: number) => {
+    await deleteMeal(id)
+  }
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(currentWeekStart)
@@ -174,10 +236,18 @@ export function PlanningPage() {
               dayLabel={DAY_LABELS[i]}
               dayDate={date}
               meals={mealsByDay.get(date.toISOString().slice(0, 10)) ?? []}
+              onAddMeal={handleAddMeal}
+              onDeleteMeal={handleDeleteMeal}
             />
           ))}
         </div>
       )}
+
+      <RecipePickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onSelect={handleRecipeSelect}
+      />
     </div>
   )
 }

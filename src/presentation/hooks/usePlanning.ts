@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from "react"
 import type { MealieMealPlan } from "../../shared/types/mealie.ts"
 import { GetWeekPlanningUseCase } from "../../application/planning/usecases/GetWeekPlanningUseCase.ts"
+import { AddMealUseCase } from "../../application/planning/usecases/AddMealUseCase.ts"
+import { DeleteMealUseCase } from "../../application/planning/usecases/DeleteMealUseCase.ts"
 import { PlanningRepository } from "../../infrastructure/mealie/repositories/PlanningRepository.ts"
 
-const getWeekPlanningUseCase = new GetWeekPlanningUseCase(
-  new PlanningRepository(),
-)
+const planningRepository = new PlanningRepository()
+const getWeekPlanningUseCase = new GetWeekPlanningUseCase(planningRepository)
+const addMealUseCase = new AddMealUseCase(planningRepository)
+const deleteMealUseCase = new DeleteMealUseCase(planningRepository)
 
 function getMonday(date: Date): Date {
   const d = new Date(date)
@@ -66,6 +69,22 @@ export function usePlanning() {
 
   const goToCurrentWeek = () => setCurrentWeekStart(getMonday(new Date()))
 
+  const addMeal = useCallback(
+    async (date: string, entryType: string, recipeId: string) => {
+      await addMealUseCase.execute(date, entryType, recipeId)
+      await fetchPlanning(currentWeekStart)
+    },
+    [currentWeekStart, fetchPlanning],
+  )
+
+  const deleteMeal = useCallback(
+    async (id: number) => {
+      await deleteMealUseCase.execute(id)
+      await fetchPlanning(currentWeekStart)
+    },
+    [currentWeekStart, fetchPlanning],
+  )
+
   return {
     mealPlans,
     loading,
@@ -74,5 +93,7 @@ export function usePlanning() {
     goToPrevWeek,
     goToNextWeek,
     goToCurrentWeek,
+    addMeal,
+    deleteMeal,
   }
 }
