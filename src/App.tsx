@@ -1,8 +1,17 @@
+import { Routes, Route, Navigate } from "react-router-dom"
+import { Layout } from "./presentation/components/Layout.tsx"
+import { RecipesPage } from "./presentation/pages/RecipesPage.tsx"
+import { PlanningPage } from "./presentation/pages/PlanningPage.tsx"
+
 function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <h1 className="text-2xl font-bold p-4">Bonap</h1>
-    </div>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<Navigate to="/recipes" replace />} />
+        <Route path="recipes" element={<RecipesPage />} />
+        <Route path="planning" element={<PlanningPage />} />
+      </Route>
+    </Routes>
   )
 }
 
