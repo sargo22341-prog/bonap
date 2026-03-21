@@ -51,15 +51,7 @@ export class ShoppingRepository implements IShoppingRepository {
   }
 
   async getOrCreateDefaultList(): Promise<ShoppingList> {
-    const raw = await mealieApiClient.get<MealieRawPaginatedShoppingLists>(
-      "/api/households/shopping/lists?page=1&perPage=-1",
-    )
-    // Fallback to first list if "Bonap" not found
-    const existing = raw.items.find((l) => l.name === DEFAULT_LIST_NAME) ?? raw.items[0]
-    if (existing) {
-      return { id: existing.id, name: existing.name, labels: [] }
-    }
-    return this.getOrCreateList(DEFAULT_LIST_NAME, raw)
+    return this.getOrCreateList(DEFAULT_LIST_NAME)
   }
 
   async getOrCreateHabituelsList(): Promise<ShoppingList> {
@@ -75,7 +67,10 @@ export class ShoppingRepository implements IShoppingRepository {
       name: s.label.name,
       color: s.label.color,
     }))
-    return { items: (raw.listItems ?? []).map(mapItem), labels }
+    return {
+      items: (raw.listItems ?? []).filter((i) => i.shoppingListId === listId).map(mapItem),
+      labels,
+    }
   }
 
   async addItem(listId: string, data: MealieShoppingItemCreate): Promise<void> {

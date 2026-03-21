@@ -418,6 +418,8 @@ export function ShoppingPage() {
   const [newHabituelLabelId, setNewHabituelLabelId] = useState<string>("")
   const [addingItem, setAddingItem] = useState(false)
   const [addingHabituel, setAddingHabituel] = useState(false)
+  const newItemInputRef = useRef<HTMLInputElement>(null)
+  const newHabituelInputRef = useRef<HTMLInputElement>(null)
 
   const checkedCount = items.filter((i) => i.checked).length
 
@@ -433,6 +435,7 @@ export function ShoppingPage() {
       setNewItemLabelId("")
     } finally {
       setAddingItem(false)
+      setTimeout(() => newItemInputRef.current?.focus(), 0)
     }
   }
 
@@ -447,6 +450,7 @@ export function ShoppingPage() {
       setNewHabituelLabelId("")
     } finally {
       setAddingHabituel(false)
+      setTimeout(() => newHabituelInputRef.current?.focus(), 0)
     }
   }
 
@@ -565,6 +569,7 @@ export function ShoppingPage() {
                   </button>
                 </div>
                 <Input
+                  ref={newItemInputRef}
                   value={newItemNote}
                   onChange={(e) => setNewItemNote(e.target.value)}
                   placeholder="Ajouter un article..."
@@ -636,6 +641,7 @@ export function ShoppingPage() {
             <div className="border-t border-border p-3">
               <form onSubmit={(e) => void handleAddHabituel(e)} className="flex gap-2">
                 <Input
+                  ref={newHabituelInputRef}
                   value={newHabituelNote}
                   onChange={(e) => setNewHabituelNote(e.target.value)}
                   placeholder="Ajouter un article habituel..."

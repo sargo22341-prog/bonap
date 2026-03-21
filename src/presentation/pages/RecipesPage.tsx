@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useRecipesInfinite } from "../hooks/useRecipesInfinite.ts"
 import { useCategories } from "../hooks/useCategories.ts"
@@ -12,6 +12,7 @@ import { Loader2, AlertCircle, UtensilsCrossed, Search, X, RotateCcw, Plus, PenL
 import type { MealieRecipe, Season } from "../../shared/types/mealie.ts"
 import { SEASONS, SEASON_LABELS } from "../../shared/types/mealie.ts"
 import { getCurrentSeason, getRecipeSeasonsFromTags, isSeasonTag } from "../../shared/utils/season.ts"
+import { getRecipesUseCase, getRecipeUseCase } from "../../infrastructure/container.ts"
 
 const TIME_OPTIONS = [
   { label: "< 30 min", value: 30 },
@@ -25,6 +26,9 @@ export function RecipesPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [maxTotalTime, setMaxTotalTime] = useState<number | undefined>(undefined)
   const [selectedSeasons, setSelectedSeasons] = useState<Season[]>([getCurrentSeason()])
+  const [noIngredients, setNoIngredients] = useState(false)
+  const [noIngredientRecipes, setNoIngredientRecipes] = useState<MealieRecipe[] | null>(null)
+  const [noIngredientsLoading, setNoIngredientsLoading] = useState(false)
   const [newRecipeDialogOpen, setNewRecipeDialogOpen] = useState(false)
   const navigate = useNavigate()
 
@@ -82,7 +86,8 @@ export function RecipesPage() {
     selectedCategories.length > 0 ||
     selectedTags.length > 0 ||
     maxTotalTime !== undefined ||
-    selectedSeasons.length > 0
+    selectedSeasons.length > 0 ||
+    noIngredients
 
   const resetFilters = () => {
     setSearch("")
@@ -90,17 +95,51 @@ export function RecipesPage() {
     setSelectedTags([])
     setMaxTotalTime(undefined)
     setSelectedSeasons([])
+    setNoIngredients(false)
+    setNoIngredientRecipes(null)
   }
 
-  // Client-side season filter (tags present in the list response)
-  const filteredRecipes =
-    selectedSeasons.length === 0
-      ? recipes
-      : recipes.filter((recipe) => {
+  const loadRecipesWithoutIngredients = useCallback(async () => {
+    setNoIngredientsLoading(true)
+    setNoIngredientRecipes(null)
+    try {
+      // Fetch all pages to collect every recipe slug
+      const first = await getRecipesUseCase.execute(1, 100)
+      const allItems = [...first.items]
+      for (let page = 2; page <= first.totalPages; page++) {
+        const data = await getRecipesUseCase.execute(page, 100)
+        allItems.push(...data.items)
+      }
+      // Fetch details in parallel (ingredient data only in detail endpoint)
+      const details = await Promise.all(allItems.map((r) => getRecipeUseCase.execute(r.slug)))
+      setNoIngredientRecipes(details.filter((r) => !r.recipeIngredient?.length))
+    } catch {
+      setNoIngredientRecipes([])
+    } finally {
+      setNoIngredientsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (noIngredients) {
+      void loadRecipesWithoutIngredients()
+    } else {
+      setNoIngredientRecipes(null)
+    }
+  }, [noIngredients, loadRecipesWithoutIngredients])
+
+  // Client-side season filter (only applies when noIngredients is off)
+  const filteredRecipes = noIngredients
+    ? (noIngredientRecipes ?? [])
+    : recipes.filter((recipe) => {
+        if (selectedSeasons.length > 0) {
           const recipeSeasons = getRecipeSeasonsFromTags(recipe.tags)
-          if (recipeSeasons.length === 0) return true
-          return selectedSeasons.some((s) => recipeSeasons.includes(s))
-        })
+          if (recipeSeasons.length > 0 && !selectedSeasons.some((s) => recipeSeasons.includes(s))) {
+            return false
+          }
+        }
+        return true
+      })
 
   return (
     <div className="space-y-6">
@@ -195,6 +234,17 @@ export function RecipesPage() {
             })}
           </div>
 
+          {/* No ingredients filter */}
+          <div className="flex flex-wrap gap-1.5">
+            <Badge
+              variant={noIngredients ? "default" : "outline"}
+              className="cursor-pointer select-none transition-colors"
+              onClick={() => setNoIngredients((prev) => !prev)}
+            >
+              Sans ingrédients
+            </Badge>
+          </div>
+
           {/* Category filters */}
           {categories.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
@@ -271,7 +321,7 @@ export function RecipesPage() {
 
       <div ref={sentinelRef} className="h-4" />
 
-      {loading && (
+      {(loading || noIngredientsLoading) && (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>

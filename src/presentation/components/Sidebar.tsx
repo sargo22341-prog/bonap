@@ -4,9 +4,9 @@ import { cn } from "../../lib/utils.ts"
 import { useTheme } from "../hooks/useTheme.ts"
 
 const navItems = [
-  { to: "/recipes", label: "Recettes", icon: UtensilsCrossed },
   { to: "/planning", label: "Planning", icon: CalendarDays },
   { to: "/shopping", label: "Courses", icon: ShoppingCart },
+  { to: "/recipes", label: "Recettes", icon: UtensilsCrossed },
   { to: "/stats", label: "Statistiques", icon: BarChart2 },
 ]
 
