@@ -49,7 +49,6 @@ function buildInitialFormData(recipe?: MealieRecipe): RecipeFormData {
     prepTime: recipe?.prepTime ?? "",
     recipeIngredient: buildInitialIngredients(recipe),
     recipeInstructions: buildInitialInstructions(recipe),
-    imageUrl: "",
     seasons: getRecipeSeasonsFromTags(recipe?.tags),
   }
 }
@@ -231,19 +230,6 @@ export function RecipeFormDialog({
                 )
               })}
             </div>
-          </div>
-
-          {/* Image URL */}
-          <div className="space-y-2">
-            <Label htmlFor="recipe-image">URL de l'image</Label>
-            <Input
-              id="recipe-image"
-              type="url"
-              placeholder="https://exemple.com/image.jpg"
-              value={formData.imageUrl}
-              onChange={(e) => setFormData((prev) => ({ ...prev, imageUrl: e.target.value }))}
-              disabled={loading}
-            />
           </div>
 
           {/* Ingrédients */}

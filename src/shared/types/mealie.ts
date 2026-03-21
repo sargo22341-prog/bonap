@@ -60,7 +60,6 @@ export interface RecipeFormData {
   prepTime: string
   recipeIngredient: RecipeFormIngredient[]
   recipeInstructions: RecipeFormInstruction[]
-  imageUrl: string
   seasons: Season[]
 }
 

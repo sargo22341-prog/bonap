@@ -5,16 +5,10 @@ import {
   addMealUseCase,
   deleteMealUseCase,
 } from "../../infrastructure/container.ts"
+import { formatDate } from "../../shared/utils/date.ts"
 
 // Marge de pré-chargement : on charge ±14 jours autour du centre
 const PREFETCH_MARGIN = 14
-
-function formatDate(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, "0")
-  const d = String(date.getDate()).padStart(2, "0")
-  return `${y}-${m}-${d}`
-}
 
 function addDays(date: Date, days: number): Date {
   const result = new Date(date)
