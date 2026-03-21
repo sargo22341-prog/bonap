@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom"
-import { UtensilsCrossed, CalendarDays, ChevronLeft, ChevronRight, Sun, Moon, ExternalLink } from "lucide-react"
+import { UtensilsCrossed, CalendarDays, BarChart2, ChevronLeft, ChevronRight, Sun, Moon, ExternalLink } from "lucide-react"
 import { cn } from "../../lib/utils.ts"
 import { useTheme } from "../hooks/useTheme.ts"
 
 const navItems = [
   { to: "/recipes", label: "Recettes", icon: UtensilsCrossed },
   { to: "/planning", label: "Planning", icon: CalendarDays },
+  { to: "/stats", label: "Statistiques", icon: BarChart2 },
 ]
 
 interface SidebarProps {
