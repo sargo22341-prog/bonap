@@ -6,6 +6,7 @@ import { AddRecipesToListUseCase } from "../../application/shopping/usecases/Add
 import { ToggleItemUseCase } from "../../application/shopping/usecases/ToggleItemUseCase.ts"
 import { ClearListUseCase } from "../../application/shopping/usecases/ClearListUseCase.ts"
 import type { ClearMode } from "../../application/shopping/usecases/ClearListUseCase.ts"
+import { DeleteItemUseCase } from "../../application/shopping/usecases/DeleteItemUseCase.ts"
 import { ShoppingRepository } from "../../infrastructure/mealie/repositories/ShoppingRepository.ts"
 import { CustomItemRepository } from "../../infrastructure/shopping/CustomItemRepository.ts"
 
@@ -16,6 +17,7 @@ const getItemsUseCase = new GetShoppingItemsUseCase(shoppingRepository)
 const addItemUseCase = new AddItemUseCase(shoppingRepository)
 const addRecipesUseCase = new AddRecipesToListUseCase(shoppingRepository)
 const toggleItemUseCase = new ToggleItemUseCase(shoppingRepository)
+const deleteItemUseCase = new DeleteItemUseCase(shoppingRepository)
 const clearListUseCase = new ClearListUseCase(shoppingRepository)
 
 export function useShopping() {
@@ -95,7 +97,7 @@ export function useShopping() {
     if (!list) return
     setItems((prev) => prev.filter((i) => i.id !== itemId))
     try {
-      await shoppingRepository.deleteItem(list.id, itemId)
+      await deleteItemUseCase.execute(list.id, itemId)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur lors de la suppression")
       void loadItems()
