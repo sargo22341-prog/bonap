@@ -80,7 +80,7 @@ export function RecipesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header sticky — compense le padding du Layout (p-4 mobile, p-6 desktop) */}
+      {/* Header sticky */}
       <div className="sticky top-0 z-10 -mx-4 -mt-4 md:-mx-6 md:-mt-6 bg-background px-4 pt-4 md:px-6 md:pt-6 pb-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-2xl font-bold">Mes recettes</h1>
@@ -108,81 +108,81 @@ export function RecipesPage() {
 
         {/* Barre de filtres */}
         <div className="space-y-3">
-        {/* Recherche */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher une recette..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-9"
-          />
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Filtre temps */}
-        <div className="flex flex-wrap gap-1.5">
-          {TIME_OPTIONS.filter((opt) => opt.value !== undefined).map((opt) => {
-            const active = maxTotalTime === opt.value
-            return (
-              <Badge
-                key={opt.label}
-                variant={active ? "default" : "outline"}
-                className="cursor-pointer select-none transition-colors"
-                onClick={() => handleTimeFilter(opt.value)}
+          {/* Recherche */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher une recette..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 pr-9"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
-                {opt.label}
-              </Badge>
-            )
-          })}
-        </div>
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-        {/* Filtres catégories */}
-        {categories.length > 0 && (
+          {/* Filtre temps */}
           <div className="flex flex-wrap gap-1.5">
-            {categories.map((cat) => {
-              const active = selectedCategories.includes(cat.slug)
+            {TIME_OPTIONS.filter((opt) => opt.value !== undefined).map((opt) => {
+              const active = maxTotalTime === opt.value
               return (
                 <Badge
-                  key={cat.id}
+                  key={opt.label}
                   variant={active ? "default" : "outline"}
                   className="cursor-pointer select-none transition-colors"
-                  onClick={() => toggleCategory(cat.slug)}
+                  onClick={() => handleTimeFilter(opt.value)}
                 >
-                  {cat.name}
+                  {opt.label}
                 </Badge>
               )
             })}
           </div>
-        )}
 
-        {/* Filtres tags */}
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {tags.map((tag) => {
-              const active = selectedTags.includes(tag.slug)
-              return (
-                <Badge
-                  key={tag.id}
-                  variant={active ? "secondary" : "outline"}
-                  className="cursor-pointer select-none transition-colors"
-                  onClick={() => toggleTag(tag.slug)}
-                >
-                  {tag.name}
-                </Badge>
-              )
-            })}
-          </div>
-        )}
-      </div>
+          {/* Filtres catégories */}
+          {categories.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {categories.map((cat) => {
+                const active = selectedCategories.includes(cat.slug)
+                return (
+                  <Badge
+                    key={cat.id}
+                    variant={active ? "default" : "outline"}
+                    className="cursor-pointer select-none transition-colors"
+                    onClick={() => toggleCategory(cat.slug)}
+                  >
+                    {cat.name}
+                  </Badge>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Filtres tags */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {tags.map((tag) => {
+                const active = selectedTags.includes(tag.slug)
+                return (
+                  <Badge
+                    key={tag.id}
+                    variant={active ? "secondary" : "outline"}
+                    className="cursor-pointer select-none transition-colors"
+                    onClick={() => toggleTag(tag.slug)}
+                  >
+                    {tag.name}
+                  </Badge>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Erreur */}

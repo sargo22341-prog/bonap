@@ -46,6 +46,7 @@ export class RecipeRepository implements IRecipeRepository {
   }
 
   async createFromUrl(url: string): Promise<string> {
-    return mealieApiClient.post<string>("/api/recipes/create-url", { url })
+    const response = await mealieApiClient.post<string | { slug: string }>("/api/recipes/create-url", { url })
+    return typeof response === "string" ? response : response.slug
   }
 }
