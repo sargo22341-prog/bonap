@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import type { MealieRecipe } from "../../shared/types/mealie.ts"
-import { GetRecipeUseCase } from "../../application/recipe/usecases/GetRecipeUseCase.ts"
-import { RecipeRepository } from "../../infrastructure/mealie/repositories/RecipeRepository.ts"
-
-const getRecipeUseCase = new GetRecipeUseCase(new RecipeRepository())
+import { getRecipeUseCase } from "../../infrastructure/container.ts"
 
 export function useRecipe(slug: string | undefined) {
   const [recipe, setRecipe] = useState<MealieRecipe | null>(null)

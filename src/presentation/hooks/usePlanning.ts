@@ -1,14 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { MealieMealPlan } from "../../shared/types/mealie.ts"
-import { GetWeekPlanningUseCase } from "../../application/planning/usecases/GetWeekPlanningUseCase.ts"
-import { AddMealUseCase } from "../../application/planning/usecases/AddMealUseCase.ts"
-import { DeleteMealUseCase } from "../../application/planning/usecases/DeleteMealUseCase.ts"
-import { PlanningRepository } from "../../infrastructure/mealie/repositories/PlanningRepository.ts"
-
-const planningRepository = new PlanningRepository()
-const getWeekPlanningUseCase = new GetWeekPlanningUseCase(planningRepository)
-const addMealUseCase = new AddMealUseCase(planningRepository)
-const deleteMealUseCase = new DeleteMealUseCase(planningRepository)
+import {
+  getWeekPlanningUseCase,
+  addMealUseCase,
+  deleteMealUseCase,
+} from "../../infrastructure/container.ts"
 
 // Marge de pré-chargement : on charge ±14 jours autour du centre
 const PREFETCH_MARGIN = 14

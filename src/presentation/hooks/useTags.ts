@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import type { MealieTag } from "../../shared/types/mealie.ts"
-import { GetTagsUseCase } from "../../application/organizer/usecases/GetTagsUseCase.ts"
-import { TagRepository } from "../../infrastructure/mealie/repositories/TagRepository.ts"
-
-const getTagsUseCase = new GetTagsUseCase(new TagRepository())
+import { getTagsUseCase } from "../../infrastructure/container.ts"
 
 export function useTags() {
   const [tags, setTags] = useState<MealieTag[]>([])

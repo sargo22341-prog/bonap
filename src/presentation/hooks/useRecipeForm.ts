@@ -1,12 +1,6 @@
 import { useState } from "react"
-import { CreateRecipeUseCase } from "../../application/recipe/usecases/CreateRecipeUseCase.ts"
-import { UpdateRecipeUseCase } from "../../application/recipe/usecases/UpdateRecipeUseCase.ts"
-import { RecipeRepository } from "../../infrastructure/mealie/repositories/RecipeRepository.ts"
+import { createRecipeUseCase, updateRecipeUseCase } from "../../infrastructure/container.ts"
 import type { MealieRecipe, RecipeFormData } from "../../shared/types/mealie.ts"
-
-const recipeRepository = new RecipeRepository()
-const createRecipeUseCase = new CreateRecipeUseCase(recipeRepository)
-const updateRecipeUseCase = new UpdateRecipeUseCase(recipeRepository)
 
 export function useRecipeForm() {
   const [loading, setLoading] = useState(false)

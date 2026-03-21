@@ -1,11 +1,8 @@
 import { useCallback, useState } from "react"
-import { ShoppingRepository } from "../../infrastructure/mealie/repositories/ShoppingRepository.ts"
-import { AddRecipesToListUseCase } from "../../application/shopping/usecases/AddRecipesToListUseCase.ts"
-import { GetShoppingItemsUseCase } from "../../application/shopping/usecases/GetShoppingItemsUseCase.ts"
-
-const shoppingRepository = new ShoppingRepository()
-const getItemsUseCase = new GetShoppingItemsUseCase(shoppingRepository)
-const addRecipesUseCase = new AddRecipesToListUseCase(shoppingRepository)
+import {
+  getShoppingItemsUseCase,
+  addRecipesToListUseCase,
+} from "../../infrastructure/container.ts"
 
 export function useAddRecipesToCart() {
   const [loading, setLoading] = useState(false)
@@ -18,8 +15,8 @@ export function useAddRecipesToCart() {
     setError(null)
     setSuccess(false)
     try {
-      const { list } = await getItemsUseCase.execute()
-      await addRecipesUseCase.execute(list.id, recipeIds)
+      const { list } = await getShoppingItemsUseCase.execute()
+      await addRecipesToListUseCase.execute(list.id, recipeIds)
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
     } catch (err) {

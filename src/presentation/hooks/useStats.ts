@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react"
 import type { MealieMealPlan, MealieRecipe } from "../../shared/types/mealie.ts"
-import { GetPlanningRangeUseCase } from "../../application/planning/usecases/GetPlanningRangeUseCase.ts"
-import { GetRecipesByIdsUseCase } from "../../application/recipe/usecases/GetRecipesByIdsUseCase.ts"
-import { GetRecipesUseCase } from "../../application/recipe/usecases/GetRecipesUseCase.ts"
-import { PlanningRepository } from "../../infrastructure/mealie/repositories/PlanningRepository.ts"
-import { RecipeRepository } from "../../infrastructure/mealie/repositories/RecipeRepository.ts"
+import {
+  getPlanningRangeUseCase,
+  getRecipesByIdsUseCase,
+  getRecipesUseCase,
+} from "../../infrastructure/container.ts"
 
 export type StatsPeriod = "30d" | "90d" | "12m"
 
@@ -50,12 +50,6 @@ export interface StatsData {
 }
 
 const MAX_INGREDIENT_RECIPES = 20
-
-const planningRepository = new PlanningRepository()
-const recipeRepository = new RecipeRepository()
-const getPlanningRangeUseCase = new GetPlanningRangeUseCase(planningRepository)
-const getRecipesByIdsUseCase = new GetRecipesByIdsUseCase(recipeRepository)
-const getRecipesUseCase = new GetRecipesUseCase(recipeRepository)
 
 function formatDate(date: Date): string {
   const y = date.getFullYear()

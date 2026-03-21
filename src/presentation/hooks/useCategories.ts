@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import type { MealieCategory } from "../../shared/types/mealie.ts"
-import { GetCategoriesUseCase } from "../../application/organizer/usecases/GetCategoriesUseCase.ts"
-import { CategoryRepository } from "../../infrastructure/mealie/repositories/CategoryRepository.ts"
-
-const getCategoriesUseCase = new GetCategoriesUseCase(new CategoryRepository())
+import { getCategoriesUseCase } from "../../infrastructure/container.ts"
 
 export function useCategories() {
   const [categories, setCategories] = useState<MealieCategory[]>([])

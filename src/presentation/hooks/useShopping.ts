@@ -1,24 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { ShoppingItem, ShoppingList, CustomItem } from "../../domain/shopping/entities/ShoppingItem.ts"
-import { GetShoppingItemsUseCase } from "../../application/shopping/usecases/GetShoppingItemsUseCase.ts"
-import { AddItemUseCase } from "../../application/shopping/usecases/AddItemUseCase.ts"
-import { AddRecipesToListUseCase } from "../../application/shopping/usecases/AddRecipesToListUseCase.ts"
-import { ToggleItemUseCase } from "../../application/shopping/usecases/ToggleItemUseCase.ts"
-import { ClearListUseCase } from "../../application/shopping/usecases/ClearListUseCase.ts"
 import type { ClearMode } from "../../application/shopping/usecases/ClearListUseCase.ts"
-import { DeleteItemUseCase } from "../../application/shopping/usecases/DeleteItemUseCase.ts"
-import { ShoppingRepository } from "../../infrastructure/mealie/repositories/ShoppingRepository.ts"
-import { CustomItemRepository } from "../../infrastructure/shopping/CustomItemRepository.ts"
-
-const shoppingRepository = new ShoppingRepository()
-const customItemRepository = new CustomItemRepository()
-
-const getItemsUseCase = new GetShoppingItemsUseCase(shoppingRepository)
-const addItemUseCase = new AddItemUseCase(shoppingRepository)
-const addRecipesUseCase = new AddRecipesToListUseCase(shoppingRepository)
-const toggleItemUseCase = new ToggleItemUseCase(shoppingRepository)
-const deleteItemUseCase = new DeleteItemUseCase(shoppingRepository)
-const clearListUseCase = new ClearListUseCase(shoppingRepository)
+import {
+  getShoppingItemsUseCase,
+  addItemUseCase,
+  addRecipesToListUseCase,
+  toggleItemUseCase,
+  deleteItemUseCase,
+  clearListUseCase,
+  customItemRepository,
+} from "../../infrastructure/container.ts"
 
 export function useShopping() {
   const [list, setList] = useState<ShoppingList | null>(null)
@@ -35,7 +26,7 @@ export function useShopping() {
     setLoading(true)
     setError(null)
     try {
-      const result = await getItemsUseCase.execute()
+      const result = await getShoppingItemsUseCase.execute()
       setList(result.list)
       setItems(result.items)
     } catch (err) {
@@ -63,9 +54,9 @@ export function useShopping() {
     setAddingRecipes(true)
     setError(null)
     try {
-      await addRecipesUseCase.execute(list.id, recipeIds)
+      await addRecipesToListUseCase.execute(list.id, recipeIds)
       // Recharger les items après l'ajout (Mealie fait la déduplication)
-      const result = await getItemsUseCase.execute()
+      const result = await getShoppingItemsUseCase.execute()
       setList(result.list)
       setItems(result.items)
     } catch (err) {

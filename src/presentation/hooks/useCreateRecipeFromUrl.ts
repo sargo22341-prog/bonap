@@ -1,10 +1,5 @@
 import { useState } from "react"
-import { CreateRecipeFromUrlUseCase } from "../../application/recipe/usecases/CreateRecipeFromUrlUseCase.ts"
-import { RecipeRepository } from "../../infrastructure/mealie/repositories/RecipeRepository.ts"
-
-const createRecipeFromUrlUseCase = new CreateRecipeFromUrlUseCase(
-  new RecipeRepository(),
-)
+import { createRecipeFromUrlUseCase } from "../../infrastructure/container.ts"
 
 export function useCreateRecipeFromUrl() {
   const [loading, setLoading] = useState(false)
