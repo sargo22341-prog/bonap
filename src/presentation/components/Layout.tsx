@@ -1,11 +1,72 @@
 import { Outlet } from "react-router-dom"
+import { Menu } from "lucide-react"
 import { Sidebar } from "./Sidebar.tsx"
+import { useSidebar } from "../hooks/useSidebar.ts"
+import { cn } from "../../lib/utils.ts"
 
 export function Layout() {
+  const { collapsed, toggleCollapsed, mobileOpen, openMobile, closeMobile } = useSidebar()
+
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
-      <main className="ml-60 p-6">
+      {/* ── Sidebar desktop (hidden on mobile) ── */}
+      <div className="hidden md:block">
+        <Sidebar
+          collapsed={collapsed}
+          onToggleCollapsed={toggleCollapsed}
+          variant="desktop"
+        />
+      </div>
+
+      {/* ── Drawer mobile ── */}
+      {/* Overlay */}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 md:hidden",
+          mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+        )}
+        onClick={closeMobile}
+        aria-hidden="true"
+      />
+      {/* Panneau drawer */}
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out md:hidden",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <Sidebar
+          collapsed={false}
+          onToggleCollapsed={toggleCollapsed}
+          onClose={closeMobile}
+          variant="mobile"
+        />
+      </div>
+
+      {/* ── Contenu principal ── */}
+      <main
+        className={cn(
+          "transition-all duration-300 ease-in-out",
+          // Desktop : marge gauche selon l'état collapsed
+          "md:ml-60",
+          collapsed && "md:ml-16",
+          // Mobile : pas de marge
+          "ml-0",
+          "p-4 md:p-6",
+        )}
+      >
+        {/* Burger mobile */}
+        <div className="mb-4 flex items-center md:hidden">
+          <button
+            type="button"
+            onClick={openMobile}
+            className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            aria-label="Ouvrir le menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
+
         <Outlet />
       </main>
     </div>

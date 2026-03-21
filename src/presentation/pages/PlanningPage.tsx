@@ -9,8 +9,8 @@ import type { MealieMealPlan, MealieRecipe } from "../../shared/types/mealie.ts"
 const DAY_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"]
 
 const MEAL_TYPES = [
-  { key: "lunch", label: "Déjeuner", color: "bg-amber-50 border-amber-200" },
-  { key: "dinner", label: "Dîner", color: "bg-orange-50 border-orange-200" },
+  { key: "lunch", label: "Déjeuner", color: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800/40" },
+  { key: "dinner", label: "Dîner", color: "bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-800/40" },
 ] as const
 
 function formatDayDate(date: Date): string {
@@ -103,7 +103,7 @@ function MealCell({
                 e.dataTransfer.setData("application/json", JSON.stringify(meal))
                 e.dataTransfer.effectAllowed = "move"
               }}
-              className="flex flex-col rounded-md bg-white/80 shadow-sm cursor-grab active:cursor-grabbing overflow-hidden"
+              className="flex flex-col rounded-md bg-white/80 dark:bg-card shadow-sm cursor-grab active:cursor-grabbing overflow-hidden"
             >
               {/* Image + nom */}
               <div className="flex items-center gap-2 p-2">

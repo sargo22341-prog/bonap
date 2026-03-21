@@ -77,8 +77,8 @@ export function RecipesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header sticky — compense le p-6 du Layout */}
-      <div className="sticky top-0 z-10 -mx-6 -mt-6 bg-background px-6 pt-6 pb-4 border-b border-border">
+      {/* Header sticky — compense le padding du Layout (p-4 mobile, p-6 desktop) */}
+      <div className="sticky top-0 z-10 -mx-4 -mt-4 md:-mx-6 md:-mt-6 bg-background px-4 pt-4 md:px-6 md:pt-6 pb-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-2xl font-bold">Mes recettes</h1>
           {hasActiveFilters && (
