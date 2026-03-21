@@ -11,9 +11,12 @@ export const SEASON_LABELS: Record<Season, string> = {
 
 export interface MealieIngredient {
   quantity?: number
-  unit?: { name: string }
-  food?: { name: string }
+  unit?: { id?: string; name: string }
+  food?: { id?: string; name: string }
   note?: string
+  display?: string
+  originalText?: string | null
+  referenceId?: string
 }
 
 export interface MealieInstruction {
@@ -61,6 +64,8 @@ export interface RecipeFormData {
   recipeIngredient: RecipeFormIngredient[]
   recipeInstructions: RecipeFormInstruction[]
   seasons: Season[]
+  categories: Array<{ id: string; name: string; slug: string }>
+  tags: Array<{ id: string; name: string; slug: string }>
 }
 
 export interface MealieRecipe {

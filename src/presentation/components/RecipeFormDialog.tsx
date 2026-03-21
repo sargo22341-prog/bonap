@@ -12,9 +12,11 @@ import { Button } from "./ui/button.tsx"
 import { Label } from "./ui/label.tsx"
 import { Badge } from "./ui/badge.tsx"
 import { useRecipeForm } from "../hooks/useRecipeForm.ts"
+import { useCategories } from "../hooks/useCategories.ts"
+import { useTags } from "../hooks/useTags.ts"
 import type { MealieRecipe, RecipeFormData, RecipeFormIngredient, RecipeFormInstruction, Season } from "../../shared/types/mealie.ts"
 import { SEASONS, SEASON_LABELS } from "../../shared/types/mealie.ts"
-import { getRecipeSeasonsFromTags } from "../../shared/utils/season.ts"
+import { getRecipeSeasonsFromTags, isSeasonTag } from "../../shared/utils/season.ts"
 
 interface RecipeFormDialogProps {
   open: boolean
@@ -42,14 +44,26 @@ function buildInitialInstructions(recipe?: MealieRecipe): RecipeFormInstruction[
   return recipe.recipeInstructions.map((step) => ({ text: step.text }))
 }
 
+function parsePrepTimeToMinutes(iso?: string): string {
+  if (!iso) return ""
+  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/)
+  if (!match) return ""
+  const hours = parseInt(match[1] ?? "0")
+  const minutes = parseInt(match[2] ?? "0")
+  const total = hours * 60 + minutes
+  return total > 0 ? String(total) : ""
+}
+
 function buildInitialFormData(recipe?: MealieRecipe): RecipeFormData {
   return {
     name: recipe?.name ?? "",
     description: recipe?.description ?? "",
-    prepTime: recipe?.prepTime ?? "",
+    prepTime: parsePrepTimeToMinutes(recipe?.prepTime),
     recipeIngredient: buildInitialIngredients(recipe),
     recipeInstructions: buildInitialInstructions(recipe),
     seasons: getRecipeSeasonsFromTags(recipe?.tags),
+    categories: (recipe?.recipeCategory ?? []).map((c) => ({ id: c.id, name: c.name, slug: c.slug })),
+    tags: (recipe?.tags ?? []).filter((t) => !isSeasonTag(t)).map((t) => ({ id: t.id, name: t.name, slug: t.slug })),
   }
 }
 
@@ -61,6 +75,8 @@ export function RecipeFormDialog({
 }: RecipeFormDialogProps) {
   const isEditing = Boolean(recipe)
   const { createRecipe, updateRecipe, loading, error } = useRecipeForm()
+  const { categories } = useCategories()
+  const { tags } = useTags()
 
   const [formData, setFormData] = useState<RecipeFormData>(() => buildInitialFormData(recipe))
 
@@ -190,18 +206,27 @@ export function RecipeFormDialog({
 
           {/* Prep time */}
           <div className="space-y-2">
-            <Label htmlFor="recipe-prep-time">Temps de préparation</Label>
-            <Input
-              id="recipe-prep-time"
-              type="text"
-              placeholder="Ex: PT30M (30 min) ou PT1H30M (1h30)"
-              value={formData.prepTime}
-              onChange={(e) => setFormData((prev) => ({ ...prev, prepTime: e.target.value }))}
-              disabled={loading}
-            />
-            <p className="text-xs text-muted-foreground">
-              Format ISO 8601 : PT30M = 30 minutes, PT1H = 1 heure
-            </p>
+            <Label htmlFor="recipe-prep-time">Temps de préparation (minutes)</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="recipe-prep-time"
+                type="number"
+                min="0"
+                step="5"
+                placeholder="30"
+                value={formData.prepTime}
+                onChange={(e) => setFormData((prev) => ({ ...prev, prepTime: e.target.value }))}
+                disabled={loading}
+                className="w-32"
+              />
+              {formData.prepTime && Number(formData.prepTime) > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {Number(formData.prepTime) >= 60
+                    ? `${Math.floor(Number(formData.prepTime) / 60)}h${Number(formData.prepTime) % 60 > 0 ? `${Number(formData.prepTime) % 60}min` : ""}`
+                    : `${formData.prepTime} min`}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Seasons */}
@@ -231,6 +256,66 @@ export function RecipeFormDialog({
               })}
             </div>
           </div>
+
+          {/* Categories */}
+          {categories.length > 0 && (
+            <div className="space-y-2">
+              <Label>Catégorie</Label>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => {
+                  const active = formData.categories.some((c) => c.id === cat.id)
+                  return (
+                    <Badge
+                      key={cat.id}
+                      variant={active ? "default" : "outline"}
+                      className="cursor-pointer select-none transition-colors"
+                      onClick={() => {
+                        if (loading) return
+                        setFormData((prev) => ({
+                          ...prev,
+                          categories: active
+                            ? prev.categories.filter((c) => c.id !== cat.id)
+                            : [...prev.categories, { id: cat.id, name: cat.name, slug: cat.slug }],
+                        }))
+                      }}
+                    >
+                      {cat.name}
+                    </Badge>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Tags */}
+          {tags.filter((t) => !isSeasonTag(t)).length > 0 && (
+            <div className="space-y-2">
+              <Label>Mots-clés</Label>
+              <div className="flex flex-wrap gap-2">
+                {tags.filter((t) => !isSeasonTag(t)).map((tag) => {
+                  const active = formData.tags.some((t) => t.id === tag.id)
+                  return (
+                    <Badge
+                      key={tag.id}
+                      variant={active ? "secondary" : "outline"}
+                      className="cursor-pointer select-none transition-colors"
+                      onClick={() => {
+                        if (loading) return
+                        setFormData((prev) => ({
+                          ...prev,
+                          tags: active
+                            ? prev.tags.filter((t) => t.id !== tag.id)
+                            : [...prev.tags, { id: tag.id, name: tag.name, slug: tag.slug }],
+                        }))
+                      }}
+                    >
+                      {tag.name}
+                    </Badge>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Ingredients */}
           <div className="space-y-3">

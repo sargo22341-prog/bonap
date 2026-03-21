@@ -63,13 +63,44 @@ export class RecipeRepository implements IRecipeRepository {
     return mealieApiClient.get<MealieRecipe>(`/api/recipes/${slug}`)
   }
 
+  private ingredientText(ing: MealieIngredient): string | null {
+    if (ing.originalText) return ing.originalText
+    if (ing.display) return ing.display
+    const parts = [
+      ing.quantity != null ? String(ing.quantity) : "",
+      ing.unit?.name ?? "",
+      ing.food?.name ?? "",
+      ing.note ?? "",
+    ].filter(Boolean)
+    return parts.length ? parts.join(" ") : null
+  }
+
+  private async parseAndUpdateIngredients(slug: string, recipe: MealieRecipe): Promise<void> {
+    const ingredients = recipe.recipeIngredient ?? []
+    const texts = ingredients.map((ing) => this.ingredientText(ing)).filter(Boolean) as string[]
+    if (!texts.length) return
+
+    const parsed = await mealieApiClient.post<MealieIngredient[]>(
+      "/api/parser/ingredients",
+      texts.map((t) => ({ ingredient: t })),
+    )
+
+    await mealieApiClient.patch(`/api/recipes/${slug}`, {
+      name: recipe.name,
+      recipeIngredient: parsed,
+    })
+  }
+
   async createFromUrl(url: string): Promise<string> {
     const response = await mealieApiClient.postSse<{ message: string; slug: string | null }>(
       "/api/recipes/create/url/stream",
       { url },
     )
     if (!response.slug) throw new Error("Recipe import failed: no slug returned")
-    return response.slug
+    const slug = response.slug
+    const recipe = await this.getBySlug(slug)
+    await this.parseAndUpdateIngredients(slug, recipe)
+    return slug
   }
 
   async create(name: string): Promise<string> {
@@ -77,19 +108,21 @@ export class RecipeRepository implements IRecipeRepository {
     return typeof response === "string" ? response : response.slug
   }
 
-  async update(slug: string, data: RecipeFormData): Promise<MealieRecipe> {
-    const [current, seasonTags] = await Promise.all([
-      this.getBySlug(slug),
-      this.resolveSeasonTags(data.seasons),
-    ])
-    const nonSeasonTags = (current.tags ?? [])
-      .filter((t) => !isSeasonTag(t))
-      .map((t) => ({ id: t.id, name: t.name, slug: t.slug }))
+  private minutesToIso(minutes: string): string | undefined {
+    const m = parseInt(minutes)
+    if (!m || m <= 0) return undefined
+    const h = Math.floor(m / 60)
+    const rem = m % 60
+    return h > 0 ? `PT${h}H${rem > 0 ? `${rem}M` : ""}` : `PT${rem}M`
+  }
 
+  async update(slug: string, data: RecipeFormData): Promise<MealieRecipe> {
+    const seasonTags = await this.resolveSeasonTags(data.seasons)
     const payload = {
       name: data.name,
       description: data.description || undefined,
-      prepTime: data.prepTime || undefined,
+      prepTime: this.minutesToIso(data.prepTime),
+      recipeCategory: data.categories,
       recipeIngredient: data.recipeIngredient.map((ing) => ({
         quantity: ing.quantity ? parseFloat(ing.quantity) : undefined,
         unit: ing.unit ? { name: ing.unit } : undefined,
@@ -102,7 +135,7 @@ export class RecipeRepository implements IRecipeRepository {
           id: String(i),
           text: step.text,
         })),
-      tags: [...nonSeasonTags, ...seasonTags],
+      tags: [...data.tags, ...seasonTags],
     }
     return mealieApiClient.patch<MealieRecipe>(`/api/recipes/${slug}`, payload)
   }

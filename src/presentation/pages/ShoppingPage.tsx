@@ -12,7 +12,8 @@ import {
   Pencil,
   X,
   Check,
-  ArrowRight,
+  ArrowUp,
+  Tag,
 } from "lucide-react"
 import { Button } from "../components/ui/button.tsx"
 import { Input } from "../components/ui/input.tsx"
@@ -116,13 +117,17 @@ function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onU
 interface HabituelItemRowProps {
   item: ShoppingItem
   labels: ShoppingLabel[]
+  cartItems: ShoppingItem[]
   onAddToCart: (item: ShoppingItem) => void
   onDelete: (id: string) => void
   onUpdateNote: (item: ShoppingItem, note: string) => void
   onUpdateLabel: (item: ShoppingItem, labelId: string | undefined) => void
 }
 
-function HabituelItemRow({ item, labels, onAddToCart, onDelete, onUpdateNote, onUpdateLabel }: HabituelItemRowProps) {
+function HabituelItemRow({ item, labels, cartItems, onAddToCart, onDelete, onUpdateNote, onUpdateLabel }: HabituelItemRowProps) {
+  const alreadyInCart = cartItems.some(
+    (i) => i.note?.toLowerCase() === item.note?.toLowerCase() && !i.checked,
+  )
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState(item.note ?? "")
   const inputRef = useRef<HTMLInputElement>(null)
@@ -150,6 +155,25 @@ function HabituelItemRow({ item, labels, onAddToCart, onDelete, onUpdateNote, on
 
   return (
     <li className="flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-accent/50 transition-colors group">
+      {/* Add to cart button — always visible, far left */}
+      {!editing && (
+        <button
+          type="button"
+          onClick={() => !alreadyInCart && onAddToCart(item)}
+          aria-label="Ajouter aux prochaines courses"
+          title={alreadyInCart ? "Déjà dans les prochaines courses" : "Ajouter aux prochaines courses"}
+          disabled={alreadyInCart}
+          className={cn(
+            "shrink-0 transition-colors",
+            alreadyInCart
+              ? "text-muted-foreground/30 cursor-default"
+              : "text-primary hover:text-primary/70",
+          )}
+        >
+          <ArrowUp className="h-4 w-4" />
+        </button>
+      )}
+
       {editing ? (
         <div className="flex flex-1 items-center gap-1">
           <Input
@@ -194,15 +218,6 @@ function HabituelItemRow({ item, labels, onAddToCart, onDelete, onUpdateNote, on
           )}
 
           <div className="flex shrink-0 items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-            <button
-              type="button"
-              onClick={() => void onAddToCart(item)}
-              aria-label="Ajouter aux prochaines courses"
-              title="Ajouter aux prochaines courses"
-              className="text-muted-foreground hover:text-primary transition-colors"
-            >
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
             <button
               type="button"
               onClick={handleEdit}
@@ -299,6 +314,79 @@ function GroupedItems({ items, labels, onToggle, onDelete, onUpdateQuantity, onU
   )
 }
 
+// ─── Grouped habituels ────────────────────────────────────────────────────────
+
+interface GroupedHabituelsProps {
+  items: ShoppingItem[]
+  cartItems: ShoppingItem[]
+  labels: ShoppingLabel[]
+  onAddToCart: (item: ShoppingItem) => void
+  onDelete: (id: string) => void
+  onUpdateNote: (item: ShoppingItem, note: string) => void
+  onUpdateLabel: (item: ShoppingItem, labelId: string | undefined) => void
+}
+
+function GroupedHabituels({ items, cartItems, labels, onAddToCart, onDelete, onUpdateNote, onUpdateLabel }: GroupedHabituelsProps) {
+  const groups = new Map<string, { label: string; color?: string; items: ShoppingItem[] }>()
+
+  for (const item of items) {
+    const key = item.label?.id ?? "__none__"
+    const labelName = item.label?.name ?? "Sans catégorie"
+    if (!groups.has(key)) {
+      groups.set(key, { label: labelName, color: item.label?.color, items: [] })
+    }
+    groups.get(key)!.items.push(item)
+  }
+
+  const sorted = [...groups.entries()].sort(([a], [b]) => {
+    if (a === "__none__") return 1
+    if (b === "__none__") return -1
+    return 0
+  })
+
+  if (sorted.length === 0) {
+    return (
+      <p className="py-8 text-center text-sm text-muted-foreground">
+        Aucun article habituel
+      </p>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {sorted.map(([key, group]) => (
+        <div key={key}>
+          <div className="mb-1 flex items-center gap-2 px-3">
+            {group.color && (
+              <span
+                className="h-2.5 w-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: group.color }}
+              />
+            )}
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {group.label}
+            </span>
+          </div>
+          <ul className="divide-y divide-border/40">
+            {group.items.map((item) => (
+              <HabituelItemRow
+                key={item.id}
+                item={item}
+                labels={labels}
+                cartItems={cartItems}
+                onAddToCart={onAddToCart}
+                onDelete={onDelete}
+                onUpdateNote={onUpdateNote}
+                onUpdateLabel={onUpdateLabel}
+              />
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ─── ShoppingPage ──────────────────────────────────────────────────────────────
 
 export function ShoppingPage() {
@@ -371,15 +459,27 @@ export function ShoppingPage() {
             <ShoppingCart className="h-5 w-5 text-primary" />
             <h1 className="text-xl font-bold">Liste de courses</h1>
           </div>
-          <button
-            type="button"
-            onClick={reload}
-            disabled={loading}
-            className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-            aria-label="Rafraîchir"
-          >
-            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={reload}
+              disabled={loading}
+              className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              aria-label="Rafraîchir"
+            >
+              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+            </button>
+            <a
+              href={`${(import.meta.env.VITE_MEALIE_URL as string ?? "").replace(/\/+$/, "")}/group/data/labels`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-foreground/30 hover:text-foreground transition-colors"
+              title="Gérer les catégories"
+            >
+              <Tag className="h-3.5 w-3.5" />
+              Catégories
+            </a>
+          </div>
         </div>
       </div>
 
@@ -521,25 +621,15 @@ export function ShoppingPage() {
             </div>
 
             <div className="p-2">
-              {habituelsItems.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  Aucun article habituel
-                </p>
-              ) : (
-                <ul className="divide-y divide-border/40">
-                  {habituelsItems.map((item) => (
-                    <HabituelItemRow
-                      key={item.id}
-                      item={item}
-                      labels={labels}
-                      onAddToCart={(i) => void addHabituelToCart(i)}
-                      onDelete={(id) => void deleteHabituel(id)}
-                      onUpdateNote={(i, note) => void updateHabituelNote(i, note)}
-                      onUpdateLabel={(i, labelId) => void updateHabituelLabel(i, labelId)}
-                    />
-                  ))}
-                </ul>
-              )}
+              <GroupedHabituels
+                items={habituelsItems}
+                cartItems={items}
+                labels={labels}
+                onAddToCart={(i) => void addHabituelToCart(i)}
+                onDelete={(id) => void deleteHabituel(id)}
+                onUpdateNote={(i, note) => void updateHabituelNote(i, note)}
+                onUpdateLabel={(i, labelId) => void updateHabituelLabel(i, labelId)}
+              />
             </div>
 
             {/* Add habituel */}
