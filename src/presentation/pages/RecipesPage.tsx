@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { useRecipesInfinite } from "../hooks/useRecipesInfinite.ts"
 import { useCategories } from "../hooks/useCategories.ts"
 import { useTags } from "../hooks/useTags.ts"
@@ -8,11 +8,25 @@ import { RecipeFormDialog } from "../components/RecipeFormDialog.tsx"
 import { Badge } from "../components/ui/badge.tsx"
 import { Button } from "../components/ui/button.tsx"
 import { Input } from "../components/ui/input.tsx"
-import { Loader2, AlertCircle, UtensilsCrossed, Search, X, RotateCcw, Plus, PenLine } from "lucide-react"
+import { Loader2, AlertCircle, UtensilsCrossed, Search, X, RotateCcw, Plus, PenLine, LayoutGrid, Table2, RefreshCw } from "lucide-react"
 import type { MealieRecipe, Season } from "../../shared/types/mealie.ts"
 import { SEASONS, SEASON_LABELS } from "../../shared/types/mealie.ts"
 import { getCurrentSeason, getRecipeSeasonsFromTags, isSeasonTag } from "../../shared/utils/season.ts"
 import { getRecipesUseCase, getRecipeUseCase } from "../../infrastructure/container.ts"
+
+type ViewMode = "cards" | "table"
+
+function formatDuration(iso?: string): string {
+  if (!iso) return "—"
+  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/)
+  if (!match) return "—"
+  const h = parseInt(match[1] ?? "0")
+  const m = parseInt(match[2] ?? "0")
+  if (h > 0 && m > 0) return `${h}h${m}`
+  if (h > 0) return `${h}h`
+  if (m > 0) return `${m} min`
+  return "—"
+}
 
 const TIME_OPTIONS = [
   { label: "< 30 min", value: 30 },
@@ -30,6 +44,9 @@ export function RecipesPage() {
   const [noIngredientRecipes, setNoIngredientRecipes] = useState<MealieRecipe[] | null>(null)
   const [noIngredientsLoading, setNoIngredientsLoading] = useState(false)
   const [newRecipeDialogOpen, setNewRecipeDialogOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>("cards")
+  const [detailedRecipes, setDetailedRecipes] = useState<Map<string, MealieRecipe>>(new Map())
+  const [detailsLoading, setDetailsLoading] = useState(false)
   const navigate = useNavigate()
 
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -128,6 +145,20 @@ export function RecipesPage() {
     }
   }, [noIngredients, loadRecipesWithoutIngredients])
 
+  const loadDetails = useCallback(async (recipesToLoad: MealieRecipe[]) => {
+    setDetailsLoading(true)
+    try {
+      const details = await Promise.all(recipesToLoad.map((r) => getRecipeUseCase.execute(r.slug)))
+      setDetailedRecipes((prev) => {
+        const next = new Map(prev)
+        details.forEach((d) => next.set(d.slug, d))
+        return next
+      })
+    } finally {
+      setDetailsLoading(false)
+    }
+  }, [])
+
   // Client-side season filter (only applies when noIngredients is off)
   const filteredRecipes = noIngredients
     ? (noIngredientRecipes ?? [])
@@ -158,6 +189,25 @@ export function RecipesPage() {
                 Réinitialiser
               </button>
             )}
+            {/* View toggle */}
+            <div className="flex rounded-md border border-input overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setViewMode("cards")}
+                className={`flex items-center px-2 py-1.5 text-sm transition-colors ${viewMode === "cards" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-accent"}`}
+                aria-label="Vue cartes"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("table")}
+                className={`flex items-center px-2 py-1.5 text-sm transition-colors ${viewMode === "table" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-accent"}`}
+                aria-label="Vue tableau"
+              >
+                <Table2 className="h-4 w-4" />
+              </button>
+            </div>
             <a
               href={`${(import.meta.env.VITE_MEALIE_URL as string ?? "").replace(/\/+$/, "")}/g/home/r/create/url`}
               target="_blank"
@@ -310,12 +360,87 @@ export function RecipesPage() {
         </div>
       )}
 
-      {/* Recipe grid */}
-      {filteredRecipes.length > 0 && (
+      {/* Recipe cards */}
+      {viewMode === "cards" && filteredRecipes.length > 0 && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {filteredRecipes.map((recipe) => (
             <RecipeCard key={recipe.id} recipe={recipe} />
           ))}
+        </div>
+      )}
+
+      {/* Recipe table */}
+      {viewMode === "table" && filteredRecipes.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">{filteredRecipes.length} recette{filteredRecipes.length > 1 ? "s" : ""}</p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => loadDetails(filteredRecipes)}
+              disabled={detailsLoading}
+              className="gap-1.5"
+            >
+              {detailsLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              Charger les détails
+            </Button>
+          </div>
+          <div className="rounded-md border overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-3 py-2 text-left font-medium">Nom</th>
+                  <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Prép.</th>
+                  <th className="px-3 py-2 text-left font-medium whitespace-nowrap">Cuisson</th>
+                  <th className="px-3 py-2 text-left font-medium">Ingrédients</th>
+                  <th className="px-3 py-2 text-left font-medium">Instructions</th>
+                  <th className="px-3 py-2 text-left font-medium">Tags</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRecipes.map((recipe) => {
+                  const detail = detailedRecipes.get(recipe.slug)
+                  const ingredients = detail?.recipeIngredient
+                  const instructions = detail?.recipeInstructions
+                  const nonSeasonTags = (recipe.tags ?? []).filter((t) => !isSeasonTag(t))
+                  return (
+                    <tr key={recipe.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="px-3 py-2 font-medium">
+                        <Link to={`/recipes/${recipe.slug}`} className="hover:underline text-foreground">
+                          {recipe.name}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{formatDuration(recipe.prepTime)}</td>
+                      <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{formatDuration(recipe.cookTime)}</td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {ingredients
+                          ? ingredients.length > 0
+                            ? <span title={ingredients.map((i) => i.note ?? i.food?.name ?? "").filter(Boolean).join(", ")}>{ingredients.length} ingrédient{ingredients.length > 1 ? "s" : ""}</span>
+                            : <span className="italic">Aucun</span>
+                          : <span className="text-muted-foreground/50">—</span>
+                        }
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {instructions
+                          ? instructions.length > 0
+                            ? `${instructions.length} étape${instructions.length > 1 ? "s" : ""}`
+                            : <span className="italic">Aucune</span>
+                          : <span className="text-muted-foreground/50">—</span>
+                        }
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex flex-wrap gap-1">
+                          {nonSeasonTags.map((t) => (
+                            <Badge key={t.id} variant="secondary" className="text-xs py-0">{t.name}</Badge>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
