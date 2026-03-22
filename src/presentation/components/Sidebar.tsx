@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom"
-import { UtensilsCrossed, CalendarDays, BarChart2, ShoppingCart, ChevronLeft, ChevronRight, Sun, Moon, ExternalLink } from "lucide-react"
+import { UtensilsCrossed, CalendarDays, BarChart2, ShoppingCart, ChevronLeft, ChevronRight, Sun, Moon, ExternalLink, Settings } from "lucide-react"
 import { cn } from "../../lib/utils.ts"
 import { useTheme } from "../hooks/useTheme.ts"
 
@@ -108,8 +108,26 @@ export function Sidebar({ collapsed, onToggleCollapsed, onClose, variant = "desk
         ))}
       </nav>
 
-      {/* Footer: Mealie link + theme toggle */}
+      {/* Footer: Settings + Mealie link + theme toggle */}
       <div className={cn("border-t px-2 py-3 space-y-1", isCollapsed && "flex flex-col items-center space-y-1")}>
+        <NavLink
+          to="/settings"
+          onClick={isMobile ? onClose : undefined}
+          className={({ isActive }) =>
+            cn(
+              "flex items-center rounded-lg text-sm font-medium transition-colors",
+              isCollapsed ? "p-2.5" : "w-full gap-3 px-3 py-2",
+              isActive
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+            )
+          }
+          title={isCollapsed ? "Paramètres" : undefined}
+        >
+          <Settings className="h-4 w-4 shrink-0" />
+          {!isCollapsed && <span>Paramètres</span>}
+        </NavLink>
+
         <a
           href={import.meta.env.VITE_MEALIE_URL}
           target="_blank"

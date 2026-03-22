@@ -5,6 +5,7 @@ import { RecipeDetailPage } from "./presentation/pages/RecipeDetailPage.tsx"
 import { PlanningPage } from "./presentation/pages/PlanningPage.tsx"
 import { StatsPage } from "./presentation/pages/StatsPage.tsx"
 import { ShoppingPage } from "./presentation/pages/ShoppingPage.tsx"
+import { SettingsPage } from "./presentation/pages/SettingsPage.tsx"
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="planning" element={<PlanningPage />} />
         <Route path="stats" element={<StatsPage />} />
         <Route path="shopping" element={<ShoppingPage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>
   )
