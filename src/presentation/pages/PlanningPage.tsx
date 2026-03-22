@@ -6,6 +6,7 @@ import { useAddRecipesToCart } from "../hooks/useAddRecipesToCart.ts"
 import { RecipePickerDialog } from "../components/RecipePickerDialog.tsx"
 import { RecipeDetailModal } from "../components/RecipeDetailModal.tsx"
 import type { MealieMealPlan, MealieRecipe } from "../../shared/types/mealie.ts"
+import { formatDate } from "../../shared/utils/date.ts"
 
 const DAY_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"]
 
@@ -286,7 +287,7 @@ export function PlanningPage() {
   const days = Array.from({ length: nbDays }, (_, i) => addDays(centerDate, i - 1))
 
   const handleAddToCart = async () => {
-    const visibleDateStrs = new Set(days.map((d) => d.toISOString().slice(0, 10)))
+    const visibleDateStrs = new Set(days.map((d) => formatDate(d)))
     const recipeIds = mealPlans
       .filter((m) => visibleDateStrs.has(m.date) && m.recipe?.id)
       .map((m) => m.recipe!.id)
