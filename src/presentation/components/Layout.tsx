@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom"
 import { Menu } from "lucide-react"
 import { Sidebar } from "./Sidebar.tsx"
+import { AssistantDrawer } from "./AssistantDrawer.tsx"
 import { useSidebar } from "../hooks/useSidebar.ts"
 import { cn } from "../../lib/utils.ts"
 
@@ -69,6 +70,8 @@ export function Layout() {
 
         <Outlet />
       </main>
+
+      <AssistantDrawer />
     </div>
   )
 }
