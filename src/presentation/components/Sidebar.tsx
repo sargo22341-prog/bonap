@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom"
-import { UtensilsCrossed, CalendarDays, BarChart2, ShoppingCart, ChevronLeft, ChevronRight, Sun, Moon, ExternalLink, Settings } from "lucide-react"
+import { UtensilsCrossed, CalendarDays, BarChart2, ShoppingCart, ChevronLeft, ChevronRight, Sun, Moon, ExternalLink, Settings, Sparkles } from "lucide-react"
 import { cn } from "../../lib/utils.ts"
 import { useTheme } from "../hooks/useTheme.ts"
 
@@ -7,6 +7,7 @@ const navItems = [
   { to: "/planning", label: "Planning", icon: CalendarDays },
   { to: "/shopping", label: "Courses", icon: ShoppingCart },
   { to: "/recipes", label: "Recettes", icon: UtensilsCrossed },
+  { to: "/suggestions", label: "Suggestions", icon: Sparkles },
   { to: "/stats", label: "Statistiques", icon: BarChart2 },
 ]
 
