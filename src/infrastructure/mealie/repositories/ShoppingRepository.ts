@@ -12,9 +12,9 @@ import { mealieApiClient } from "../api/index.ts"
 const DEFAULT_LIST_NAME = "Bonap"
 const HABITUELS_LIST_NAME = "Habituels"
 
-function mapItem(raw: MealieShoppingItem): ShoppingItem {
+function mapItem(raw: MealieShoppingItem, recipeById: Map<string, string> = new Map()): ShoppingItem {
   const recipeNames = (raw.recipeReferences ?? [])
-    .map((r) => r.recipe?.name)
+    .map((r) => r.recipe?.name ?? recipeById.get(r.recipeId))
     .filter((n): n is string => Boolean(n))
   return {
     id: raw.id,
@@ -63,16 +63,18 @@ export class ShoppingRepository implements IShoppingRepository {
   }
 
   async getItems(listId: string): Promise<{ items: ShoppingItem[]; labels: ShoppingLabel[] }> {
-    const raw = await mealieApiClient.get<MealieShoppingList>(
-      `/api/households/shopping/lists/${listId}`,
-    )
+    const [raw, recipesRaw] = await Promise.all([
+      mealieApiClient.get<MealieShoppingList>(`/api/households/shopping/lists/${listId}`),
+      mealieApiClient.get<{ items: Array<{ id: string; name: string }> }>("/api/recipes?page=1&perPage=-1").catch(() => ({ items: [] })),
+    ])
+    const recipeById = new Map(recipesRaw.items.map((r) => [r.id, r.name]))
     const labels: ShoppingLabel[] = (raw.labelSettings ?? []).map((s) => ({
       id: s.label.id,
       name: s.label.name,
       color: s.label.color,
     }))
     return {
-      items: (raw.listItems ?? []).filter((i) => i.shoppingListId === listId).map(mapItem),
+      items: (raw.listItems ?? []).filter((i) => i.shoppingListId === listId).map((i) => mapItem(i, recipeById)),
       labels,
     }
   }
