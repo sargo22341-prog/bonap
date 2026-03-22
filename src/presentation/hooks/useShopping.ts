@@ -4,12 +4,13 @@ import type { ClearMode } from "../../application/shopping/usecases/ClearListUse
 import {
   getShoppingItemsUseCase,
   addItemUseCase,
-  addRecipesToListUseCase,
+  getRecipesByIdsUseCase,
   toggleItemUseCase,
   deleteItemUseCase,
   clearListUseCase,
   shoppingRepository,
 } from "../../infrastructure/container.ts"
+import { extractFoodKey } from "../../shared/utils/food.ts"
 
 export function useShopping() {
   const [list, setList] = useState<ShoppingList | null>(null)
@@ -47,13 +48,17 @@ export function useShopping() {
     void loadItems()
   }, [loadItems])
 
+  const findExisting = useCallback((currentItems: ShoppingItem[], key: string) => {
+    return currentItems.find((i) => {
+      const iKey = extractFoodKey(i.foodName ?? i.note ?? "")
+      return iKey && iKey === key
+    })
+  }, [])
+
   const addItem = useCallback(async (note: string, quantity?: number, labelId?: string) => {
     if (!list) return
-    const normalize = (s?: string) => s?.trim().toLowerCase()
-    const existing = items.find((i) => {
-      const n = normalize(note)
-      return (n && normalize(i.foodName) === n) || (n && normalize(i.note) === n)
-    })
+    const key = extractFoodKey(note)
+    const existing = key ? findExisting(items, key) : undefined
     if (existing) {
       await shoppingRepository.updateItem(list.id, {
         id: existing.id,
@@ -73,7 +78,7 @@ export function useShopping() {
     setList(result.list)
     setItems(result.items)
     setLabels(result.labels)
-  }, [list, items])
+  }, [list, items, findExisting])
 
   const updateItemQuantity = useCallback(async (item: ShoppingItem, quantity: number) => {
     if (!list) return
@@ -123,8 +128,56 @@ export function useShopping() {
     setAddingRecipes(true)
     setError(null)
     try {
-      await addRecipesToListUseCase.execute(list.id, recipeIds)
-      // Reload items after adding (Mealie handles deduplication)
+      const recipes = await getRecipesByIdsUseCase.execute(recipeIds)
+      // Build a mutable snapshot of current items to track in-flight additions
+      let currentItems = [...items]
+      for (const recipe of recipes) {
+        const ingredients = recipe.recipeIngredient ?? []
+        for (const ing of ingredients) {
+          const rawNote = ing.note ?? [
+            ing.quantity != null ? String(ing.quantity) : "",
+            ing.unit?.name ?? "",
+            ing.food?.name ?? "",
+          ].filter(Boolean).join(" ")
+          if (!rawNote.trim()) continue
+          const key = extractFoodKey(rawNote)
+          const existing = key ? findExisting(currentItems, key) : undefined
+          if (existing) {
+            const updated = await shoppingRepository.updateItem(list.id, {
+              id: existing.id,
+              shoppingListId: list.id,
+              checked: existing.checked,
+              position: existing.position,
+              isFood: existing.isFood,
+              note: existing.note,
+              quantity: (existing.quantity ?? 1) + 1,
+              labelId: existing.label?.id,
+              display: existing.display,
+            })
+            currentItems = currentItems.map((i) => (i.id === existing.id ? updated : i))
+          } else {
+            // Add with the clean food name (stripped of quantities/units) as note
+            const cleanNote = key || rawNote.trim()
+            await shoppingRepository.addItem(list.id, {
+              shoppingListId: list.id,
+              note: cleanNote,
+              isFood: false,
+              quantity: 1,
+            })
+            // Optimistically add to snapshot to catch duplicates within the loop
+            currentItems = [...currentItems, {
+              id: `tmp-${Date.now()}-${Math.random()}`,
+              shoppingListId: list.id,
+              checked: false,
+              position: 0,
+              isFood: false,
+              note: cleanNote,
+              quantity: 1,
+              source: "mealie",
+            }]
+          }
+        }
+      }
       const result = await getShoppingItemsUseCase.execute()
       setList(result.list)
       setItems(result.items)
@@ -134,7 +187,7 @@ export function useShopping() {
     } finally {
       setAddingRecipes(false)
     }
-  }, [list])
+  }, [list, items, findExisting])
 
   const toggleItem = useCallback(async (item: ShoppingItem) => {
     if (!list) return
@@ -251,13 +304,8 @@ export function useShopping() {
 
   const addHabituelToCart = useCallback(async (item: ShoppingItem) => {
     if (!list) return
-    const normalize = (s?: string) => s?.trim().toLowerCase()
-    const existing = items.find((i) => {
-      const searchNote = normalize(item.note)
-      const searchFood = normalize(item.foodName)
-      return (searchFood && normalize(i.foodName) === searchFood)
-        || (searchNote && normalize(i.note) === searchNote)
-    })
+    const key = extractFoodKey(item.foodName ?? item.note ?? "")
+    const existing = key ? findExisting(items, key) : undefined
     if (existing) {
       await shoppingRepository.updateItem(list.id, {
         id: existing.id,
@@ -283,7 +331,7 @@ export function useShopping() {
     setList(result.list)
     setItems(result.items)
     setLabels(result.labels)
-  }, [list, items])
+  }, [list, items, findExisting])
 
   const deleteAllHabituels = useCallback(async () => {
     if (!habituelsListId) return
