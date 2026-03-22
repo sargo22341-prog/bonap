@@ -49,12 +49,31 @@ export function useShopping() {
 
   const addItem = useCallback(async (note: string, quantity?: number, labelId?: string) => {
     if (!list) return
-    await addItemUseCase.execute(list.id, note, quantity, labelId)
+    const normalize = (s?: string) => s?.trim().toLowerCase()
+    const existing = items.find((i) => {
+      const n = normalize(note)
+      return (n && normalize(i.foodName) === n) || (n && normalize(i.note) === n)
+    })
+    if (existing) {
+      await shoppingRepository.updateItem(list.id, {
+        id: existing.id,
+        shoppingListId: list.id,
+        checked: existing.checked,
+        position: existing.position,
+        isFood: existing.isFood,
+        note: existing.note,
+        quantity: (existing.quantity ?? 1) + (quantity ?? 1),
+        labelId: existing.label?.id,
+        display: existing.display,
+      })
+    } else {
+      await addItemUseCase.execute(list.id, note, quantity, labelId)
+    }
     const result = await getShoppingItemsUseCase.execute()
     setList(result.list)
     setItems(result.items)
     setLabels(result.labels)
-  }, [list])
+  }, [list, items])
 
   const updateItemQuantity = useCallback(async (item: ShoppingItem, quantity: number) => {
     if (!list) return
@@ -232,18 +251,39 @@ export function useShopping() {
 
   const addHabituelToCart = useCallback(async (item: ShoppingItem) => {
     if (!list) return
-    await shoppingRepository.addItem(list.id, {
-      shoppingListId: list.id,
-      note: item.note,
-      isFood: item.isFood,
-      quantity: item.quantity ?? 1,
-      labelId: item.label?.id,
+    const normalize = (s?: string) => s?.trim().toLowerCase()
+    const existing = items.find((i) => {
+      const searchNote = normalize(item.note)
+      const searchFood = normalize(item.foodName)
+      return (searchFood && normalize(i.foodName) === searchFood)
+        || (searchNote && normalize(i.note) === searchNote)
     })
+    if (existing) {
+      await shoppingRepository.updateItem(list.id, {
+        id: existing.id,
+        shoppingListId: list.id,
+        checked: existing.checked,
+        position: existing.position,
+        isFood: existing.isFood,
+        note: existing.note,
+        quantity: (existing.quantity ?? 1) + (item.quantity ?? 1),
+        labelId: existing.label?.id,
+        display: existing.display,
+      })
+    } else {
+      await shoppingRepository.addItem(list.id, {
+        shoppingListId: list.id,
+        note: item.note,
+        isFood: item.isFood,
+        quantity: item.quantity ?? 1,
+        labelId: item.label?.id,
+      })
+    }
     const result = await getShoppingItemsUseCase.execute()
     setList(result.list)
     setItems(result.items)
     setLabels(result.labels)
-  }, [list])
+  }, [list, items])
 
   const deleteAllHabituels = useCallback(async () => {
     if (!habituelsListId) return
