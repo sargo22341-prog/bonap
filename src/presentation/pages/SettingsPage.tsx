@@ -1,15 +1,25 @@
 import { useState, useEffect } from "react"
-import { Eye, EyeOff, CheckCircle2, XCircle, Loader2 } from "lucide-react"
+import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, Check, Sun, Moon, Monitor } from "lucide-react"
 import { Button } from "../components/ui/button.tsx"
 import { Input } from "../components/ui/input.tsx"
 import { Label } from "../components/ui/label.tsx"
 import { llmConfigService } from "../../infrastructure/llm/LLMConfigService.ts"
 import type { LLMConfig, LLMProvider } from "../../shared/types/llm.ts"
 import { LLM_PROVIDERS } from "../../shared/types/llm.ts"
+import { useTheme } from "../hooks/useTheme.ts"
+import { ACCENT_COLORS } from "../../infrastructure/theme/ThemeService.ts"
+import type { Theme } from "../../infrastructure/theme/ThemeService.ts"
 
 type TestStatus = { state: "idle" } | { state: "loading" } | { state: "ok"; message: string } | { state: "error"; message: string }
 
+const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
+  { value: "light", label: "Clair", icon: Sun },
+  { value: "dark", label: "Sombre", icon: Moon },
+  { value: "system", label: "Système", icon: Monitor },
+]
+
 export function SettingsPage() {
+  const { theme, setTheme, accentColor, setAccentColor } = useTheme()
   const [config, setConfig] = useState<LLMConfig>(() => llmConfigService.load())
   const [showKey, setShowKey] = useState(false)
   const [testStatus, setTestStatus] = useState<TestStatus>({ state: "idle" })
@@ -48,6 +58,59 @@ export function SettingsPage() {
         <h1 className="text-2xl font-bold">Paramètres</h1>
         <p className="mt-1 text-sm text-muted-foreground">Configuration du fournisseur IA et des connexions.</p>
       </div>
+
+      {/* Apparence Section */}
+      <section className="space-y-6 rounded-lg border p-6">
+        <div>
+          <h2 className="text-base font-semibold">Apparence</h2>
+          <p className="text-sm text-muted-foreground">Personnalisez l'aspect visuel de l'application.</p>
+        </div>
+
+        {/* Sélecteur de thème */}
+        <div className="space-y-2">
+          <Label>Thème</Label>
+          <div className="flex gap-2">
+            {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setTheme(value)}
+                className={`flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors ${
+                  theme === value
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-background text-foreground hover:bg-accent"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Sélecteur de couleur principale */}
+        <div className="space-y-2">
+          <Label>Couleur principale</Label>
+          <div className="flex flex-wrap gap-3">
+            {ACCENT_COLORS.map((color) => (
+              <button
+                key={color.id}
+                type="button"
+                onClick={() => setAccentColor(color)}
+                title={color.name}
+                aria-label={color.name}
+                className="relative h-8 w-8 rounded-full transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                style={{ backgroundColor: `oklch(${color.oklch})` }}
+              >
+                {accentColor.id === color.id && (
+                  <Check className="absolute inset-0 m-auto h-4 w-4 text-white drop-shadow" />
+                )}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">Couleur sélectionnée : {accentColor.name}</p>
+        </div>
+      </section>
 
       {/* LLM Section */}
       <section className="space-y-6 rounded-lg border p-6">
