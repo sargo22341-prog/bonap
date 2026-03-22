@@ -123,7 +123,7 @@ async function streamAnthropic(
   tools: Record<string, AssistantTool>,
   onEvent: (event: StreamEvent) => void,
 ): Promise<void> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("/anthropic/v1/messages", {
     method: "POST",
     headers: {
       "x-api-key": config.apiKey,
@@ -283,7 +283,7 @@ async function chatFallback(
   let text = ""
 
   if (config.provider === "openai") {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    const res = await fetch("/openai/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${config.apiKey}`, "content-type": "application/json" },
       body: JSON.stringify({ model: config.model, messages }),
@@ -294,7 +294,7 @@ async function chatFallback(
   } else if (config.provider === "google") {
     const contents = messages.filter((m) => m.role === "user").map((m) => ({ parts: [{ text: m.content }] }))
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent?key=${config.apiKey}`,
+      `/google-ai/v1beta/models/${config.model}:generateContent?key=${config.apiKey}`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },

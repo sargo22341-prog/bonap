@@ -45,7 +45,7 @@ export class LLMConfigService {
 }
 
 async function testAnthropic(apiKey: string, model: string): Promise<{ ok: boolean; message: string }> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("/anthropic/v1/messages", {
     method: "POST",
     headers: {
       "x-api-key": apiKey,
@@ -64,7 +64,7 @@ async function testAnthropic(apiKey: string, model: string): Promise<{ ok: boole
 }
 
 async function testOpenAI(apiKey: string, model: string): Promise<{ ok: boolean; message: string }> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const res = await fetch("/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -83,7 +83,7 @@ async function testOpenAI(apiKey: string, model: string): Promise<{ ok: boolean;
 
 async function testGoogle(apiKey: string, model: string): Promise<{ ok: boolean; message: string }> {
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    `/google-ai/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
