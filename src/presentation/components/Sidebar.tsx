@@ -1,7 +1,6 @@
 import { NavLink } from "react-router-dom"
-import { UtensilsCrossed, CalendarDays, BarChart2, ShoppingCart, ChevronLeft, ChevronRight, Sun, Moon, ExternalLink, Settings, Sparkles } from "lucide-react"
+import { UtensilsCrossed, CalendarDays, BarChart2, ShoppingCart, ChevronLeft, ChevronRight, ExternalLink, Settings, Sparkles } from "lucide-react"
 import { cn } from "../../lib/utils.ts"
-import { useTheme } from "../hooks/useTheme.ts"
 
 const navItems = [
   { to: "/planning", label: "Planning", icon: CalendarDays },
@@ -20,7 +19,6 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggleCollapsed, onClose, variant = "desktop" }: SidebarProps) {
-  const { resolvedTheme, toggleTheme } = useTheme()
   const isMobile = variant === "mobile"
   // On mobile the drawer is always in "expanded" mode
   const isCollapsed = isMobile ? false : collapsed
@@ -28,9 +26,9 @@ export function Sidebar({ collapsed, onToggleCollapsed, onClose, variant = "desk
   return (
     <aside
       className={cn(
-        "flex flex-col border-r bg-card transition-all duration-300 ease-in-out",
+        "flex flex-col border-r bg-card/80 backdrop-blur-sm transition-all duration-300 ease-in-out",
         // Desktop: fixed position + variable width
-        !isMobile && "fixed inset-y-0 left-0 z-30 shadow-sm",
+        !isMobile && "fixed inset-y-0 left-0 z-30 shadow-md",
         !isMobile && (isCollapsed ? "w-16" : "w-60"),
         // Mobile: full height, fixed width (parent handles positioning)
         isMobile && "w-72 h-full",
@@ -44,12 +42,19 @@ export function Sidebar({ collapsed, onToggleCollapsed, onClose, variant = "desk
         )}
       >
         {!isCollapsed && (
-          <span className="bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-lg font-extrabold tracking-tight text-transparent">
-            Bonap
-          </span>
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary shadow-sm">
+              <UtensilsCrossed className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <span className="text-lg font-extrabold tracking-tight text-foreground">
+              Bon<span className="text-primary">ap</span>
+            </span>
+          </div>
         )}
         {isCollapsed && (
-          <UtensilsCrossed className="h-5 w-5 text-primary" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-sm">
+            <UtensilsCrossed className="h-4 w-4 text-primary-foreground" />
+          </div>
         )}
 
         {/* Close drawer button (mobile) */}
@@ -85,7 +90,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, onClose, variant = "desk
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
+      <nav className="flex-1 space-y-0.5 px-2 py-4 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -94,33 +99,40 @@ export function Sidebar({ collapsed, onToggleCollapsed, onClose, variant = "desk
             className={({ isActive }) =>
               cn(
                 "flex items-center rounded-lg transition-all duration-150",
-                isCollapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2",
+                isCollapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
                 "text-sm font-medium",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  ? "bg-primary/12 text-primary font-semibold"
+                  : "text-muted-foreground hover:bg-accent/70 hover:text-foreground",
               )
             }
             title={isCollapsed ? item.label : undefined}
           >
-            <item.icon className="h-4 w-4 shrink-0" />
-            {!isCollapsed && <span>{item.label}</span>}
+            {({ isActive }) => (
+              <>
+                <item.icon className={cn("h-4 w-4 shrink-0", isActive && "text-primary")} />
+                {!isCollapsed && <span>{item.label}</span>}
+                {!isCollapsed && isActive && (
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                )}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      {/* Footer: Settings + Mealie link + theme toggle */}
-      <div className={cn("border-t px-2 py-3 space-y-1", isCollapsed && "flex flex-col items-center space-y-1")}>
+      {/* Footer: Settings + Mealie link */}
+      <div className={cn("border-t px-2 py-3 space-y-0.5", isCollapsed && "flex flex-col items-center space-y-0.5")}>
         <NavLink
           to="/settings"
           onClick={isMobile ? onClose : undefined}
           className={({ isActive }) =>
             cn(
               "flex items-center rounded-lg text-sm font-medium transition-colors",
-              isCollapsed ? "p-2.5" : "w-full gap-3 px-3 py-2",
+              isCollapsed ? "p-2.5" : "w-full gap-3 px-3 py-2.5",
               isActive
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                ? "bg-primary/12 text-primary font-semibold"
+                : "text-muted-foreground hover:bg-accent/70 hover:text-foreground",
             )
           }
           title={isCollapsed ? "Paramètres" : undefined}
@@ -134,34 +146,14 @@ export function Sidebar({ collapsed, onToggleCollapsed, onClose, variant = "desk
           target="_blank"
           rel="noopener noreferrer"
           className={cn(
-            "flex items-center rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-            isCollapsed ? "p-2.5" : "w-full gap-3 px-3 py-2",
+            "flex items-center rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground",
+            isCollapsed ? "p-2.5" : "w-full gap-3 px-3 py-2.5",
           )}
           title="Ouvrir Mealie"
         >
           <ExternalLink className="h-4 w-4 shrink-0" />
           {!isCollapsed && <span>Mealie</span>}
         </a>
-
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className={cn(
-            "flex items-center rounded-lg text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-            isCollapsed ? "p-2.5" : "w-full gap-3 px-3 py-2",
-          )}
-          aria-label={resolvedTheme === "dark" ? "Passer en mode clair" : "Passer en mode sombre"}
-          title={resolvedTheme === "dark" ? "Mode clair" : "Mode sombre"}
-        >
-          {resolvedTheme === "dark" ? (
-            <Sun className="h-4 w-4 shrink-0" />
-          ) : (
-            <Moon className="h-4 w-4 shrink-0" />
-          )}
-          {!isCollapsed && (
-            <span>{resolvedTheme === "dark" ? "Mode clair" : "Mode sombre"}</span>
-          )}
-        </button>
       </div>
     </aside>
   )
