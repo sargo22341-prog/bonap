@@ -1,4 +1,5 @@
 import { useStats, type StatsPeriod } from "../hooks/useStats.ts"
+import { TrendingUp, Calendar, RefreshCw, Zap } from "lucide-react"
 import { cn } from "../../lib/utils.ts"
 
 const PERIODS: { value: StatsPeriod; label: string }[] = [
@@ -7,22 +8,33 @@ const PERIODS: { value: StatsPeriod; label: string }[] = [
   { value: "12m", label: "12 mois" },
 ]
 
-// ─── Utility components ───────────────────────────────────────────────────────
+// ─── Composants utilitaires ───────────────────────────────────────────────────
 
 function StatCard({
   label,
   value,
   sub,
+  icon: Icon,
+  accent,
 }: {
   label: string
   value: string | number
   sub?: string
+  icon: React.ElementType
+  accent: string
 }) {
   return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 text-3xl font-bold tabular-nums">{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
+    <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm hover:shadow-warm transition-shadow">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">{label}</p>
+          <p className="mt-1.5 font-heading text-4xl font-bold tabular-nums tracking-tight">{value}</p>
+          {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
+        </div>
+        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl", accent)}>
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
     </div>
   )
 }
@@ -44,29 +56,24 @@ function ProportionBar({
   const rightPct = 100 - leftPct
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between text-sm">
-        <span className="font-medium">
-          {leftLabel} <span className="text-muted-foreground">({leftCount})</span>
+      <div className="mb-2 flex items-center justify-between text-sm">
+        <span className="font-semibold">
+          {leftLabel} <span className="font-normal text-muted-foreground">({leftCount})</span>
         </span>
-        <span className="font-medium">
-          {rightLabel} <span className="text-muted-foreground">({rightCount})</span>
+        <span className="font-semibold">
+          {rightLabel} <span className="font-normal text-muted-foreground">({rightCount})</span>
         </span>
       </div>
-      <div className="flex h-4 w-full overflow-hidden rounded-full">
+      <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
         <div
-          className="bg-primary transition-all duration-500"
+          className="bg-primary transition-all duration-700 ease-out"
           style={{ width: `${leftPct}%` }}
           title={`${leftLabel} : ${leftPct}%`}
         />
-        <div
-          className="bg-muted transition-all duration-500"
-          style={{ width: `${rightPct}%` }}
-          title={`${rightLabel} : ${rightPct}%`}
-        />
       </div>
-      <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-        <span>{leftPct}%</span>
-        <span>{rightPct}%</span>
+      <div className="mt-1.5 flex justify-between text-xs text-muted-foreground">
+        <span className="font-medium">{leftPct}%</span>
+        <span className="font-medium">{rightPct}%</span>
       </div>
     </div>
   )
@@ -83,36 +90,45 @@ function RankedList({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border bg-card p-4 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold">{title}</h3>
+      <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+        <h3 className="mb-3 text-sm font-bold">{title}</h3>
         <p className="text-sm text-muted-foreground">Pas encore de données sur cette période.</p>
       </div>
     )
   }
   return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm">
-      <h3 className="mb-3 text-sm font-semibold">{title}</h3>
-      <ol className="space-y-2">
+    <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+      <h3 className="mb-4 text-sm font-bold">{title}</h3>
+      <ol className="space-y-3">
         {items.map((item, i) => {
           const pct = maxCount > 0 ? Math.round((item.count / maxCount) * 100) : 0
           return (
             <li key={item.label} className="flex items-center gap-3">
-              <span className="w-5 shrink-0 text-right text-xs font-bold text-muted-foreground">
+              <span
+                className={cn(
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                  i === 0
+                    ? "bg-primary text-primary-foreground"
+                    : i === 1
+                    ? "bg-secondary text-secondary-foreground"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
                 {i + 1}
               </span>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-0.5">
-                  <span className="truncate text-sm font-medium">{item.label}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="truncate text-sm font-semibold">{item.label}</span>
+                  <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground">
                     {item.count}x
                   </span>
                 </div>
                 {item.sub && (
-                  <p className="truncate text-xs text-muted-foreground">{item.sub}</p>
+                  <p className="truncate text-xs text-muted-foreground mb-1">{item.sub}</p>
                 )}
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-primary transition-all duration-500"
+                    className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -132,27 +148,27 @@ function CategoryBars({
 }) {
   if (stats.length === 0) {
     return (
-      <div className="rounded-xl border bg-card p-4 shadow-sm">
-        <h3 className="mb-3 text-sm font-semibold">Distribution par catégorie</h3>
+      <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+        <h3 className="mb-3 text-sm font-bold">Distribution par catégorie</h3>
         <p className="text-sm text-muted-foreground">Pas encore de données sur cette période.</p>
       </div>
     )
   }
   return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm">
-      <h3 className="mb-3 text-sm font-semibold">Distribution par catégorie</h3>
-      <ul className="space-y-2.5">
+    <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+      <h3 className="mb-4 text-sm font-bold">Distribution par catégorie</h3>
+      <ul className="space-y-3">
         {stats.map((cat) => (
           <li key={cat.name}>
-            <div className="flex items-center justify-between text-sm mb-1">
-              <span className="truncate font-medium">{cat.name}</span>
-              <span className="ml-2 shrink-0 text-xs text-muted-foreground">
+            <div className="flex items-center justify-between text-sm mb-1.5">
+              <span className="truncate font-semibold">{cat.name}</span>
+              <span className="ml-2 shrink-0 text-xs text-muted-foreground font-medium">
                 {cat.count} — {cat.percentage}%
               </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-primary transition-all duration-500"
+                className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
                 style={{ width: `${cat.percentage}%` }}
               />
             </div>
@@ -170,8 +186,8 @@ function NeverPlannedList({
 }) {
   if (recipes.length === 0) {
     return (
-      <div className="rounded-xl border bg-card p-4 shadow-sm">
-        <h3 className="mb-1 text-sm font-semibold">Recettes jamais planifiées</h3>
+      <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+        <h3 className="mb-1 text-sm font-bold">Recettes jamais planifiées</h3>
         <p className="text-sm text-muted-foreground">
           Toutes les recettes du catalogue ont été planifiées sur cette période.
         </p>
@@ -179,8 +195,8 @@ function NeverPlannedList({
     )
   }
   return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm">
-      <h3 className="mb-1 text-sm font-semibold">Recettes jamais planifiées</h3>
+    <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+      <h3 className="mb-1 text-sm font-bold">Recettes jamais planifiées</h3>
       <p className="mb-3 text-xs text-muted-foreground">
         {recipes.length} recette{recipes.length > 1 ? "s" : ""} du catalogue absente
         {recipes.length > 1 ? "s" : ""} du planning
@@ -197,31 +213,31 @@ function NeverPlannedList({
   )
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ─── Page principale ──────────────────────────────────────────────────────────
 
 export function StatsPage() {
   const { period, setPeriod, stats, loading, error } = useStats()
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* En-tête */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Statistiques</h1>
-          <p className="text-sm text-muted-foreground">Analyse de vos habitudes culinaires</p>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">Statistiques</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">Analyse de vos habitudes culinaires</p>
         </div>
 
-        {/* Period selector */}
-        <div className="flex gap-1 rounded-lg border bg-muted p-1">
+        {/* Sélecteur de période */}
+        <div className="flex gap-1 rounded-2xl border border-border bg-secondary/50 p-1">
           {PERIODS.map((p) => (
             <button
               key={p.value}
               type="button"
               onClick={() => setPeriod(p.value)}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+                "rounded-xl px-3 py-1.5 text-sm font-semibold transition-all",
                 period === p.value
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -231,37 +247,40 @@ export function StatsPage() {
         </div>
       </div>
 
-      {/* Error */}
+      {/* Erreur */}
       {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-2xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
           {error}
         </div>
       )}
 
-      {/* Loading skeleton */}
+      {/* Skeleton chargement */}
       {loading && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-24 animate-pulse rounded-xl border bg-muted" />
+              <div key={i} className="h-28 animate-pulse rounded-2xl border bg-muted" />
             ))}
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-48 animate-pulse rounded-xl border bg-muted" />
+              <div key={i} className="h-48 animate-pulse rounded-2xl border bg-muted" />
             ))}
           </div>
         </div>
       )}
 
-      {/* Content */}
+      {/* Contenu */}
       {!loading && stats && (
         <div className="space-y-6">
-          {/* Global empty state */}
+          {/* État vide global */}
           {stats.totalMeals === 0 && (
-            <div className="rounded-xl border bg-card p-8 text-center shadow-sm">
-              <p className="text-lg font-semibold">Aucun repas planifié sur cette période</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-border/60 bg-card p-10 text-center shadow-sm">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
+                <Calendar className="h-7 w-7 text-muted-foreground" />
+              </div>
+              <p className="text-lg font-heading font-bold">Aucun repas planifié sur cette période</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">
                 Commencez à remplir votre planning pour voir apparaître des statistiques.
               </p>
             </div>
@@ -269,33 +288,41 @@ export function StatsPage() {
 
           {stats.totalMeals > 0 && (
             <>
-              {/* Key figures */}
+              {/* Chiffres clés — dashboard cards */}
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <StatCard
                   label="Repas planifiés"
                   value={stats.totalMeals}
+                  icon={Calendar}
+                  accent="bg-primary/10 text-primary"
                 />
                 <StatCard
                   label="Moy. / semaine"
                   value={stats.avgMealsPerWeek}
                   sub="repas par semaine"
+                  icon={TrendingUp}
+                  accent="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                 />
                 <StatCard
                   label="% restes"
                   value={`${stats.leftoverPercentage}%`}
                   sub="même plat consécutif"
+                  icon={RefreshCw}
+                  accent="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                 />
                 <StatCard
                   label="Streak"
                   value={stats.streak}
                   sub={stats.streak === 1 ? "semaine complète" : "semaines complètes"}
+                  icon={Zap}
+                  accent="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400"
                 />
               </div>
 
-              {/* Lunch / dinner breakdown */}
+              {/* Répartition déjeuner / dîner */}
               {(stats.lunchCount > 0 || stats.dinnerCount > 0) && (
-                <div className="rounded-xl border bg-card p-4 shadow-sm">
-                  <h3 className="mb-3 text-sm font-semibold">Répartition déjeuner / dîner</h3>
+                <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+                  <h3 className="mb-4 text-sm font-bold">Répartition déjeuner / dîner</h3>
                   <ProportionBar
                     leftLabel="Déjeuner"
                     rightLabel="Dîner"
@@ -306,7 +333,7 @@ export function StatsPage() {
                 </div>
               )}
 
-              {/* Top recipes + top ingredients */}
+              {/* Top recettes + ingrédients */}
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <RankedList
                   title="Top recettes cuisinées"
@@ -327,10 +354,10 @@ export function StatsPage() {
                 />
               </div>
 
-              {/* Category distribution */}
+              {/* Distribution par catégorie */}
               <CategoryBars stats={stats.categoryStats} />
 
-              {/* Never-planned recipes */}
+              {/* Recettes jamais planifiées */}
               <NeverPlannedList
                 recipes={stats.neverPlannedRecipes.map((r) => ({
                   slug: r.slug,

@@ -1,6 +1,7 @@
 import type {
   MealiePaginatedRecipes,
   MealieRecipe,
+  MealieCategory,
   RecipeFilters,
   RecipeFormData,
   Season,
@@ -16,4 +17,5 @@ export interface IRecipeRepository {
   create(name: string): Promise<string>
   update(slug: string, data: RecipeFormData): Promise<MealieRecipe>
   updateSeasons(slug: string, seasons: Season[]): Promise<MealieRecipe>
+  updateCategories(slug: string, categories: MealieCategory[]): Promise<MealieRecipe>
 }

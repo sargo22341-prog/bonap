@@ -7,6 +7,7 @@ import { RecipePickerDialog } from "../components/RecipePickerDialog.tsx"
 import { RecipeDetailModal } from "../components/RecipeDetailModal.tsx"
 import type { MealieMealPlan, MealieRecipe } from "../../shared/types/mealie.ts"
 import { formatDate } from "../../shared/utils/date.ts"
+import { cn } from "../../lib/utils.ts"
 
 const DAY_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"]
 
@@ -33,7 +34,7 @@ function addDays(date: Date, n: number): Date {
   return d
 }
 
-// ─── MobileMealSection ───────────────────────────────────────────────────────
+// ─── MobileMealSection ────────────────────────────────────────────────────────
 
 interface MobileMealSectionProps {
   meals: MealieMealPlan[]
@@ -51,7 +52,7 @@ function MobileMealSection({ meals, previousMeal, onAdd, onDelete, onLeftovers, 
       {meals.map((meal) => {
         const name = meal.recipe?.name ?? meal.title ?? "Sans titre"
         return (
-          <div key={meal.id} className="flex items-center gap-3 rounded-lg bg-white/80 dark:bg-card shadow-sm overflow-hidden">
+          <div key={meal.id} className="flex items-center gap-3 rounded-xl bg-card border border-border/50 shadow-sm overflow-hidden">
             {meal.recipe && (
               <img
                 src={`/api/media/recipes/${meal.recipe.id}/images/min-original.webp`}
@@ -85,7 +86,7 @@ function MobileMealSection({ meals, previousMeal, onAdd, onDelete, onLeftovers, 
         <button
           type="button"
           onClick={onAdd}
-          className="flex flex-1 items-center justify-center rounded-md border border-dashed border-current/20 py-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+          className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-border/60 py-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
         </button>
@@ -95,7 +96,7 @@ function MobileMealSection({ meals, previousMeal, onAdd, onDelete, onLeftovers, 
             onClick={onLeftovers}
             disabled={!previousMeal}
             title={previousMeal ? `Copier "${previousMeal.recipe?.name ?? "le repas"}"` : "Aucun repas précédent"}
-            className="flex items-center justify-center rounded-md border border-dashed border-current/20 px-3 py-2 text-muted-foreground hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
+            className="flex items-center justify-center rounded-xl border border-dashed border-border/60 px-3 py-2 text-muted-foreground hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
           >
             <Copy className="h-3.5 w-3.5" />
           </button>
@@ -105,7 +106,7 @@ function MobileMealSection({ meals, previousMeal, onAdd, onDelete, onLeftovers, 
   )
 }
 
-// ─── MealCell ────────────────────────────────────────────────────────────────
+// ─── MealCell ─────────────────────────────────────────────────────────────────
 
 interface MealCellProps {
   meals: MealieMealPlan[]
@@ -159,9 +160,11 @@ function MealCell({
 
   return (
     <td
-      className={`border border-border p-2 align-top ${colorClass} ${
-        isDragOver ? "ring-2 ring-inset ring-primary" : ""
-      }`}
+      className={cn(
+        "border border-border p-2 align-top",
+        colorClass,
+        isDragOver && "ring-2 ring-inset ring-primary",
+      )}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -177,15 +180,14 @@ function MealCell({
                 e.dataTransfer.setData("application/json", JSON.stringify(meal))
                 e.dataTransfer.effectAllowed = "move"
               }}
-              className="flex flex-col rounded-md bg-white/80 dark:bg-card shadow-sm cursor-grab active:cursor-grabbing overflow-hidden"
+              className="flex flex-col rounded-xl bg-card border border-border/50 shadow-sm cursor-grab active:cursor-grabbing overflow-hidden hover:border-primary/30 hover:shadow-warm transition-all"
             >
-              {/* Recipe image + name */}
               <div className="flex items-center gap-2 p-2">
                 {meal.recipe && (
                   <img
                     src={`/api/media/recipes/${meal.recipe.id}/images/min-original.webp`}
                     alt={name}
-                    className="h-20 w-20 shrink-0 rounded object-cover"
+                    className="h-20 w-20 shrink-0 rounded-lg object-cover"
                   />
                 )}
                 <span className="line-clamp-4 flex-1 text-sm font-medium leading-tight">
@@ -193,7 +195,6 @@ function MealCell({
                 </span>
               </div>
 
-              {/* Action bar */}
               <div className="flex border-t border-border/40">
                 {meal.recipe?.slug && (
                   <button
@@ -218,12 +219,11 @@ function MealCell({
           )
         })}
 
-        {/* Actions: add and leftovers */}
         <div className="flex gap-1">
           <button
             type="button"
             onClick={onAdd}
-            className="flex flex-1 items-center justify-center rounded-md border border-dashed border-current/20 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+            className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-border/60 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
@@ -238,7 +238,7 @@ function MealCell({
                   ? `Copier "${previousMeal.recipe?.name ?? "le repas"}" du créneau précédent`
                   : "Aucun repas au créneau précédent"
               }
-              className="flex items-center justify-center rounded-md border border-dashed border-current/20 px-2 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30"
+              className="flex items-center justify-center rounded-xl border border-dashed border-border/60 px-2 py-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30"
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
@@ -283,7 +283,7 @@ export function PlanningPage() {
     if (!open) setPreviewSlug(null)
   }
 
-  // Compute displayed days — today in 2nd column (offset -1)
+  // Jours affichés — lundi en 1ère colonne (offset -1 par rapport à centerDate)
   const days = Array.from({ length: nbDays }, (_, i) => addDays(centerDate, i - 1))
 
   const handleAddToCart = async () => {
@@ -291,7 +291,6 @@ export function PlanningPage() {
     const recipeIds = mealPlans
       .filter((m) => visibleDateStrs.has(m.date) && m.recipe?.id)
       .map((m) => m.recipe!.id)
-    // Deduplicate recipe IDs
     const unique = [...new Set(recipeIds)]
     await addRecipesToCart(unique)
   }
@@ -302,7 +301,6 @@ export function PlanningPage() {
   }
 
   const getPreviousMeal = (date: Date, type: string): MealieMealPlan | null => {
-    // Chronologically previous slot: lunch → previous day dinner; dinner → same day lunch
     const [prevDate, prevType] =
       type === "lunch"
         ? [addDays(date, -1), "dinner"]
@@ -334,7 +332,6 @@ export function PlanningPage() {
     targetDate: string,
     targetType: string,
   ) => {
-    // Avoid dropping on the same cell
     if (draggedMeal.date === targetDate && draggedMeal.entryType === targetType) return
     if (!draggedMeal.recipe) return
     await deleteMeal(draggedMeal.id)
@@ -343,19 +340,19 @@ export function PlanningPage() {
 
   return (
     <div className="flex flex-col gap-4 px-4 pb-4 md:px-6 md:pb-6">
-      {/* Sticky header */}
+      {/* ── En-tête sticky ── */}
       <div className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 pb-3 pt-4 backdrop-blur md:-mx-6 md:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-bold">Planning</h1>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">Planning</h1>
 
-          <div className="flex items-center gap-2">
-            {/* Add to cart button */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Ajouter au panier */}
             <Button
               variant="outline"
               size="sm"
               onClick={() => void handleAddToCart()}
               disabled={addingToCart}
-              className="gap-1.5"
+              className="gap-1.5 rounded-xl"
             >
               {addingToCart ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -369,37 +366,38 @@ export function PlanningPage() {
               </span>
             </Button>
 
-            {/* Day count selector */}
-            <div className="flex items-center rounded-md border border-border overflow-hidden">
+            {/* Sélecteur nombre de jours */}
+            <div className="flex items-center rounded-xl border border-border overflow-hidden">
               {([3, 5, 7] as const).map((n) => (
                 <button
                   key={n}
                   type="button"
                   onClick={() => setNbDays(n)}
-                  className={`px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={cn(
+                    "px-3 py-1.5 text-sm font-semibold transition-colors",
                     nbDays === n
                       ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-secondary"
-                  }`}
+                      : "text-muted-foreground hover:bg-secondary",
+                  )}
                 >
                   {n}j
                 </button>
               ))}
             </div>
 
-            <Button variant="outline" size="icon" onClick={goToPrevPeriod}>
+            <Button variant="outline" size="icon" onClick={goToPrevPeriod} className="rounded-xl">
               <ChevronsLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={goToPrevDay}>
+            <Button variant="outline" size="icon" onClick={goToPrevDay} className="rounded-xl">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={goToToday}>
+            <Button variant="outline" size="sm" onClick={goToToday} className="rounded-xl px-3">
               Aujourd'hui
             </Button>
-            <Button variant="outline" size="icon" onClick={goToNextDay}>
+            <Button variant="outline" size="icon" onClick={goToNextDay} className="rounded-xl">
               <ChevronRight className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={goToNextPeriod}>
+            <Button variant="outline" size="icon" onClick={goToNextPeriod} className="rounded-xl">
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>
@@ -416,43 +414,37 @@ export function PlanningPage() {
         </div>
       )}
 
-      {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive">
-          <AlertCircle className="h-5 w-5" />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {cartError && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive">
-          <AlertCircle className="h-5 w-5" />
-          <span>Panier : {cartError}</span>
+      {(error || cartError) && (
+        <div className="flex items-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-destructive">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          <span>{error ?? `Panier : ${cartError}`}</span>
         </div>
       )}
 
       {!loading && !error && (
         <>
-          {/* ── Mobile view: vertical day cards ── */}
+          {/* ── Vue mobile : cartes verticales ── */}
           <div className="flex flex-col gap-3 md:hidden">
             {days.slice(1).map((date) => {
               const isToday = new Date().toDateString() === date.toDateString()
               const dayLabel = DAY_LABELS[date.getDay()]
               return (
-                <div key={date.toISOString()} className="rounded-xl border border-border overflow-hidden shadow-sm">
-                  {/* Day header */}
-                  <div className={`px-4 py-2 text-sm font-semibold ${isToday ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"}`}>
+                <div key={date.toISOString()} className="rounded-2xl border border-border/60 overflow-hidden shadow-sm">
+                  <div className={cn(
+                    "px-4 py-2 text-sm font-semibold",
+                    isToday ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground",
+                  )}>
                     <span className="uppercase tracking-wide opacity-70 text-xs mr-2">{dayLabel}</span>
                     {formatDayDate(date)}
                   </div>
-                  {/* Meal slots */}
                   {MEAL_TYPES.map(({ key, label, color }) => {
                     const dateStr = date.toISOString().slice(0, 10)
                     const meals = getMeals(date, key)
                     const prevMeal = getPreviousMeal(date, key)
                     return (
-                      <div key={key} className={`${color} border-t border-border`}>
+                      <div key={key} className={cn(color, "border-t border-border")}>
                         <div className="px-3 pt-2 pb-1">
-                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+                          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70">{label}</span>
                         </div>
                         <MobileMealSection
                           meals={meals}
@@ -470,28 +462,29 @@ export function PlanningPage() {
             })}
           </div>
 
-          {/* ── Desktop view: table ── */}
-          <div className="hidden md:block overflow-x-auto rounded-xl border border-border shadow-sm">
+          {/* ── Vue desktop : tableau ── */}
+          <div className="hidden md:block overflow-x-auto rounded-2xl border border-border/60 shadow-sm">
             <table className="w-full border-collapse text-sm table-fixed">
               <thead>
                 <tr>
-                  <th className="w-20 border border-border bg-secondary px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground" />
+                  <th className="w-20 border border-border bg-secondary/70 px-3 py-2 text-left text-xs font-bold uppercase tracking-widest text-muted-foreground" />
                   {days.map((date) => {
                     const isToday = new Date().toDateString() === date.toDateString()
                     const dayLabel = DAY_LABELS[date.getDay()]
                     return (
                       <th
                         key={date.toISOString()}
-                        className={`border border-border px-2 py-2 text-center font-semibold ${
+                        className={cn(
+                          "border border-border px-2 py-2.5 text-center font-semibold",
                           isToday
                             ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-foreground"
-                        }`}
+                            : "bg-secondary/70 text-foreground",
+                        )}
                       >
-                        <div className="text-xs uppercase tracking-wide opacity-70">
+                        <div className="text-[10px] uppercase tracking-widest opacity-70">
                           {dayLabel}
                         </div>
-                        <div className="text-sm">{formatDayDate(date)}</div>
+                        <div className="text-sm font-bold">{formatDayDate(date)}</div>
                       </th>
                     )
                   })}
@@ -500,8 +493,8 @@ export function PlanningPage() {
               <tbody>
                 {MEAL_TYPES.map(({ key, label, color }) => (
                   <tr key={key}>
-                    <td className="border border-border bg-secondary px-3 py-2 align-middle w-20">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <td className="border border-border bg-secondary/70 px-3 py-2 align-middle w-20">
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
                         {label}
                       </span>
                     </td>

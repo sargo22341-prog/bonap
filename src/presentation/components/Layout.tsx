@@ -1,80 +1,80 @@
-import { Outlet } from "react-router-dom"
-import { Menu } from "lucide-react"
+import { Outlet, NavLink } from "react-router-dom"
+import { CalendarDays, ShoppingCart, UtensilsCrossed, Sparkles, BarChart2 } from "lucide-react"
 import { Sidebar } from "./Sidebar.tsx"
 import { AssistantDrawer } from "./AssistantDrawer.tsx"
 import { useSidebar } from "../hooks/useSidebar.ts"
 import { cn } from "../../lib/utils.ts"
 
+const mobileNavItems = [
+  { to: "/planning", label: "Planning", icon: CalendarDays },
+  { to: "/shopping", label: "Courses", icon: ShoppingCart },
+  { to: "/recipes", label: "Recettes", icon: UtensilsCrossed },
+  { to: "/suggestions", label: "IA", icon: Sparkles },
+  { to: "/stats", label: "Stats", icon: BarChart2 },
+]
+
 export function Layout() {
-  const { collapsed, toggleCollapsed, mobileOpen, openMobile, closeMobile } = useSidebar()
+  const { collapsed, toggleCollapsed } = useSidebar()
 
   return (
     <div className="min-h-screen bg-background">
       {/* ── Sidebar desktop (hidden on mobile) ── */}
       <div className="hidden md:block">
-        <Sidebar
-          collapsed={collapsed}
-          onToggleCollapsed={toggleCollapsed}
-          variant="desktop"
-        />
-      </div>
-
-      {/* ── Drawer mobile ── */}
-      {/* Overlay */}
-      <div
-        className={cn(
-          "fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 md:hidden",
-          mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
-        )}
-        onClick={closeMobile}
-        aria-hidden="true"
-      />
-      {/* Drawer panel */}
-      <div
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out md:hidden",
-          mobileOpen ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
-        <Sidebar
-          collapsed={false}
-          onToggleCollapsed={toggleCollapsed}
-          onClose={closeMobile}
-          variant="mobile"
-        />
+        <Sidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
       </div>
 
       {/* ── Contenu principal ── */}
       <main
         className={cn(
-          "transition-all duration-300 ease-in-out",
-          // Desktop: left margin based on collapsed state
-          "md:ml-60",
+          "transition-[margin-left] duration-300 ease-in-out",
+          /* Desktop : marge gauche selon état sidebar */
+          "md:ml-64",
           collapsed && "md:ml-16",
-          // Mobile: no margin
+          /* Mobile : plein écran */
           "ml-0",
+          /* Padding contenu */
           "px-4 py-6 md:px-8 md:py-8",
+          /* Extra espace bas pour nav mobile */
+          "pb-24 md:pb-8",
         )}
       >
-        {/* Mobile header with burger */}
-        <div className="mb-6 flex items-center gap-3 md:hidden">
-          <button
-            type="button"
-            onClick={openMobile}
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Ouvrir le menu"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="text-base font-extrabold tracking-tight">
-              Bon<span className="text-primary">ap</span>
-            </span>
-          </div>
-        </div>
-
         <Outlet />
       </main>
+
+      {/* ── Navigation basse mobile ── */}
+      <nav className="fixed bottom-0 inset-x-0 z-50 border-t border-border/60 bg-card/95 backdrop-blur-md md:hidden">
+        <div className="flex h-16 items-stretch">
+          {mobileNavItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                cn(
+                  "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors",
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground",
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-full bg-primary" />
+                  )}
+                  <item.icon
+                    className={cn(
+                      "h-5 w-5 transition-transform duration-150",
+                      isActive && "scale-110",
+                    )}
+                  />
+                  <span>{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
 
       <AssistantDrawer />
     </div>

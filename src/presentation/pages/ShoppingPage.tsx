@@ -20,7 +20,22 @@ import { useShopping } from "../hooks/useShopping.ts"
 import type { ShoppingItem, ShoppingLabel } from "../../domain/shopping/entities/ShoppingItem.ts"
 import { cn } from "../../lib/utils.ts"
 
-// ─── Label dropdown (replaces native <select>) ────────────────────────────────
+// ─── Couleur déterministe par nom de catégorie ─────────────────────────────────
+
+function hashStr(s: string): number {
+  let h = 0
+  for (let i = 0; i < s.length; i++) {
+    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
+  }
+  return Math.abs(h)
+}
+
+function labelColor(name: string): string {
+  const hue = hashStr(name) % 360
+  return `oklch(0.62 0.14 ${hue})`
+}
+
+// ─── Label dropdown ────────────────────────────────────────────────────────────
 
 interface LabelDropdownProps {
   labels: ShoppingLabel[]
@@ -39,7 +54,6 @@ function LabelDropdown({ labels, value, onChange, className }: LabelDropdownProp
     setOpen(false)
   }
 
-  // Close on outside click
   const handleBlur = (e: React.FocusEvent) => {
     if (ref.current && !ref.current.contains(e.relatedTarget as Node)) {
       setOpen(false)
@@ -55,12 +69,7 @@ function LabelDropdown({ labels, value, onChange, className }: LabelDropdownProp
       >
         {selectedLabel ? (
           <>
-            {selectedLabel.color && (
-              <span
-                className="h-2 w-2 rounded-full shrink-0"
-                style={{ backgroundColor: selectedLabel.color }}
-              />
-            )}
+            <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: labelColor(selectedLabel.name) }} />
             <span className="max-w-[80px] truncate">{selectedLabel.name}</span>
           </>
         ) : (
@@ -70,11 +79,11 @@ function LabelDropdown({ labels, value, onChange, className }: LabelDropdownProp
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 min-w-[130px] rounded-lg border border-border bg-popover shadow-md">
+        <div className="absolute right-0 top-full z-50 mt-1 min-w-[130px] rounded-xl border border-border bg-card shadow-warm-md overflow-hidden">
           <button
             type="button"
             onClick={() => handleSelect(undefined)}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors rounded-t-lg"
+            className="flex w-full items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:bg-accent transition-colors"
           >
             <span className="h-2 w-2 rounded-full bg-border" />
             Sans catégorie
@@ -84,13 +93,9 @@ function LabelDropdown({ labels, value, onChange, className }: LabelDropdownProp
               key={l.id}
               type="button"
               onClick={() => handleSelect(l.id)}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-xs hover:bg-accent transition-colors last:rounded-b-lg"
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-accent transition-colors border-t border-border/30"
             >
-              {l.color ? (
-                <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: l.color }} />
-              ) : (
-                <span className="h-2 w-2 rounded-full bg-border" />
-              )}
+              <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: labelColor(l.name) }} />
               <span className="truncate">{l.name}</span>
               {l.id === value && <Check className="ml-auto h-3 w-3 text-primary" />}
             </button>
@@ -101,7 +106,7 @@ function LabelDropdown({ labels, value, onChange, className }: LabelDropdownProp
   )
 }
 
-// ─── Inline label select for forms ────────────────────────────────────────────
+// ─── Label select inline pour les formulaires ──────────────────────────────────
 
 interface FormLabelSelectProps {
   labels: ShoppingLabel[]
@@ -127,13 +132,11 @@ function FormLabelSelect({ labels, value, onChange, disabled }: FormLabelSelectP
         type="button"
         onClick={() => !disabled && setOpen((p) => !p)}
         disabled={disabled}
-        className="flex h-8 items-center gap-1.5 rounded-md border border-input bg-background px-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+        className="flex h-8 items-center gap-1.5 rounded-xl border border-input bg-background px-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
       >
         {selected ? (
           <>
-            {selected.color && (
-              <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: selected.color }} />
-            )}
+            <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: labelColor(selected.name) }} />
             <span className="max-w-[80px] truncate">{selected.name}</span>
           </>
         ) : (
@@ -143,11 +146,11 @@ function FormLabelSelect({ labels, value, onChange, disabled }: FormLabelSelectP
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 min-w-[140px] rounded-lg border border-border bg-popover shadow-md">
+        <div className="absolute left-0 top-full z-50 mt-1 min-w-[140px] rounded-xl border border-border bg-card shadow-warm-md overflow-hidden">
           <button
             type="button"
             onClick={() => { onChange(""); setOpen(false) }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors rounded-t-lg"
+            className="flex w-full items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:bg-accent transition-colors"
           >
             <span className="h-2 w-2 rounded-full bg-border" />
             Catégorie
@@ -157,13 +160,9 @@ function FormLabelSelect({ labels, value, onChange, disabled }: FormLabelSelectP
               key={l.id}
               type="button"
               onClick={() => { onChange(l.id); setOpen(false) }}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-xs hover:bg-accent transition-colors last:rounded-b-lg"
+              className="flex w-full items-center gap-2 px-3 py-2 text-xs hover:bg-accent transition-colors border-t border-border/30"
             >
-              {l.color ? (
-                <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: l.color }} />
-              ) : (
-                <span className="h-2 w-2 rounded-full bg-border" />
-              )}
+              <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: labelColor(l.name) }} />
               <span className="truncate">{l.name}</span>
               {l.id === value && <Check className="ml-auto h-3 w-3 text-primary" />}
             </button>
@@ -174,7 +173,7 @@ function FormLabelSelect({ labels, value, onChange, disabled }: FormLabelSelectP
   )
 }
 
-// ─── Mealie item component ─────────────────────────────────────────────────────
+// ─── Ligne article liste de courses ───────────────────────────────────────────
 
 interface MealieItemRowProps {
   item: ShoppingItem
@@ -190,8 +189,8 @@ function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onU
   const qty = item.quantity ?? 0
 
   return (
-    <li className="flex min-h-[44px] items-center gap-2.5 border-b border-border/30 px-3 last:border-0 hover:bg-muted/30 transition-colors group">
-      {/* Custom checkbox */}
+    <li className="flex min-h-[48px] items-center gap-3 border-b border-border/25 px-4 last:border-0 hover:bg-muted/20 transition-colors group">
+      {/* Checkbox custom */}
       <button
         type="button"
         onClick={() => onToggle(item)}
@@ -206,7 +205,36 @@ function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onU
         {item.checked && <Check className="h-3 w-3 text-primary-foreground stroke-[3]" />}
       </button>
 
-      {/* Name + recipe references */}
+      {/* Quantité */}
+      <div className="flex shrink-0 items-center gap-0.5">
+        <button
+          type="button"
+          onClick={() => onUpdateQuantity(item, Math.max(0, qty - 1))}
+          aria-label="Diminuer"
+          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-foreground transition-all"
+        >
+          <Minus className="h-3 w-3" />
+        </button>
+        {qty > 0 ? (
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-xs tabular-nums font-semibold min-w-[1.5rem] text-center">
+            {qty}
+          </span>
+        ) : (
+          <span className="opacity-0 group-hover:opacity-100 rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground transition-all min-w-[1.5rem] text-center">
+            —
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={() => onUpdateQuantity(item, qty + 1)}
+          aria-label="Augmenter"
+          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-foreground transition-all"
+        >
+          <Plus className="h-3 w-3" />
+        </button>
+      </div>
+
+      {/* Nom + recettes associées */}
       <span className="flex-1 min-w-0">
         <span
           className={cn(
@@ -217,62 +245,14 @@ function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onU
           {name}
         </span>
         {item.recipeNames && item.recipeNames.length > 0 && (
-          <span className="block text-xs text-muted-foreground/70 italic">
+          <span className="block text-xs text-muted-foreground/60 italic">
             {item.recipeNames.join(", ")}
           </span>
         )}
       </span>
 
-      {/* Quantity badge */}
-      {qty > 0 && (
-        <div className="flex shrink-0 items-center gap-0.5">
-          <button
-            type="button"
-            onClick={() => onUpdateQuantity(item, Math.max(0, qty - 1))}
-            aria-label="Diminuer"
-            className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-foreground transition-all"
-          >
-            <Minus className="h-3 w-3" />
-          </button>
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums font-medium">
-            {qty}
-          </span>
-          <button
-            type="button"
-            onClick={() => onUpdateQuantity(item, qty + 1)}
-            aria-label="Augmenter"
-            className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-foreground transition-all"
-          >
-            <Plus className="h-3 w-3" />
-          </button>
-        </div>
-      )}
-      {qty === 0 && (
-        <div className="flex shrink-0 items-center gap-0.5">
-          <button
-            type="button"
-            onClick={() => onUpdateQuantity(item, Math.max(0, qty - 1))}
-            aria-label="Diminuer"
-            className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-foreground transition-all"
-          >
-            <Minus className="h-3 w-3" />
-          </button>
-          <span className="opacity-0 group-hover:opacity-100 rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground transition-all">
-            —
-          </span>
-          <button
-            type="button"
-            onClick={() => onUpdateQuantity(item, qty + 1)}
-            aria-label="Augmenter"
-            className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-foreground transition-all"
-          >
-            <Plus className="h-3 w-3" />
-          </button>
-        </div>
-      )}
-
-      {/* Actions (hover only) */}
-      <div className="flex shrink-0 items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+      {/* Catégorie (toujours visible) + suppression (au survol) */}
+      <div className="flex shrink-0 items-center gap-1">
         {labels.length > 0 && (
           <LabelDropdown
             labels={labels}
@@ -284,7 +264,7 @@ function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onU
           type="button"
           onClick={() => onDelete(item.id)}
           aria-label="Supprimer"
-          className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-destructive transition-colors"
+          className="flex h-6 w-6 items-center justify-center rounded-lg text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -293,7 +273,7 @@ function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onU
   )
 }
 
-// ─── Habituel item component ───────────────────────────────────────────────────
+// ─── Ligne article habituel ────────────────────────────────────────────────────
 
 interface HabituelItemRowProps {
   item: ShoppingItem
@@ -335,8 +315,7 @@ function HabituelItemRow({ item, labels, cartItems, onAddToCart, onDelete, onUpd
   }
 
   return (
-    <li className="flex min-h-[44px] items-center gap-2.5 border-b border-border/30 px-3 last:border-0 hover:bg-muted/30 transition-colors group">
-      {/* Add to cart — always visible */}
+    <li className="flex min-h-[48px] items-center gap-3 border-b border-border/25 px-4 last:border-0 hover:bg-muted/20 transition-colors group">
       {!editing && (
         <button
           type="button"
@@ -360,13 +339,13 @@ function HabituelItemRow({ item, labels, cartItems, onAddToCart, onDelete, onUpd
       )}
 
       {editing ? (
-        <div className="flex flex-1 items-center gap-1">
+        <div className="flex flex-1 items-center gap-1.5">
           <Input
             ref={inputRef}
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="h-7 flex-1 text-sm"
+            className="h-7 flex-1 text-sm rounded-xl"
           />
           <button
             type="button"
@@ -399,7 +378,7 @@ function HabituelItemRow({ item, labels, cartItems, onAddToCart, onDelete, onUpd
               type="button"
               onClick={handleEdit}
               aria-label="Modifier"
-              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors"
+              className="flex h-6 w-6 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
@@ -407,7 +386,7 @@ function HabituelItemRow({ item, labels, cartItems, onAddToCart, onDelete, onUpd
               type="button"
               onClick={() => onDelete(item.id)}
               aria-label="Supprimer"
-              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-destructive transition-colors"
+              className="flex h-6 w-6 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -418,29 +397,30 @@ function HabituelItemRow({ item, labels, cartItems, onAddToCart, onDelete, onUpd
   )
 }
 
-// ─── Group header ─────────────────────────────────────────────────────────────
+// ─── En-tête de groupe ─────────────────────────────────────────────────────────
 
 interface GroupHeaderProps {
   label: string
   color?: string
+  isFirst?: boolean
 }
 
-function GroupHeader({ label, color }: GroupHeaderProps) {
+function GroupHeader({ label, isFirst }: GroupHeaderProps) {
+  const isNone = label === "Sans catégorie"
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5">
-      {color ? (
-        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-      ) : (
-        <span className="h-2 w-2 rounded-full bg-border shrink-0" />
-      )}
-      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className={cn("flex items-center gap-2 px-4 py-1.5 bg-secondary/40", isFirst && "rounded-t-2xl")}>
+      <span
+        className="h-2 w-2 rounded-full shrink-0"
+        style={{ backgroundColor: isNone ? undefined : labelColor(label) }}
+      />
+      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
         {label}
       </span>
     </div>
   )
 }
 
-// ─── Items section grouped by label ──────────────────────────────────────────
+// ─── Articles groupés par label ───────────────────────────────────────────────
 
 interface GroupedItemsProps {
   items: ShoppingItem[]
@@ -474,7 +454,7 @@ function GroupedItems({ items, labels, onToggle, onDelete, onUpdateQuantity, onU
 
   if (items.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-muted-foreground">
+      <p className="py-10 text-center text-sm text-muted-foreground">
         Aucun article dans la liste
       </p>
     )
@@ -485,7 +465,6 @@ function GroupedItems({ items, labels, onToggle, onDelete, onUpdateQuantity, onU
 
   return (
     <div>
-      {/* Unchecked items */}
       {uncheckedGroups.map(([key, group]) => (
         <div key={key}>
           {uncheckedGroups.length > 1 && (
@@ -507,16 +486,14 @@ function GroupedItems({ items, labels, onToggle, onDelete, onUpdateQuantity, onU
         </div>
       ))}
 
-      {/* Checked separator */}
       {checked.length > 0 && unchecked.length > 0 && (
-        <div className="flex items-center gap-2 px-3 py-2">
-          <div className="h-px flex-1 bg-border/40" />
-          <span className="text-xs text-muted-foreground/50">cochés</span>
-          <div className="h-px flex-1 bg-border/40" />
+        <div className="flex items-center gap-2 px-4 py-2">
+          <div className="h-px flex-1 bg-border/30" />
+          <span className="text-xs font-medium text-muted-foreground/50">cochés</span>
+          <div className="h-px flex-1 bg-border/30" />
         </div>
       )}
 
-      {/* Checked items */}
       {checkedGroups.map(([key, group]) => (
         <div key={key}>
           {checkedGroups.length > 1 && (
@@ -541,7 +518,7 @@ function GroupedItems({ items, labels, onToggle, onDelete, onUpdateQuantity, onU
   )
 }
 
-// ─── Grouped habituels ────────────────────────────────────────────────────────
+// ─── Habituels groupés ────────────────────────────────────────────────────────
 
 interface GroupedHabituelsProps {
   items: ShoppingItem[]
@@ -573,7 +550,7 @@ function GroupedHabituels({ items, cartItems, labels, onAddToCart, onDelete, onU
 
   if (sorted.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-muted-foreground">
+      <p className="py-10 text-center text-sm text-muted-foreground">
         Aucun article habituel
       </p>
     )
@@ -581,10 +558,10 @@ function GroupedHabituels({ items, cartItems, labels, onAddToCart, onDelete, onU
 
   return (
     <div>
-      {sorted.map(([key, group]) => (
+      {sorted.map(([key, group], i) => (
         <div key={key}>
           {sorted.length > 1 && (
-            <GroupHeader label={group.label} color={group.color} />
+            <GroupHeader label={group.label} color={group.color} isFirst={i === 0} />
           )}
           <ul>
             {group.items.map((item) => (
@@ -642,6 +619,7 @@ export function ShoppingPage() {
 
   const checkedCount = items.filter((i) => i.checked).length
   const totalCount = items.length
+  const progressPct = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -675,20 +653,22 @@ export function ShoppingPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 px-4 pb-8 md:px-6">
-      {/* Header */}
-      <div className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 pb-3 pt-4 backdrop-blur md:-mx-6 md:px-6">
+    <div className="flex flex-col gap-6 pb-8">
+      {/* ── En-tête ── */}
+      <div className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 pb-3 pt-4 backdrop-blur md:-mx-8 md:px-8">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-bold">Liste de courses</h1>
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
+              <ShoppingCart className="h-4 w-4 text-primary" />
+            </div>
+            <h1 className="font-heading text-xl font-bold tracking-tight">Liste de courses</h1>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={reload}
               disabled={loading}
-              className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              className="rounded-xl p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
               aria-label="Rafraîchir"
             >
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
@@ -697,7 +677,7 @@ export function ShoppingPage() {
               href={`${(import.meta.env.VITE_MEALIE_URL as string ?? "").replace(/\/+$/, "")}/group/data/labels`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-foreground/30 hover:text-foreground transition-colors"
+              className="flex items-center gap-1.5 rounded-xl border border-border px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:border-foreground/30 hover:text-foreground transition-colors"
               title="Gérer les catégories"
             >
               <Tag className="h-3.5 w-3.5" />
@@ -707,15 +687,14 @@ export function ShoppingPage() {
         </div>
       </div>
 
-      {/* Error */}
+      {/* Erreur */}
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive">
+        <div className="flex items-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-destructive">
           <AlertCircle className="h-5 w-5 shrink-0" />
           <span className="text-sm">{error}</span>
         </div>
       )}
 
-      {/* Loading spinner */}
       {loading && (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -723,15 +702,16 @@ export function ShoppingPage() {
       )}
 
       {!loading && (
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-6">
-          {/* ── Prochaines courses (60%) ── */}
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
+          {/* ── Prochaines courses ── */}
           <section className="flex flex-col lg:w-[60%]">
-            {/* Section title */}
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-semibold">Prochaines courses</h2>
+                <h2 className="text-base font-bold">Prochaines courses</h2>
                 {totalCount > 0 && (
-                  <span className="text-sm text-muted-foreground">({totalCount})</span>
+                  <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                    {checkedCount}/{totalCount}
+                  </span>
                 )}
               </div>
               <div className="flex items-center gap-3">
@@ -739,16 +719,16 @@ export function ShoppingPage() {
                   <button
                     type="button"
                     onClick={() => void clearList("checked")}
-                    className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                    className="text-xs font-medium text-muted-foreground hover:text-destructive transition-colors"
                   >
-                    Vider cochés ({checkedCount})
+                    Vider cochés
                   </button>
                 )}
                 {items.length > 0 && (
                   <button
                     type="button"
                     onClick={() => void clearList("all")}
-                    className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                    className="text-xs font-medium text-muted-foreground hover:text-destructive transition-colors"
                   >
                     Tout vider
                   </button>
@@ -756,8 +736,23 @@ export function ShoppingPage() {
               </div>
             </div>
 
-            {/* Items */}
-            <div className="rounded-xl border border-border/60">
+            <div className="rounded-2xl border border-border/60 bg-card shadow-sm">
+              {/* Barre de progression */}
+              {totalCount > 0 && (
+                <div className="px-4 pt-3 pb-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-medium text-muted-foreground">{progressPct}% complété</span>
+                    <span className="text-xs text-muted-foreground">{checkedCount}/{totalCount}</span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-500"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <GroupedItems
                 items={items}
                 labels={labels}
@@ -767,10 +762,10 @@ export function ShoppingPage() {
                 onUpdateLabel={(item, labelId) => void updateItemLabel(item, labelId)}
               />
 
-              {/* Add item form */}
-              <div className="border-t border-border/60 p-2.5">
+              {/* Formulaire d'ajout */}
+              <div className="border-t border-border/50 bg-secondary/20 p-3 rounded-b-2xl overflow-hidden">
                 <form onSubmit={(e) => void handleAddItem(e)} className="flex gap-2">
-                  <div className="flex shrink-0 items-center rounded-md border border-input bg-background">
+                  <div className="flex shrink-0 items-center rounded-xl border border-input bg-background overflow-hidden">
                     <button
                       type="button"
                       onClick={() => setNewItemQty((q) => Math.max(1, q - 1))}
@@ -779,7 +774,7 @@ export function ShoppingPage() {
                     >
                       <Minus className="h-3 w-3" />
                     </button>
-                    <span className="w-6 text-center text-sm tabular-nums">{newItemQty}</span>
+                    <span className="w-6 text-center text-sm tabular-nums font-semibold">{newItemQty}</span>
                     <button
                       type="button"
                       onClick={() => setNewItemQty((q) => q + 1)}
@@ -794,7 +789,7 @@ export function ShoppingPage() {
                     value={newItemNote}
                     onChange={(e) => setNewItemNote(e.target.value)}
                     placeholder="Ajouter un article..."
-                    className="h-8 min-w-0 flex-1 text-sm"
+                    className="h-8 min-w-0 flex-1 text-sm rounded-xl"
                     disabled={addingItem}
                   />
                   {labels.length > 0 && (
@@ -808,7 +803,7 @@ export function ShoppingPage() {
                   <Button
                     type="submit"
                     size="sm"
-                    className="h-8 shrink-0"
+                    className="h-8 shrink-0 rounded-xl"
                     disabled={addingItem || !newItemNote.trim()}
                   >
                     {addingItem ? (
@@ -822,29 +817,29 @@ export function ShoppingPage() {
             </div>
           </section>
 
-          {/* ── Articles habituels (40%) ── */}
+          {/* ── Articles habituels ── */}
           <section className="flex flex-col lg:w-[40%]">
-            {/* Section title */}
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-semibold">Habituels</h2>
+                <h2 className="text-base font-bold">Habituels</h2>
                 {habituelsItems.length > 0 && (
-                  <span className="text-sm text-muted-foreground">({habituelsItems.length})</span>
+                  <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+                    {habituelsItems.length}
+                  </span>
                 )}
               </div>
               {habituelsItems.length > 0 && (
                 <button
                   type="button"
                   onClick={() => void deleteAllHabituels()}
-                  className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                  className="text-xs font-medium text-muted-foreground hover:text-destructive transition-colors"
                 >
                   Tout supprimer
                 </button>
               )}
             </div>
 
-            {/* Items */}
-            <div className="rounded-xl border border-border/60">
+            <div className="rounded-2xl border border-border/60 bg-card shadow-sm">
               <GroupedHabituels
                 items={habituelsItems}
                 cartItems={items}
@@ -855,15 +850,15 @@ export function ShoppingPage() {
                 onUpdateLabel={(i, labelId) => void updateHabituelLabel(i, labelId)}
               />
 
-              {/* Add habituel form */}
-              <div className="border-t border-border/60 p-2.5">
+              {/* Formulaire d'ajout habituel */}
+              <div className="border-t border-border/50 bg-secondary/20 p-3 rounded-b-2xl overflow-hidden">
                 <form onSubmit={(e) => void handleAddHabituel(e)} className="flex gap-2">
                   <Input
                     ref={newHabituelInputRef}
                     value={newHabituelNote}
                     onChange={(e) => setNewHabituelNote(e.target.value)}
                     placeholder="Ajouter un habituel..."
-                    className="h-8 flex-1 text-sm"
+                    className="h-8 flex-1 text-sm rounded-xl"
                     disabled={addingHabituel}
                   />
                   {labels.length > 0 && (
@@ -877,7 +872,7 @@ export function ShoppingPage() {
                   <Button
                     type="submit"
                     size="sm"
-                    className="h-8 shrink-0"
+                    className="h-8 shrink-0 rounded-xl"
                     disabled={addingHabituel || !newHabituelNote.trim()}
                   >
                     {addingHabituel ? (

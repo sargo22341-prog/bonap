@@ -23,8 +23,18 @@ function today(): Date {
   return d
 }
 
+/** Retourne le mardi de la semaine en cours (lundi affiché = centerDate - 1) */
+function currentWeekTuesday(): Date {
+  const d = today()
+  const dow = d.getDay() // 0=dim, 1=lun, ..., 6=sam
+  // Lundi de la semaine courante (ISO : la semaine commence le lundi)
+  const diffToMonday = dow === 0 ? -6 : 1 - dow
+  const monday = addDays(d, diffToMonday)
+  return addDays(monday, 1) // mardi = center qui affiche lundi en col 0
+}
+
 export function usePlanning() {
-  const [centerDate, setCenterDate] = useState<Date>(() => today())
+  const [centerDate, setCenterDate] = useState<Date>(() => currentWeekTuesday())
   const [nbDays, setNbDays] = useState<3 | 5 | 7>(7)
   const [mealPlans, setMealPlans] = useState<MealieMealPlan[]>([])
   const [loading, setLoading] = useState(true)
@@ -96,7 +106,7 @@ export function usePlanning() {
   const goToNextDay = () => setCenterDate((prev) => addDays(prev, 1))
   const goToPrevPeriod = () => setCenterDate((prev) => addDays(prev, -nbDays))
   const goToNextPeriod = () => setCenterDate((prev) => addDays(prev, nbDays))
-  const goToToday = () => setCenterDate(today())
+  const goToToday = () => setCenterDate(currentWeekTuesday())
 
   const addMeal = useCallback(async (date: string, entryType: string, recipeId: string) => {
     const newMeal = await addMealUseCase.execute(date, entryType, recipeId)

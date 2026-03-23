@@ -3,6 +3,7 @@ import type {
   MealiePaginatedRecipes,
   MealieRawPaginatedRecipes,
   MealieRecipe,
+  MealieCategory,
   MealieTag,
   RecipeFilters,
   RecipeFormData,
@@ -97,6 +98,14 @@ export class RecipeRepository implements IRecipeRepository {
       tags: [...data.tags, ...seasonTags],
     }
     return mealieApiClient.patch<MealieRecipe>(`/api/recipes/${slug}`, payload)
+  }
+
+  async updateCategories(slug: string, categories: MealieCategory[]): Promise<MealieRecipe> {
+    const current = await this.getBySlug(slug)
+    return mealieApiClient.patch<MealieRecipe>(`/api/recipes/${slug}`, {
+      name: current.name,
+      recipeCategory: categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug })),
+    })
   }
 
   async updateSeasons(slug: string, seasons: Season[]): Promise<MealieRecipe> {

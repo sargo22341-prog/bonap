@@ -2,6 +2,8 @@ import { useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { useRecipe } from "../hooks/useRecipe.ts"
 import { useUpdateSeasons } from "../hooks/useUpdateSeasons.ts"
+import { useUpdateCategories } from "../hooks/useUpdateCategories.ts"
+import { useCategories } from "../hooks/useCategories.ts"
 import { Button } from "../components/ui/button.tsx"
 import { Badge } from "../components/ui/badge.tsx"
 import { RecipeFormDialog } from "../components/RecipeFormDialog.tsx"
@@ -9,7 +11,7 @@ import { SeasonBadge } from "../components/SeasonBadge.tsx"
 import { RecipeIngredientsList } from "../components/RecipeIngredientsList.tsx"
 import { RecipeInstructionsList } from "../components/RecipeInstructionsList.tsx"
 import { Pencil } from "lucide-react"
-import type { MealieRecipe, Season } from "../../shared/types/mealie.ts"
+import type { MealieRecipe, MealieCategory, Season } from "../../shared/types/mealie.ts"
 import { SEASONS, SEASON_LABELS } from "../../shared/types/mealie.ts"
 import { getRecipeSeasonsFromTags } from "../../shared/utils/season.ts"
 
@@ -43,9 +45,22 @@ export function RecipeDetailPage() {
   const { recipe, loading, error, setRecipe } = useRecipe(slug)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const { updateSeasons, loading: seasonsLoading } = useUpdateSeasons()
+  const { updateCategories, loading: categoriesLoading } = useUpdateCategories()
+  const { categories: allCategories } = useCategories()
 
   const handleEditSuccess = (updated: MealieRecipe) => {
     setRecipe(updated)
+  }
+
+  const handleToggleCategory = async (cat: MealieCategory) => {
+    if (!recipe) return
+    const current = recipe.recipeCategory ?? []
+    const isActive = current.some((c) => c.id === cat.id)
+    const newCategories = isActive
+      ? current.filter((c) => c.id !== cat.id)
+      : [...current, cat]
+    const updated = await updateCategories(recipe.slug, newCategories)
+    if (updated) setRecipe(updated)
   }
 
   const handleToggleSeason = async (season: Season) => {
@@ -105,16 +120,21 @@ export function RecipeDetailPage() {
           <div className="space-y-3">
             <h1 className="text-2xl font-bold">{recipe.name}</h1>
 
-            {recipe.recipeCategory && recipe.recipeCategory.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {recipe.recipeCategory.map((cat) => (
-                  <span
-                    key={cat.id}
-                    className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
-                  >
-                    {cat.name}
-                  </span>
-                ))}
+            {allCategories.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {allCategories.map((cat) => {
+                  const active = (recipe.recipeCategory ?? []).some((c) => c.id === cat.id)
+                  return (
+                    <Badge
+                      key={cat.id}
+                      variant={active ? "default" : "outline"}
+                      className="cursor-pointer select-none transition-colors text-xs"
+                      onClick={() => void handleToggleCategory(cat)}
+                    >
+                      {categoriesLoading ? "…" : cat.name}
+                    </Badge>
+                  )
+                })}
               </div>
             )}
 

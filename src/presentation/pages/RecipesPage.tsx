@@ -13,6 +13,7 @@ import type { MealieRecipe, Season } from "../../shared/types/mealie.ts"
 import { SEASONS, SEASON_LABELS } from "../../shared/types/mealie.ts"
 import { getCurrentSeason, getRecipeSeasonsFromTags, isSeasonTag } from "../../shared/utils/season.ts"
 import { getRecipesUseCase, getRecipeUseCase } from "../../infrastructure/container.ts"
+import { cn } from "../../lib/utils.ts"
 
 type ViewMode = "cards" | "table"
 
@@ -120,14 +121,12 @@ export function RecipesPage() {
     setNoIngredientsLoading(true)
     setNoIngredientRecipes(null)
     try {
-      // Fetch all pages to collect every recipe slug
       const first = await getRecipesUseCase.execute(1, 100)
       const allItems = [...first.items]
       for (let page = 2; page <= first.totalPages; page++) {
         const data = await getRecipesUseCase.execute(page, 100)
         allItems.push(...data.items)
       }
-      // Fetch details in parallel (ingredient data only in detail endpoint)
       const details = await Promise.all(allItems.map((r) => getRecipeUseCase.execute(r.slug)))
       setNoIngredientRecipes(details.filter((r) => !r.recipeIngredient?.length))
     } catch {
@@ -159,7 +158,6 @@ export function RecipesPage() {
     }
   }, [])
 
-  // Client-side season filter (only applies when noIngredients is off)
   const filteredRecipes = noIngredients
     ? (noIngredientRecipes ?? [])
     : recipes.filter((recipe) => {
@@ -174,32 +172,33 @@ export function RecipesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header sticky */}
-      <div className="sticky top-0 z-10 -mx-4 -mt-4 md:-mx-6 md:-mt-6 bg-background px-4 pt-4 md:px-6 md:pt-6 pb-4 border-b border-border">
+      {/* ── En-tête sticky ── */}
+      <div className="sticky top-0 z-10 -mx-4 -mt-4 md:-mx-8 md:-mt-8 bg-background/95 backdrop-blur px-4 pt-4 md:px-8 md:pt-8 pb-4 border-b border-border/60">
 
-        {/* Title row */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-baseline gap-2">
-            <h1 className="text-2xl font-bold">Mes recettes</h1>
+        {/* Ligne titre */}
+        <div className="flex items-center justify-between mb-4 gap-3">
+          <div className="flex items-baseline gap-2.5">
+            <h1 className="font-heading text-2xl font-bold tracking-tight">Mes recettes</h1>
             {filteredRecipes.length > 0 && (
-              <span className="text-sm text-muted-foreground">
-                {filteredRecipes.length} recette{filteredRecipes.length > 1 ? "s" : ""}
+              <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                {filteredRecipes.length}
               </span>
             )}
           </div>
 
           <div className="flex items-center gap-2">
-            {/* View mode segmented control */}
-            <div className="flex rounded-lg border border-input overflow-hidden bg-background">
+            {/* Bascule vue */}
+            <div className="flex rounded-xl border border-border overflow-hidden">
               <button
                 type="button"
                 onClick={() => setViewMode("cards")}
                 aria-label="Vue cartes"
-                className={`flex items-center px-2.5 py-1.5 text-sm transition-colors ${
+                className={cn(
+                  "flex items-center px-2.5 py-1.5 text-sm transition-colors",
                   viewMode === "cards"
                     ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted/50"
-                }`}
+                    : "text-muted-foreground hover:bg-muted/50",
+                )}
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>
@@ -207,22 +206,23 @@ export function RecipesPage() {
                 type="button"
                 onClick={() => setViewMode("table")}
                 aria-label="Vue tableau"
-                className={`flex items-center px-2.5 py-1.5 text-sm transition-colors ${
+                className={cn(
+                  "flex items-center px-2.5 py-1.5 text-sm transition-colors",
                   viewMode === "table"
                     ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted/50"
-                }`}
+                    : "text-muted-foreground hover:bg-muted/50",
+                )}
               >
                 <Table2 className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Importer */}
+            {/* Importer depuis Mealie */}
             <a
               href={`${(import.meta.env.VITE_MEALIE_URL as string ?? "").replace(/\/+$/, "")}/g/home/r/create/url`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Importer</span>
@@ -232,7 +232,7 @@ export function RecipesPage() {
             <Button
               size="sm"
               onClick={() => setNewRecipeDialogOpen(true)}
-              className="gap-1.5"
+              className="gap-1.5 rounded-xl"
             >
               <PenLine className="h-4 w-4" />
               <span className="hidden sm:inline">Nouvelle recette</span>
@@ -240,16 +240,16 @@ export function RecipesPage() {
           </div>
         </div>
 
-        {/* Filter bar — 2 lines max */}
+        {/* Barre de filtres */}
         <div className="space-y-2">
-          {/* Line 1: search */}
+          {/* Recherche */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Rechercher une recette..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-9"
+              className="pl-9 pr-9 rounded-xl"
             />
             {search && (
               <button
@@ -262,17 +262,17 @@ export function RecipesPage() {
             )}
           </div>
 
-          {/* Line 2: all filters in one scrollable row */}
+          {/* Filtres pills */}
           <div className="relative flex items-center gap-2">
             <div className="flex gap-1.5 overflow-x-auto flex-nowrap scrollbar-hide pb-0.5">
-              {/* Seasons */}
+              {/* Saisons */}
               {SEASONS.map((season: Season) => {
                 const active = selectedSeasons.includes(season)
                 return (
                   <Badge
                     key={season}
                     variant={active ? "default" : "outline"}
-                    className="cursor-pointer select-none transition-colors whitespace-nowrap shrink-0"
+                    className="cursor-pointer select-none transition-all whitespace-nowrap shrink-0 rounded-full"
                     onClick={() => toggleSeason(season)}
                   >
                     {SEASON_LABELS[season]}
@@ -280,19 +280,16 @@ export function RecipesPage() {
                 )
               })}
 
-              {/* Separator dot */}
-              {(categories.length > 0 || tags.filter((t) => !isSeasonTag(t)).length > 0 || true) && (
-                <span className="flex items-center px-0.5 text-border select-none shrink-0">·</span>
-              )}
+              <span className="flex items-center px-0.5 text-border select-none shrink-0">·</span>
 
-              {/* Time filters */}
+              {/* Temps */}
               {TIME_OPTIONS.filter((opt) => opt.value !== undefined).map((opt) => {
                 const active = maxTotalTime === opt.value
                 return (
                   <Badge
                     key={opt.label}
                     variant={active ? "default" : "outline"}
-                    className="cursor-pointer select-none transition-colors whitespace-nowrap shrink-0"
+                    className="cursor-pointer select-none transition-all whitespace-nowrap shrink-0 rounded-full"
                     onClick={() => handleTimeFilter(opt.value)}
                   >
                     {opt.label}
@@ -300,16 +297,16 @@ export function RecipesPage() {
                 )
               })}
 
-              {/* No ingredients */}
+              {/* Sans ingrédients */}
               <Badge
                 variant={noIngredients ? "default" : "outline"}
-                className="cursor-pointer select-none transition-colors whitespace-nowrap shrink-0"
+                className="cursor-pointer select-none transition-all whitespace-nowrap shrink-0 rounded-full"
                 onClick={() => setNoIngredients((prev) => !prev)}
               >
                 Sans ingrédients
               </Badge>
 
-              {/* Category filters */}
+              {/* Catégories */}
               {categories.length > 0 && (
                 <>
                   <span className="flex items-center px-0.5 text-border select-none shrink-0">·</span>
@@ -319,7 +316,7 @@ export function RecipesPage() {
                       <Badge
                         key={cat.id}
                         variant={active ? "default" : "outline"}
-                        className="cursor-pointer select-none transition-colors whitespace-nowrap shrink-0"
+                        className="cursor-pointer select-none transition-all whitespace-nowrap shrink-0 rounded-full"
                         onClick={() => toggleCategory(cat.slug)}
                       >
                         {cat.name}
@@ -329,7 +326,7 @@ export function RecipesPage() {
                 </>
               )}
 
-              {/* Tag filters */}
+              {/* Tags */}
               {tags.filter((t) => !isSeasonTag(t)).length > 0 && (
                 <>
                   <span className="flex items-center px-0.5 text-border select-none shrink-0">·</span>
@@ -339,7 +336,7 @@ export function RecipesPage() {
                       <Badge
                         key={tag.id}
                         variant={active ? "secondary" : "outline"}
-                        className="cursor-pointer select-none transition-colors whitespace-nowrap shrink-0"
+                        className="cursor-pointer select-none transition-all whitespace-nowrap shrink-0 rounded-full"
                         onClick={() => toggleTag(tag.slug)}
                       >
                         {tag.name}
@@ -350,7 +347,7 @@ export function RecipesPage() {
               )}
             </div>
 
-            {/* Clear filters button */}
+            {/* Effacer les filtres */}
             {hasActiveFilters && (
               <button
                 type="button"
@@ -365,7 +362,7 @@ export function RecipesPage() {
         </div>
       </div>
 
-      {/* Error */}
+      {/* Erreur */}
       {error && (
         <div className="flex flex-col items-center gap-2 py-24 text-destructive">
           <AlertCircle className="h-8 w-8" />
@@ -373,16 +370,18 @@ export function RecipesPage() {
         </div>
       )}
 
-      {/* Empty state */}
+      {/* État vide */}
       {!loading && !error && filteredRecipes.length === 0 && (
-        <div className="flex flex-col items-center gap-2 py-24 text-muted-foreground">
-          <UtensilsCrossed className="h-8 w-8" />
-          <p className="text-sm">Aucune recette trouvée</p>
+        <div className="flex flex-col items-center gap-3 py-24 text-muted-foreground">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary">
+            <UtensilsCrossed className="h-7 w-7" />
+          </div>
+          <p className="text-sm font-medium">Aucune recette trouvée</p>
           {hasActiveFilters && (
             <button
               type="button"
               onClick={resetFilters}
-              className="mt-1 text-sm underline underline-offset-2"
+              className="mt-1 text-sm text-primary underline underline-offset-2 hover:opacity-80"
             >
               Effacer les filtres
             </button>
@@ -390,44 +389,43 @@ export function RecipesPage() {
         </div>
       )}
 
-      {/* Recipe cards */}
+      {/* Vue cartes */}
       {viewMode === "cards" && filteredRecipes.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {filteredRecipes.map((recipe) => (
             <RecipeCard key={recipe.id} recipe={recipe} />
           ))}
         </div>
       )}
 
-      {/* Recipe table — custom rows */}
+      {/* Vue tableau */}
       {viewMode === "table" && filteredRecipes.length > 0 && (
         <div>
-          {/* Load details toolbar */}
           <div className="mb-3 flex items-center justify-end">
             <Button
               size="sm"
               variant="outline"
               onClick={() => loadDetails(filteredRecipes)}
               disabled={detailsLoading}
-              className="gap-1.5"
+              className="gap-1.5 rounded-xl"
             >
               {detailsLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
               Charger les détails
             </Button>
           </div>
 
-          {/* Column headers */}
+          {/* En-têtes colonnes */}
           <div className="grid grid-cols-[2fr_72px_72px_1fr_auto] items-center gap-3 border-b border-border px-4 pb-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nom</span>
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right">Prép.</span>
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right">Cuisson</span>
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tags</span>
+            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Nom</span>
+            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground text-right">Prép.</span>
+            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground text-right">Cuisson</span>
+            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Tags</span>
             <span className="w-8" />
           </div>
 
-          {/* Rows */}
-          <div>
-            {filteredRecipes.map((recipe) => {
+          {/* Lignes */}
+          <div className="rounded-2xl border border-border/60 overflow-hidden">
+            {filteredRecipes.map((recipe, index) => {
               const detail = detailedRecipes.get(recipe.slug)
               const ingredients = detail?.recipeIngredient
               const nonSeasonTags = (recipe.tags ?? []).filter((t) => !isSeasonTag(t))
@@ -437,13 +435,15 @@ export function RecipesPage() {
               return (
                 <div
                   key={recipe.id}
-                  className="grid grid-cols-[2fr_72px_72px_1fr_auto] items-center gap-3 border-b border-border/40 px-4 py-2.5 last:border-0 hover:bg-muted/30 transition-colors"
+                  className={cn(
+                    "grid grid-cols-[2fr_72px_72px_1fr_auto] items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors",
+                    index > 0 && "border-t border-border/40",
+                  )}
                 >
-                  {/* Name */}
                   <div className="min-w-0">
                     <Link
                       to={`/recipes/${recipe.slug}`}
-                      className="text-sm font-medium text-foreground hover:text-primary transition-colors truncate block"
+                      className="text-sm font-semibold text-foreground hover:text-primary transition-colors truncate block"
                     >
                       {recipe.name}
                     </Link>
@@ -456,32 +456,28 @@ export function RecipesPage() {
                     )}
                   </div>
 
-                  {/* Prep time */}
                   <div className="flex items-center justify-end gap-1 text-sm text-muted-foreground whitespace-nowrap">
                     {prepTime !== "—" && <Clock className="h-3 w-3 shrink-0" />}
                     <span>{prepTime}</span>
                   </div>
 
-                  {/* Cook time */}
                   <div className="flex items-center justify-end gap-1 text-sm text-muted-foreground whitespace-nowrap">
                     {cookTime !== "—" && <Clock className="h-3 w-3 shrink-0" />}
                     <span>{cookTime}</span>
                   </div>
 
-                  {/* Tags */}
                   <div className="flex flex-wrap gap-1 min-w-0">
                     {nonSeasonTags.map((t) => (
-                      <Badge key={t.id} variant="secondary" className="text-xs py-0 px-1.5">
+                      <Badge key={t.id} variant="secondary" className="text-xs py-0 px-1.5 rounded-full">
                         {t.name}
                       </Badge>
                     ))}
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center justify-end">
                     <Link
                       to={`/recipes/${recipe.slug}`}
-                      className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                      className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
                     >
                       Voir
                     </Link>

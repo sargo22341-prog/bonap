@@ -44,11 +44,12 @@ export function extractFoodKey(note: string): string {
     "g",
     "l",
   ]
-  const unitPattern = new RegExp(`^(${units.join("|")})s?\\s*`, "i")
+  // L'unité doit être suivie d'un espace ou d'un chiffre pour ne pas croquer le début d'un mot
+  const unitPattern = new RegExp(`^(${units.join("|")})s?(?=\\s|\\d|$)\\s*`, "i")
   s = s.replace(unitPattern, "")
 
-  // Strip "de " / "d'" preposition
-  s = s.replace(/^d[e']?\s*/i, "")
+  // Strip "de " ou "d'" (préposition) mais pas un "d" seul collé à un mot
+  s = s.replace(/^d(?:e\s+|')/i, "")
 
   return s.trim().toLowerCase()
 }
