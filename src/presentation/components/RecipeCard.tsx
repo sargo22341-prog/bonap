@@ -2,19 +2,29 @@ import { Link } from "react-router-dom"
 import { SeasonBadge } from "./SeasonBadge.tsx"
 import type { MealieRecipe } from "../../shared/types/mealie.ts"
 import { getRecipeSeasonsFromTags } from "../../shared/utils/season.ts"
+import { cn } from "../../lib/utils.ts"
 
 interface RecipeCardProps {
   recipe: MealieRecipe
+  onSelect?: (slug: string) => void
+  selected?: boolean
 }
 
-export function RecipeCard({ recipe }: RecipeCardProps) {
+export function RecipeCard({ recipe, onSelect, selected }: RecipeCardProps) {
   const imageUrl = `/api/media/recipes/${recipe.id}/images/min-original.webp`
   const seasons = getRecipeSeasonsFromTags(recipe.tags)
   const categories = recipe.recipeCategory ?? []
 
   return (
-    <Link to={`/recipes/${recipe.slug}`} className="group block">
-      <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-sm transition-all duration-200 hover:shadow-warm-md hover:-translate-y-0.5 hover:border-primary/30">
+    <Link
+      to={`/recipes/${recipe.slug}`}
+      className="group block"
+      onClick={onSelect ? (e) => { e.preventDefault(); onSelect(recipe.slug) } : undefined}
+    >
+      <div className={cn(
+          "overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-200 hover:shadow-warm-md hover:-translate-y-0.5",
+          selected ? "border-primary ring-2 ring-primary/30" : "border-border/50 hover:border-primary/30",
+        )}>
         {/* Image carrée */}
         <div className="relative aspect-square w-full overflow-hidden bg-muted">
           <img

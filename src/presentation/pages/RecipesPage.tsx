@@ -3,31 +3,23 @@ import { useNavigate, Link } from "react-router-dom"
 import { useRecipesInfinite } from "../hooks/useRecipesInfinite.ts"
 import { useCategories } from "../hooks/useCategories.ts"
 import { useTags } from "../hooks/useTags.ts"
+import { useRecipe } from "../hooks/useRecipe.ts"
+import { useUpdateSeasons } from "../hooks/useUpdateSeasons.ts"
+import { useUpdateCategories } from "../hooks/useUpdateCategories.ts"
 import { RecipeCard } from "../components/RecipeCard.tsx"
 import { RecipeFormDialog } from "../components/RecipeFormDialog.tsx"
 import { Badge } from "../components/ui/badge.tsx"
 import { Button } from "../components/ui/button.tsx"
 import { Input } from "../components/ui/input.tsx"
-import { Loader2, AlertCircle, UtensilsCrossed, Search, X, RotateCcw, Plus, PenLine, LayoutGrid, Table2, Clock, RefreshCw } from "lucide-react"
-import type { MealieRecipe, Season } from "../../shared/types/mealie.ts"
+import { Loader2, AlertCircle, UtensilsCrossed, Search, X, RotateCcw, Plus, PenLine, ExternalLink, Clock } from "lucide-react"
+import type { MealieRecipe, MealieCategory, Season } from "../../shared/types/mealie.ts"
 import { SEASONS, SEASON_LABELS } from "../../shared/types/mealie.ts"
 import { getCurrentSeason, getRecipeSeasonsFromTags, isSeasonTag } from "../../shared/utils/season.ts"
 import { getRecipesUseCase, getRecipeUseCase } from "../../infrastructure/container.ts"
+import { SeasonBadge } from "../components/SeasonBadge.tsx"
+import { RecipeIngredientsList } from "../components/RecipeIngredientsList.tsx"
+import { RecipeInstructionsList } from "../components/RecipeInstructionsList.tsx"
 import { cn } from "../../lib/utils.ts"
-
-type ViewMode = "cards" | "table"
-
-function formatDuration(iso?: string): string {
-  if (!iso) return "—"
-  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/)
-  if (!match) return "—"
-  const h = parseInt(match[1] ?? "0")
-  const m = parseInt(match[2] ?? "0")
-  if (h > 0 && m > 0) return `${h}h${m}`
-  if (h > 0) return `${h}h`
-  if (m > 0) return `${m} min`
-  return "—"
-}
 
 const TIME_OPTIONS = [
   { label: "< 30 min", value: 30 },
@@ -45,10 +37,35 @@ export function RecipesPage() {
   const [noIngredientRecipes, setNoIngredientRecipes] = useState<MealieRecipe[] | null>(null)
   const [noIngredientsLoading, setNoIngredientsLoading] = useState(false)
   const [newRecipeDialogOpen, setNewRecipeDialogOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<ViewMode>("cards")
-  const [detailedRecipes, setDetailedRecipes] = useState<Map<string, MealieRecipe>>(new Map())
-  const [detailsLoading, setDetailsLoading] = useState(false)
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null)
+  const [drawerClosing, setDrawerClosing] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (selectedSlug) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => { document.body.style.overflow = "" }
+  }, [selectedSlug])
+
+  const closeDrawer = () => {
+    setDrawerClosing(true)
+    setTimeout(() => {
+      setSelectedSlug(null)
+      setDrawerClosing(false)
+    }, 240)
+  }
+
+  const selectSlug = (slug: string) => {
+    if (slug === selectedSlug) {
+      closeDrawer()
+    } else {
+      setSelectedSlug(slug)
+      setDrawerClosing(false)
+    }
+  }
 
   const sentinelRef = useRef<HTMLDivElement>(null)
 
@@ -144,20 +161,6 @@ export function RecipesPage() {
     }
   }, [noIngredients, loadRecipesWithoutIngredients])
 
-  const loadDetails = useCallback(async (recipesToLoad: MealieRecipe[]) => {
-    setDetailsLoading(true)
-    try {
-      const details = await Promise.all(recipesToLoad.map((r) => getRecipeUseCase.execute(r.slug)))
-      setDetailedRecipes((prev) => {
-        const next = new Map(prev)
-        details.forEach((d) => next.set(d.slug, d))
-        return next
-      })
-    } finally {
-      setDetailsLoading(false)
-    }
-  }, [])
-
   const filteredRecipes = noIngredients
     ? (noIngredientRecipes ?? [])
     : recipes.filter((recipe) => {
@@ -187,36 +190,6 @@ export function RecipesPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Bascule vue */}
-            <div className="flex rounded-xl border border-border overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setViewMode("cards")}
-                aria-label="Vue cartes"
-                className={cn(
-                  "flex items-center px-2.5 py-1.5 text-sm transition-colors",
-                  viewMode === "cards"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted/50",
-                )}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                aria-label="Vue tableau"
-                className={cn(
-                  "flex items-center px-2.5 py-1.5 text-sm transition-colors",
-                  viewMode === "table"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted/50",
-                )}
-              >
-                <Table2 className="h-4 w-4" />
-              </button>
-            </div>
-
             {/* Importer depuis Mealie */}
             <a
               href={`${(import.meta.env.VITE_MEALIE_URL as string ?? "").replace(/\/+$/, "")}/g/home/r/create/url`}
@@ -389,103 +362,17 @@ export function RecipesPage() {
         </div>
       )}
 
-      {/* Vue cartes */}
-      {viewMode === "cards" && filteredRecipes.length > 0 && (
+      {/* Grille */}
+      {filteredRecipes.length > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {filteredRecipes.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
+            <RecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              selected={recipe.slug === selectedSlug}
+              onSelect={selectSlug}
+            />
           ))}
-        </div>
-      )}
-
-      {/* Vue tableau */}
-      {viewMode === "table" && filteredRecipes.length > 0 && (
-        <div>
-          <div className="mb-3 flex items-center justify-end">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => loadDetails(filteredRecipes)}
-              disabled={detailsLoading}
-              className="gap-1.5 rounded-xl"
-            >
-              {detailsLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-              Charger les détails
-            </Button>
-          </div>
-
-          {/* En-têtes colonnes */}
-          <div className="grid grid-cols-[2fr_72px_72px_1fr_auto] items-center gap-3 border-b border-border px-4 pb-2">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Nom</span>
-            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground text-right">Prép.</span>
-            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground text-right">Cuisson</span>
-            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Tags</span>
-            <span className="w-8" />
-          </div>
-
-          {/* Lignes */}
-          <div className="rounded-2xl border border-border/60 overflow-hidden">
-            {filteredRecipes.map((recipe, index) => {
-              const detail = detailedRecipes.get(recipe.slug)
-              const ingredients = detail?.recipeIngredient
-              const nonSeasonTags = (recipe.tags ?? []).filter((t) => !isSeasonTag(t))
-              const prepTime = formatDuration(recipe.prepTime)
-              const cookTime = formatDuration(recipe.cookTime)
-
-              return (
-                <div
-                  key={recipe.id}
-                  className={cn(
-                    "grid grid-cols-[2fr_72px_72px_1fr_auto] items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors",
-                    index > 0 && "border-t border-border/40",
-                  )}
-                >
-                  <div className="min-w-0">
-                    <Link
-                      to={`/recipes/${recipe.slug}`}
-                      className="text-sm font-semibold text-foreground hover:text-primary transition-colors truncate block"
-                    >
-                      {recipe.name}
-                    </Link>
-                    {ingredients !== undefined && (
-                      <span className="text-xs text-muted-foreground/70">
-                        {ingredients.length > 0
-                          ? `${ingredients.length} ingrédient${ingredients.length > 1 ? "s" : ""}`
-                          : "Aucun ingrédient"}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-end gap-1 text-sm text-muted-foreground whitespace-nowrap">
-                    {prepTime !== "—" && <Clock className="h-3 w-3 shrink-0" />}
-                    <span>{prepTime}</span>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-1 text-sm text-muted-foreground whitespace-nowrap">
-                    {cookTime !== "—" && <Clock className="h-3 w-3 shrink-0" />}
-                    <span>{cookTime}</span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1 min-w-0">
-                    {nonSeasonTags.map((t) => (
-                      <Badge key={t.id} variant="secondary" className="text-xs py-0 px-1.5 rounded-full">
-                        {t.name}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center justify-end">
-                    <Link
-                      to={`/recipes/${recipe.slug}`}
-                      className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      Voir
-                    </Link>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
         </div>
       )}
 
@@ -497,11 +384,190 @@ export function RecipesPage() {
         </div>
       )}
 
+      {/* Drawer latéral */}
+      {selectedSlug !== null && (
+        <>
+          {/* Backdrop */}
+          <div
+            className={cn("fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px] min-h-screen", drawerClosing ? "animate-fade-out" : "animate-fade-in")}
+            onClick={closeDrawer}
+          />
+          <RecipeDrawer
+            slug={selectedSlug}
+            allCategories={categories}
+            closing={drawerClosing}
+            onClose={closeDrawer}
+          />
+        </>
+      )}
+
       <RecipeFormDialog
         open={newRecipeDialogOpen}
         onOpenChange={setNewRecipeDialogOpen}
         onSuccess={(recipe: MealieRecipe) => navigate(`/recipes/${recipe.slug}`)}
       />
+    </div>
+  )
+}
+
+// ─── Drawer recette ────────────────────────────────────────────────────────────
+
+function formatDuration(iso?: string): string {
+  if (!iso) return ""
+  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/)
+  if (!match) return ""
+  const h = parseInt(match[1] ?? "0")
+  const m = parseInt(match[2] ?? "0")
+  if (h > 0 && m > 0) return `${h}h${m}`
+  if (h > 0) return `${h}h`
+  if (m > 0) return `${m} min`
+  return ""
+}
+
+interface RecipeDrawerProps {
+  slug: string
+  allCategories: MealieCategory[]
+  closing: boolean
+  onClose: () => void
+}
+
+function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDrawerProps) {
+  const { recipe, setRecipe, loading } = useRecipe(slug)
+  const { updateSeasons, loading: seasonsLoading } = useUpdateSeasons()
+  const { updateCategories, loading: categoriesLoading } = useUpdateCategories()
+
+  const handleToggleSeason = async (season: Season) => {
+    if (!recipe) return
+    const current = getRecipeSeasonsFromTags(recipe.tags)
+    const newSeasons = current.includes(season)
+      ? current.filter((s) => s !== season)
+      : [...current, season]
+    const updated = await updateSeasons(recipe.slug, newSeasons)
+    if (updated) setRecipe(updated)
+  }
+
+  const handleToggleCategory = async (cat: MealieCategory) => {
+    if (!recipe) return
+    const current = recipe.recipeCategory ?? []
+    const isActive = current.some((c) => c.id === cat.id)
+    const newCats = isActive ? current.filter((c) => c.id !== cat.id) : [...current, cat]
+    const updated = await updateCategories(recipe.slug, newCats)
+    if (updated) setRecipe(updated)
+  }
+
+  return (
+    <div className={cn("fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-card shadow-2xl border-l border-border/60", closing ? "animate-slide-out-right" : "animate-slide-in-right")}>
+      {/* Header */}
+      <div className="flex shrink-0 items-center justify-between border-b border-border/50 px-5 py-4">
+        <span className="font-heading text-base font-bold">Recette</span>
+        <div className="flex items-center gap-2">
+          {recipe && (
+            <Link
+              to={`/recipes/${recipe.slug}`}
+              className="flex items-center gap-1.5 rounded-xl border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Page complète
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Contenu scrollable */}
+      <div className="flex-1 overflow-y-auto">
+        {loading && (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-7 w-7 animate-spin text-primary" />
+          </div>
+        )}
+
+        {recipe && (
+          <article className="space-y-6 pb-8">
+            {/* Image */}
+            <img
+              src={`/api/media/recipes/${recipe.id}/images/original.webp`}
+              alt={recipe.name}
+              className="aspect-video w-full object-cover"
+            />
+
+            <div className="space-y-4 px-5">
+              {/* Nom */}
+              <h1 className="font-heading text-xl font-bold leading-snug">{recipe.name}</h1>
+
+              {/* Temps */}
+              {(recipe.prepTime || recipe.cookTime) && (
+                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                  {recipe.prepTime && <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />Prép. {formatDuration(recipe.prepTime)}</span>}
+                  {recipe.cookTime && <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />Cuisson {formatDuration(recipe.cookTime)}</span>}
+                </div>
+              )}
+
+              {/* Toggle catégories */}
+              {allCategories.length > 0 && (
+                <div className="space-y-2 rounded-xl border border-border/50 p-3">
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Modifier les catégories</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {allCategories.map((cat) => {
+                      const active = (recipe.recipeCategory ?? []).some((c) => c.id === cat.id)
+                      return (
+                        <Badge
+                          key={cat.id}
+                          variant={active ? "default" : "outline"}
+                          className="cursor-pointer select-none text-xs"
+                          onClick={() => void handleToggleCategory(cat)}
+                        >
+                          {categoriesLoading ? "…" : cat.name}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Toggle saisons */}
+              <div className="space-y-2 rounded-xl border border-border/50 p-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Modifier les saisons</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {SEASONS.map((season: Season) => {
+                    const active = getRecipeSeasonsFromTags(recipe.tags).includes(season)
+                    return (
+                      <Badge
+                        key={season}
+                        variant={active ? "default" : "outline"}
+                        className="cursor-pointer select-none text-xs"
+                        onClick={() => void handleToggleSeason(season)}
+                      >
+                        {seasonsLoading ? "…" : SEASON_LABELS[season]}
+                      </Badge>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Ingrédients */}
+            {(recipe.recipeIngredient ?? []).length > 0 && (
+              <div className="px-5">
+                <RecipeIngredientsList ingredients={recipe.recipeIngredient ?? []} headingSize="text-base" />
+              </div>
+            )}
+
+            {/* Instructions */}
+            {(recipe.recipeInstructions ?? []).length > 0 && (
+              <div className="px-5">
+                <RecipeInstructionsList instructions={recipe.recipeInstructions ?? []} headingSize="text-base" />
+              </div>
+            )}
+          </article>
+        )}
+      </div>
     </div>
   )
 }
