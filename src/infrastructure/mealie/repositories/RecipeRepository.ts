@@ -95,10 +95,11 @@ export class RecipeRepository implements IRecipeRepository {
             // Ingrédient structuré avec aliment résolu
             return {
               quantity: quantity ?? 0,
-              unit: hasUnit ? { id: ing.unitId } : null,
-              food: { id: ing.foodId },
+              unit: hasUnit ? { id: ing.unitId, name: ing.unit } : null,
+              food: { id: ing.foodId, name: ing.food },
               note: ing.note || "",
-              title: "",
+              title: null,
+              disableAmount: false,
             }
           }
 

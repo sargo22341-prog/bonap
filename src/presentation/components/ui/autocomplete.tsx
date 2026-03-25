@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useId } from "react"
+import { createPortal } from "react-dom"
 import { cn } from "../../../lib/utils.ts"
 
 export interface AutocompleteOption {
@@ -32,6 +33,7 @@ export function Autocomplete({
 }: AutocompleteProps) {
   const [open, setOpen] = useState(false)
   const [highlighted, setHighlighted] = useState(-1)
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({})
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const id = useId()
@@ -54,6 +56,20 @@ export function Autocomplete({
   useEffect(() => {
     setHighlighted(-1)
   }, [value])
+
+  // Recalcule la position du dropdown à chaque ouverture
+  useEffect(() => {
+    if (!open || !inputRef.current) return
+
+    const rect = inputRef.current.getBoundingClientRect()
+    setDropdownStyle({
+      position: "fixed",
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+      zIndex: 9999,
+    })
+  }, [open])
 
   const selectItem = (item: AutocompleteOption) => {
     if (item.id === "__create__") {
@@ -99,6 +115,39 @@ export function Autocomplete({
     }
   }, [highlighted])
 
+  const dropdown = open && visibleItems.length > 0 ? (
+    <ul
+      ref={listRef}
+      id={`${id}-list`}
+      role="listbox"
+      style={dropdownStyle}
+      className={cn(
+        "max-h-48 overflow-auto rounded-md border border-border",
+        "bg-popover text-popover-foreground shadow-md",
+      )}
+    >
+      {visibleItems.map((item, i) => (
+        <li
+          key={item.id}
+          role="option"
+          aria-selected={i === highlighted}
+          onMouseDown={(e) => {
+            e.preventDefault()
+            selectItem(item)
+          }}
+          onMouseEnter={() => setHighlighted(i)}
+          className={cn(
+            "cursor-pointer px-3 py-2 text-sm",
+            i === highlighted ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground",
+            item.id === "__create__" && "italic text-muted-foreground",
+          )}
+        >
+          {item.label}
+        </li>
+      ))}
+    </ul>
+  ) : null
+
   return (
     <div className={cn("relative", className)}>
       <input
@@ -131,37 +180,7 @@ export function Autocomplete({
         )}
       />
 
-      {open && visibleItems.length > 0 && (
-        <ul
-          ref={listRef}
-          id={`${id}-list`}
-          role="listbox"
-          className={cn(
-            "absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-md border border-border",
-            "bg-popover text-popover-foreground shadow-md",
-          )}
-        >
-          {visibleItems.map((item, i) => (
-            <li
-              key={item.id}
-              role="option"
-              aria-selected={i === highlighted}
-              onMouseDown={(e) => {
-                e.preventDefault()
-                selectItem(item)
-              }}
-              onMouseEnter={() => setHighlighted(i)}
-              className={cn(
-                "cursor-pointer px-3 py-2 text-sm",
-                i === highlighted ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground",
-                item.id === "__create__" && "italic text-muted-foreground",
-              )}
-            >
-              {item.label}
-            </li>
-          ))}
-        </ul>
-      )}
+      {dropdown && createPortal(dropdown, document.body)}
     </div>
   )
 }
