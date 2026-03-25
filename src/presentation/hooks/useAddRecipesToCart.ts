@@ -2,21 +2,35 @@ import { useCallback, useState } from "react"
 import {
   getShoppingItemsUseCase,
   addRecipesToListUseCase,
+  getRecipesByIdsUseCase,
 } from "../../infrastructure/container.ts"
+
+interface MealEntry {
+  slug: string
+  recipeName: string
+}
 
 export function useAddRecipesToCart() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  const addRecipes = useCallback(async (recipeIds: string[]) => {
-    if (recipeIds.length === 0) return
+  const addRecipes = useCallback(async (meals: MealEntry[]) => {
+    if (meals.length === 0) return
     setLoading(true)
     setError(null)
     setSuccess(false)
     try {
       const { list } = await getShoppingItemsUseCase.execute()
-      await addRecipesToListUseCase.execute(list.id, recipeIds)
+      const recipes = await getRecipesByIdsUseCase.execute(meals.map((m) => m.slug))
+      const entries = meals
+        .map(({ slug, recipeName }) => {
+          const recipe = recipes.find((r) => r.slug === slug)
+          if (!recipe) return null
+          return { recipeName, recipeSlug: slug, ingredients: recipe.recipeIngredient ?? [] }
+        })
+        .filter((e): e is NonNullable<typeof e> => e !== null)
+      await addRecipesToListUseCase.execute(list.id, entries)
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
     } catch (err) {

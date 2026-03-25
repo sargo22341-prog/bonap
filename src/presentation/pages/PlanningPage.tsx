@@ -316,11 +316,10 @@ export function PlanningPage() {
 
   const handleAddToCart = async () => {
     const visibleDateStrs = new Set(days.map((d) => formatDate(d)))
-    const recipeIds = mealPlans
-      .filter((m) => visibleDateStrs.has(m.date) && m.recipe?.id)
-      .map((m) => m.recipe!.id)
-    const unique = [...new Set(recipeIds)]
-    await addRecipesToCart(unique)
+    const meals = mealPlans
+      .filter((m) => visibleDateStrs.has(m.date) && m.recipe?.slug && m.recipe?.name)
+      .map((m) => ({ slug: m.recipe!.slug, recipeName: m.recipe!.name }))
+    await addRecipesToCart(meals)
   }
 
   const getMeals = (date: Date, type: string): MealieMealPlan[] => {

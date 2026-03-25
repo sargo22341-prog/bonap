@@ -86,10 +86,11 @@ export class ShoppingRepository implements IShoppingRepository {
     )
   }
 
-  async addRecipeToList(listId: string, recipeId: string): Promise<void> {
+  async addItems(listId: string, items: MealieShoppingItemCreate[]): Promise<void> {
+    if (items.length === 0) return
     await mealieApiClient.post(
-      `/api/households/shopping/lists/${listId}/recipe/${recipeId}`,
-      {},
+      "/api/households/shopping/items/create-bulk",
+      items.map((item) => ({ ...item, shoppingListId: listId })),
     )
   }
 

@@ -14,8 +14,8 @@ export interface IShoppingRepository {
   /** Adds a free-text item */
   addItem(listId: string, data: MealieShoppingItemCreate): Promise<void>
 
-  /** Adds all ingredients of a recipe to the list */
-  addRecipeToList(listId: string, recipeId: string): Promise<void>
+  /** Adds multiple items in a single bulk call */
+  addItems(listId: string, items: MealieShoppingItemCreate[]): Promise<void>
 
   /** Checks or unchecks an item */
   updateItem(listId: string, item: MealieShoppingItemUpdate): Promise<ShoppingItem>

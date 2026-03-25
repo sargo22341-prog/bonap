@@ -11,6 +11,7 @@ import {
   shoppingRepository,
 } from "../../infrastructure/container.ts"
 import { extractFoodKey } from "../../shared/utils/food.ts"
+import { foodLabelStore } from "../../infrastructure/shopping/FoodLabelStore.ts"
 
 export function useShopping() {
   const [list, setList] = useState<ShoppingList | null>(null)
@@ -58,6 +59,8 @@ export function useShopping() {
   const addItem = useCallback(async (note: string, _quantity?: number, labelId?: string) => {
     if (!list) return
     const key = extractFoodKey(note)
+    const savedLabelId = key ? foodLabelStore.lookup(key) : undefined
+    const effectiveLabelId = labelId ?? savedLabelId
     const existing = key ? findExisting(items, key) : undefined
     if (existing) {
       await shoppingRepository.updateItem(list.id, {
@@ -72,7 +75,7 @@ export function useShopping() {
         display: existing.display,
       })
     } else {
-      await addItemUseCase.execute(list.id, note, 1, labelId)
+      await addItemUseCase.execute(list.id, note, 1, effectiveLabelId)
     }
     const result = await getShoppingItemsUseCase.execute()
     setList(result.list)
@@ -101,10 +104,38 @@ export function useShopping() {
     }
   }, [list])
 
+  const updateItemNote = useCallback(async (item: ShoppingItem, newNote: string) => {
+    if (!list) return
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, note: newNote } : i)))
+    try {
+      await shoppingRepository.updateItem(list.id, {
+        id: item.id,
+        shoppingListId: list.id,
+        checked: item.checked,
+        position: item.position,
+        isFood: item.isFood,
+        note: newNote,
+        quantity: item.quantity,
+        labelId: item.label?.id,
+        display: item.display,
+      })
+    } catch (err) {
+      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, note: item.note } : i)))
+      setError(err instanceof Error ? err.message : "Erreur lors de la mise à jour")
+    }
+  }, [list])
+
   const updateItemLabel = useCallback(async (item: ShoppingItem, labelId: string | undefined) => {
     if (!list) return
     const newLabel = labelId ? labels.find((l) => l.id === labelId) : undefined
     setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, label: newLabel } : i)))
+    // Save to reference: extract food key from note (strip recipe suffix like " — Recette X")
+    const rawName = item.foodName ?? (item.note?.split(" — ")[0] ?? "")
+    const foodKey = extractFoodKey(rawName)
+    if (foodKey) {
+      if (labelId) foodLabelStore.set(foodKey, labelId)
+      else foodLabelStore.remove(foodKey)
+    }
     try {
       await shoppingRepository.updateItem(list.id, {
         id: item.id,
@@ -354,6 +385,7 @@ export function useShopping() {
     addRecipes,
     toggleItem,
     updateItemQuantity,
+    updateItemNote,
     updateItemLabel,
     deleteItem,
     clearList,

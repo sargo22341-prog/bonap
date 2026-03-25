@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import {
   Loader2,
   AlertCircle,
@@ -12,10 +12,17 @@ import {
   ArrowUp,
   Tag,
   ChevronDown,
+  Sparkles,
 } from "lucide-react"
 import { Button } from "../components/ui/button.tsx"
 import { Input } from "../components/ui/input.tsx"
 import { useShopping } from "../hooks/useShopping.ts"
+import { useCategorizeItems } from "../hooks/useCategorizeItems.ts"
+import { RecipeDetailModal } from "../components/RecipeDetailModal.tsx"
+import { recipeSlugStore } from "../../infrastructure/shopping/RecipeSlugStore.ts"
+import { foodLabelStore } from "../../infrastructure/shopping/FoodLabelStore.ts"
+import { getRecipesUseCase } from "../../infrastructure/container.ts"
+import { extractFoodKey } from "../../shared/utils/food.ts"
 import type { ShoppingItem, ShoppingLabel } from "../../domain/shopping/entities/ShoppingItem.ts"
 import { cn } from "../../lib/utils.ts"
 
@@ -45,12 +52,22 @@ interface LabelDropdownProps {
 
 function LabelDropdown({ labels, value, onChange, className }: LabelDropdownProps) {
   const [open, setOpen] = useState(false)
+  const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const selectedLabel = labels.find((l) => l.id === value)
 
   const handleSelect = (id: string | undefined) => {
     onChange(id)
     setOpen(false)
+  }
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      setOpenUpward(rect.bottom + 220 > window.innerHeight)
+    }
+    setOpen((p) => !p)
   }
 
   const handleBlur = (e: React.FocusEvent) => {
@@ -63,7 +80,7 @@ function LabelDropdown({ labels, value, onChange, className }: LabelDropdownProp
     <div ref={ref} className={cn("relative shrink-0", className)} onBlur={handleBlur}>
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); setOpen((p) => !p) }}
+        onClick={handleToggle}
         className="flex h-6 items-center gap-1 rounded-full bg-muted px-2 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
       >
         {selectedLabel ? (
@@ -78,7 +95,10 @@ function LabelDropdown({ labels, value, onChange, className }: LabelDropdownProp
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 min-w-[130px] rounded-[var(--radius-xl)] border border-border/50 bg-card shadow-warm-md overflow-hidden">
+        <div className={cn(
+          "absolute right-0 z-50 min-w-[130px] rounded-[var(--radius-xl)] border border-border/50 bg-card shadow-warm-md overflow-hidden",
+          openUpward ? "bottom-full mb-1" : "top-full mt-1",
+        )}>
           <button
             type="button"
             onClick={() => handleSelect(undefined)}
@@ -87,7 +107,7 @@ function LabelDropdown({ labels, value, onChange, className }: LabelDropdownProp
             <span className="h-2 w-2 rounded-full bg-border" />
             Sans catégorie
           </button>
-          {labels.map((l) => (
+          {[...labels].sort((a, b) => a.name.localeCompare(b.name, "fr")).map((l) => (
             <button
               key={l.id}
               type="button"
@@ -116,8 +136,18 @@ interface FormLabelSelectProps {
 
 function FormLabelSelect({ labels, value, onChange, disabled }: FormLabelSelectProps) {
   const [open, setOpen] = useState(false)
+  const [openUpward, setOpenUpward] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const selected = labels.find((l) => l.id === value)
+
+  const handleToggle = () => {
+    if (disabled) return
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      setOpenUpward(rect.bottom + 220 > window.innerHeight)
+    }
+    setOpen((p) => !p)
+  }
 
   const handleBlur = (e: React.FocusEvent) => {
     if (ref.current && !ref.current.contains(e.relatedTarget as Node)) {
@@ -129,7 +159,7 @@ function FormLabelSelect({ labels, value, onChange, disabled }: FormLabelSelectP
     <div ref={ref} className="relative shrink-0" onBlur={handleBlur}>
       <button
         type="button"
-        onClick={() => !disabled && setOpen((p) => !p)}
+        onClick={handleToggle}
         disabled={disabled}
         className="flex h-8 items-center gap-1.5 rounded-[var(--radius-lg)] border border-input bg-card px-2.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors disabled:opacity-50"
       >
@@ -145,7 +175,10 @@ function FormLabelSelect({ labels, value, onChange, disabled }: FormLabelSelectP
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 min-w-[140px] rounded-[var(--radius-xl)] border border-border/50 bg-card shadow-warm-md overflow-hidden">
+        <div className={cn(
+          "absolute left-0 z-50 min-w-[140px] rounded-[var(--radius-xl)] border border-border/50 bg-card shadow-warm-md overflow-hidden",
+          openUpward ? "bottom-full mb-1" : "top-full mt-1",
+        )}>
           <button
             type="button"
             onClick={() => { onChange(""); setOpen(false) }}
@@ -154,7 +187,7 @@ function FormLabelSelect({ labels, value, onChange, disabled }: FormLabelSelectP
             <span className="h-2 w-2 rounded-full bg-border" />
             Catégorie
           </button>
-          {labels.map((l) => (
+          {[...labels].sort((a, b) => a.name.localeCompare(b.name, "fr")).map((l) => (
             <button
               key={l.id}
               type="button"
@@ -180,12 +213,43 @@ interface MealieItemRowProps {
   onToggle: (item: ShoppingItem) => void
   onDelete: (id: string) => void
   onUpdateQuantity: (item: ShoppingItem, qty: number) => void
+  onUpdateNote: (item: ShoppingItem, note: string) => void
   onUpdateLabel: (item: ShoppingItem, labelId: string | undefined) => void
+  onViewRecipe?: (recipeName: string) => void
 }
 
-function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onUpdateLabel }: MealieItemRowProps) {
-  const name = item.foodName ?? item.note ?? "Article sans nom"
+function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onUpdateNote, onUpdateLabel, onViewRecipe }: MealieItemRowProps) {
+  // For items added from planning, the note is "ingredient — RecipeName"
+  const noteParts = item.note?.split(" — ") ?? []
+  const displayName = item.foodName ?? (noteParts.length >= 2 ? noteParts[0] : item.note) ?? "Article sans nom"
+  const recipeSuffix = noteParts.length >= 2 ? noteParts.slice(1).join(" — ") : null
+  const recipeNamesFromNote = recipeSuffix ? [recipeSuffix] : []
+  const allRecipeNames = item.recipeNames?.length ? item.recipeNames : recipeNamesFromNote
   const qty = item.quantity ?? 0
+
+  const [editing, setEditing] = useState(false)
+  const [editValue, setEditValue] = useState(displayName)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const startEdit = () => {
+    setEditValue(displayName)
+    setEditing(true)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  const saveEdit = () => {
+    const trimmed = editValue.trim()
+    if (trimmed && trimmed !== displayName) {
+      const newNote = recipeSuffix ? `${trimmed} — ${recipeSuffix}` : trimmed
+      onUpdateNote(item, newNote)
+    }
+    setEditing(false)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") saveEdit()
+    if (e.key === "Escape") setEditing(false)
+  }
 
   return (
     <li className="flex min-h-[48px] items-center gap-3 border-b border-border/25 px-4 last:border-0 hover:bg-secondary/30 transition-colors group">
@@ -234,39 +298,58 @@ function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onU
       </div>
 
       {/* Nom + recettes associées */}
-      <span className="flex-1 min-w-0">
-        <span
-          className={cn(
-            "text-sm font-medium leading-tight",
-            item.checked && "line-through opacity-40",
-          )}
-        >
-          {name}
-        </span>
-        {item.recipeNames && item.recipeNames.length > 0 && (
-          <span className="block text-xs text-muted-foreground/60 italic">
-            {item.recipeNames.join(", ")}
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={saveEdit}
+          onKeyDown={handleKeyDown}
+          className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none border-b border-primary"
+        />
+      ) : (
+        <span className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+          <span
+            onDoubleClick={startEdit}
+            className={cn(
+              "text-sm font-medium leading-tight cursor-text",
+              item.checked && "line-through opacity-40",
+            )}
+          >
+            {displayName}
           </span>
-        )}
-      </span>
+          {allRecipeNames.map((recipeName) => (
+            <button
+              key={recipeName}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onViewRecipe?.(recipeName) }}
+              className="text-[10px] text-muted-foreground/40 hover:text-primary transition-colors leading-tight"
+            >
+              {recipeName}
+            </button>
+          ))}
+        </span>
+      )}
 
       {/* Catégorie (toujours visible) + suppression (au survol) */}
       <div className="flex shrink-0 items-center gap-1">
-        {labels.length > 0 && (
+        {!editing && labels.length > 0 && (
           <LabelDropdown
             labels={labels}
             value={item.label?.id}
             onChange={(labelId) => onUpdateLabel(item, labelId)}
           />
         )}
-        <button
-          type="button"
-          onClick={() => onDelete(item.id)}
-          aria-label="Supprimer"
-          className="flex h-6 w-6 items-center justify-center rounded-lg text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
+        {!editing && (
+          <button
+            type="button"
+            onClick={() => onDelete(item.id)}
+            aria-label="Supprimer"
+            className="flex h-6 w-6 items-center justify-center rounded-lg text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
     </li>
   )
@@ -402,9 +485,11 @@ interface GroupHeaderProps {
   label: string
   color?: string
   isFirst?: boolean
+  onAiCategorize?: () => void
+  aiCategorizeLoading?: boolean
 }
 
-function GroupHeader({ label, isFirst }: GroupHeaderProps) {
+function GroupHeader({ label, isFirst, onAiCategorize, aiCategorizeLoading }: GroupHeaderProps) {
   const isNone = label === "Sans catégorie"
   return (
     <div className={cn(
@@ -418,6 +503,21 @@ function GroupHeader({ label, isFirst }: GroupHeaderProps) {
       <span className="text-[9.5px] font-bold uppercase tracking-[0.10em] text-muted-foreground/60">
         {label}
       </span>
+      {onAiCategorize && (
+        <button
+          type="button"
+          onClick={onAiCategorize}
+          disabled={aiCategorizeLoading}
+          title="Catégoriser via IA"
+          className="ml-auto flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.10em] text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+        >
+          {aiCategorizeLoading
+            ? <Loader2 className="h-3 w-3 animate-spin" />
+            : <Sparkles className="h-3 w-3" />
+          }
+          IA
+        </button>
+      )}
     </div>
   )
 }
@@ -430,10 +530,19 @@ interface GroupedItemsProps {
   onToggle: (item: ShoppingItem) => void
   onDelete: (id: string) => void
   onUpdateQuantity: (item: ShoppingItem, qty: number) => void
+  onUpdateNote: (item: ShoppingItem, note: string) => void
   onUpdateLabel: (item: ShoppingItem, labelId: string | undefined) => void
+  onAiCategorize?: (uncategorizedItems: ShoppingItem[]) => void
+  aiCategorizeLoading?: boolean
+  onViewRecipe?: (recipeName: string) => void
 }
 
-function GroupedItems({ items, labels, onToggle, onDelete, onUpdateQuantity, onUpdateLabel }: GroupedItemsProps) {
+function itemSortKey(item: ShoppingItem): string {
+  const note = item.note?.split(" — ")[0] ?? ""
+  return (item.foodName ?? note).toLowerCase()
+}
+
+function GroupedItems({ items, labels, onToggle, onDelete, onUpdateQuantity, onUpdateNote, onUpdateLabel, onAiCategorize, aiCategorizeLoading, onViewRecipe }: GroupedItemsProps) {
   const unchecked = items.filter((i) => !i.checked)
   const checked = items.filter((i) => i.checked)
 
@@ -447,10 +556,14 @@ function GroupedItems({ items, labels, onToggle, onDelete, onUpdateQuantity, onU
       }
       groups.get(key)!.items.push(item)
     }
-    return [...groups.entries()].sort(([a], [b]) => {
+    // Sort items alphabetically within each group
+    for (const group of groups.values()) {
+      group.items.sort((a, b) => itemSortKey(a).localeCompare(itemSortKey(b), "fr"))
+    }
+    return [...groups.entries()].sort(([a, ga], [b, gb]) => {
       if (a === "__none__") return 1
       if (b === "__none__") return -1
-      return 0
+      return ga.label.localeCompare(gb.label, "fr")
     })
   }
 
@@ -470,7 +583,12 @@ function GroupedItems({ items, labels, onToggle, onDelete, onUpdateQuantity, onU
       {uncheckedGroups.map(([key, group]) => (
         <div key={key}>
           {uncheckedGroups.length > 1 && (
-            <GroupHeader label={group.label} color={group.color} />
+            <GroupHeader
+              label={group.label}
+              color={group.color}
+              onAiCategorize={key === "__none__" && onAiCategorize ? () => onAiCategorize(group.items) : undefined}
+              aiCategorizeLoading={key === "__none__" ? aiCategorizeLoading : undefined}
+            />
           )}
           <ul>
             {group.items.map((item) => (
@@ -481,7 +599,9 @@ function GroupedItems({ items, labels, onToggle, onDelete, onUpdateQuantity, onU
                 onToggle={onToggle}
                 onDelete={onDelete}
                 onUpdateQuantity={onUpdateQuantity}
+                onUpdateNote={onUpdateNote}
                 onUpdateLabel={onUpdateLabel}
+                onViewRecipe={onViewRecipe}
               />
             ))}
           </ul>
@@ -510,7 +630,9 @@ function GroupedItems({ items, labels, onToggle, onDelete, onUpdateQuantity, onU
                 onToggle={onToggle}
                 onDelete={onDelete}
                 onUpdateQuantity={onUpdateQuantity}
+                onUpdateNote={onUpdateNote}
                 onUpdateLabel={onUpdateLabel}
+                onViewRecipe={onViewRecipe}
               />
             ))}
           </ul>
@@ -544,10 +666,10 @@ function GroupedHabituels({ items, cartItems, labels, onAddToCart, onDelete, onU
     groups.get(key)!.items.push(item)
   }
 
-  const sorted = [...groups.entries()].sort(([a], [b]) => {
+  const sorted = [...groups.entries()].sort(([a, ga], [b, gb]) => {
     if (a === "__none__") return 1
     if (b === "__none__") return -1
-    return 0
+    return ga.label.localeCompare(gb.label, "fr")
   })
 
   if (sorted.length === 0) {
@@ -597,6 +719,7 @@ export function ShoppingPage() {
     addItem,
     toggleItem,
     updateItemQuantity,
+    updateItemNote,
     updateItemLabel,
     deleteItem,
     clearList,
@@ -609,13 +732,44 @@ export function ShoppingPage() {
     reload,
   } = useShopping()
 
+  const { categorize: categorizeWithAI, loading: aiLoading, error: aiError } = useCategorizeItems()
+
   const [newItemNote, setNewItemNote] = useState("")
   const [newItemQty, setNewItemQty] = useState(1)
   const [newItemLabelId, setNewItemLabelId] = useState<string>("")
+  const labelManuallySet = useRef(false)
+
+  useEffect(() => {
+    if (labelManuallySet.current) return
+    const key = extractFoodKey(newItemNote)
+    const saved = key ? foodLabelStore.lookup(key) : undefined
+    setNewItemLabelId(saved ?? "")
+  }, [newItemNote])
   const [newHabituelNote, setNewHabituelNote] = useState("")
   const [newHabituelLabelId, setNewHabituelLabelId] = useState<string>("")
   const [addingItem, setAddingItem] = useState(false)
   const [addingHabituel, setAddingHabituel] = useState(false)
+
+  const [previewSlug, setPreviewSlug] = useState<string | null>(null)
+
+  const handleViewRecipe = async (recipeName: string) => {
+    // Try the slug store first (populated when adding from planning)
+    let slug = recipeSlugStore.lookup(recipeName)
+    if (!slug) {
+      // Fallback: search Mealie by name
+      const results = await getRecipesUseCase.execute(1, 5, { search: recipeName })
+      const match = results.items.find((r) => r.name.toLowerCase() === recipeName.toLowerCase())
+      if (match) {
+        slug = match.slug
+        recipeSlugStore.set(recipeName, slug)
+      }
+    }
+    if (slug) setPreviewSlug(slug)
+  }
+
+  const handleAiCategorize = async (uncategorizedItems: ShoppingItem[]) => {
+    await categorizeWithAI(uncategorizedItems, labels, updateItemLabel)
+  }
   const newItemInputRef = useRef<HTMLInputElement>(null)
   const newHabituelInputRef = useRef<HTMLInputElement>(null)
 
@@ -633,6 +787,7 @@ export function ShoppingPage() {
       setNewItemNote("")
       setNewItemQty(1)
       setNewItemLabelId("")
+      labelManuallySet.current = false
     } finally {
       setAddingItem(false)
       setTimeout(() => newItemInputRef.current?.focus(), 0)
@@ -695,10 +850,10 @@ export function ShoppingPage() {
       </div>
 
       {/* Erreur */}
-      {error && (
+      {(error || aiError) && (
         <div className="flex items-center gap-3 rounded-[var(--radius-xl)] border border-destructive/20 bg-destructive/8 p-4 text-destructive">
           <AlertCircle className="h-5 w-5 shrink-0" />
-          <span className="text-sm">{error}</span>
+          <span className="text-sm">{error ?? aiError}</span>
         </div>
       )}
 
@@ -766,11 +921,15 @@ export function ShoppingPage() {
                 onToggle={(item) => void toggleItem(item)}
                 onDelete={(id) => void deleteItem(id)}
                 onUpdateQuantity={(item, qty) => void updateItemQuantity(item, qty)}
+                onUpdateNote={(item, note) => void updateItemNote(item, note)}
                 onUpdateLabel={(item, labelId) => void updateItemLabel(item, labelId)}
+                onAiCategorize={labels.length > 0 ? (uncategorized) => void handleAiCategorize(uncategorized) : undefined}
+                aiCategorizeLoading={aiLoading}
+                onViewRecipe={(name) => void handleViewRecipe(name)}
               />
 
               {/* Formulaire d'ajout */}
-              <div className="border-t border-border/40 bg-secondary/20 p-3 rounded-b-[var(--radius-2xl)] overflow-hidden">
+              <div className="border-t border-border/40 bg-secondary/20 p-3 rounded-b-[var(--radius-2xl)]">
                 <form onSubmit={(e) => void handleAddItem(e)} className="flex gap-2">
                   <div className="flex shrink-0 items-center rounded-[var(--radius-lg)] border border-input bg-card overflow-hidden">
                     <button
@@ -803,7 +962,7 @@ export function ShoppingPage() {
                     <FormLabelSelect
                       labels={labels}
                       value={newItemLabelId}
-                      onChange={setNewItemLabelId}
+                      onChange={(v) => { labelManuallySet.current = true; setNewItemLabelId(v) }}
                       disabled={addingItem}
                     />
                   )}
@@ -858,7 +1017,7 @@ export function ShoppingPage() {
               />
 
               {/* Formulaire d'ajout habituel */}
-              <div className="border-t border-border/40 bg-secondary/20 p-3 rounded-b-[var(--radius-2xl)] overflow-hidden">
+              <div className="border-t border-border/40 bg-secondary/20 p-3 rounded-b-[var(--radius-2xl)]">
                 <form onSubmit={(e) => void handleAddHabituel(e)} className="flex gap-2">
                   <Input
                     ref={newHabituelInputRef}
@@ -894,6 +1053,11 @@ export function ShoppingPage() {
           </section>
         </div>
       )}
+
+      <RecipeDetailModal
+        slug={previewSlug}
+        onOpenChange={(open) => { if (!open) setPreviewSlug(null) }}
+      />
     </div>
   )
 }
