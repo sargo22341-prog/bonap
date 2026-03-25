@@ -1,5 +1,5 @@
 import { useStats, type StatsPeriod } from "../hooks/useStats.ts"
-import { TrendingUp, Calendar, RefreshCw, Zap } from "lucide-react"
+import { TrendingUp, Calendar, RefreshCw, Zap, Layers } from "lucide-react"
 import { cn } from "../../lib/utils.ts"
 
 const PERIODS: { value: StatsPeriod; label: string }[] = [
@@ -39,42 +39,28 @@ function StatCard({
   )
 }
 
-function ProportionBar({
-  leftLabel,
-  rightLabel,
-  leftRatio,
-  leftCount,
-  rightCount,
+function CatalogueCoverage({
+  unique,
+  total,
+  pct,
 }: {
-  leftLabel: string
-  rightLabel: string
-  leftRatio: number
-  leftCount: number
-  rightCount: number
+  unique: number
+  total: number
+  pct: number
 }) {
-  const leftPct = Math.round(leftRatio * 100)
-  const rightPct = 100 - leftPct
   return (
-    <div>
-      <div className="mb-2 flex items-center justify-between text-sm">
-        <span className="font-semibold">
-          {leftLabel} <span className="font-normal text-muted-foreground">({leftCount})</span>
-        </span>
-        <span className="font-semibold">
-          {rightLabel} <span className="font-normal text-muted-foreground">({rightCount})</span>
-        </span>
-      </div>
-      <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted">
+    <div className="rounded-[var(--radius-2xl)] border border-border/50 bg-card shadow-subtle p-5">
+      <h3 className="mb-1 text-sm font-bold">Exploration du catalogue</h3>
+      <p className="mb-4 text-xs text-muted-foreground">
+        {unique} recette{unique > 1 ? "s" : ""} différente{unique > 1 ? "s" : ""} sur {total} au catalogue
+      </p>
+      <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
         <div
-          className="bg-primary transition-all duration-700 ease-out"
-          style={{ width: `${leftPct}%` }}
-          title={`${leftLabel} : ${leftPct}%`}
+          className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
+          style={{ width: `${pct}%` }}
         />
       </div>
-      <div className="mt-1.5 flex justify-between text-xs text-muted-foreground">
-        <span className="font-medium">{leftPct}%</span>
-        <span className="font-medium">{rightPct}%</span>
-      </div>
+      <p className="mt-2 text-right text-xs font-semibold text-muted-foreground">{pct}%</p>
     </div>
   )
 }
@@ -297,10 +283,10 @@ export function StatsPage() {
                   accent="bg-primary/10 text-primary"
                 />
                 <StatCard
-                  label="Moy. / semaine"
-                  value={stats.avgMealsPerWeek}
-                  sub="repas par semaine"
-                  icon={TrendingUp}
+                  label="Recettes uniques"
+                  value={stats.uniqueRecipesCount}
+                  sub="recettes différentes"
+                  icon={Layers}
                   accent="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                 />
                 <StatCard
@@ -319,19 +305,12 @@ export function StatsPage() {
                 />
               </div>
 
-              {/* Répartition déjeuner / dîner */}
-              {(stats.lunchCount > 0 || stats.dinnerCount > 0) && (
-                <div className="rounded-[var(--radius-2xl)] border border-border/50 bg-card shadow-subtle p-5">
-                  <h3 className="mb-4 text-sm font-bold">Répartition déjeuner / dîner</h3>
-                  <ProportionBar
-                    leftLabel="Déjeuner"
-                    rightLabel="Dîner"
-                    leftRatio={stats.lunchRatio}
-                    leftCount={stats.lunchCount}
-                    rightCount={stats.dinnerCount}
-                  />
-                </div>
-              )}
+              {/* Couverture catalogue */}
+              <CatalogueCoverage
+                unique={stats.uniqueRecipesCount}
+                total={stats.totalCatalogueRecipes}
+                pct={stats.catalogueCoverage}
+              />
 
               {/* Top recettes + ingrédients */}
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

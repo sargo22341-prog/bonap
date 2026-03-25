@@ -7,31 +7,51 @@ export interface CategoryStat {
   percentage: number
 }
 
+/** Lunch slots sort before dinner slots on the same day. */
+function slotOrder(entryType: string): number {
+  const t = (entryType ?? "").toLowerCase()
+  return t.includes("dinner") || t.includes("dîner") || t.includes("diner") || t.includes("supper") ? 2 : 1
+}
+
 /**
- * Computes the percentage of "leftover" meals (same recipe on two consecutive slots).
+ * Computes the percentage of "leftover" meals.
+ * A leftover is when the same recipe appears in two truly consecutive slots
+ * (lunch → dinner on the same day, or dinner → lunch the next day).
  */
 export function computeLeftoverPercentage(mealPlans: MealieMealPlan[]): number {
   if (mealPlans.length < 2) return 0
 
   const sorted = [...mealPlans].sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date)
-    return a.entryType.localeCompare(b.entryType)
+    return slotOrder(a.entryType) - slotOrder(b.entryType)
   })
 
   let leftovers = 0
+  let consecutivePairs = 0
+
   for (let i = 1; i < sorted.length; i++) {
     const prev = sorted[i - 1]
     const curr = sorted[i]
-    if (
-      prev.recipeId &&
-      curr.recipeId &&
-      prev.recipeId === curr.recipeId
-    ) {
+
+    // Only count truly consecutive slots (same day or adjacent days)
+    let consecutive = false
+    if (prev.date === curr.date) {
+      consecutive = true
+    } else {
+      const d = new Date(prev.date)
+      d.setDate(d.getDate() + 1)
+      if (formatDate(d) === curr.date) consecutive = true
+    }
+    if (!consecutive) continue
+
+    consecutivePairs++
+    if (prev.recipeId && curr.recipeId && prev.recipeId === curr.recipeId) {
       leftovers++
     }
   }
 
-  return Math.round((leftovers / (mealPlans.length - 1)) * 100)
+  if (consecutivePairs === 0) return 0
+  return Math.round((leftovers / consecutivePairs) * 100)
 }
 
 /**
@@ -48,7 +68,6 @@ export function computeStreak(
   const start = new Date(startDate)
   const end = new Date(endDate)
 
-  // Rewind to the Monday of the end week
   const current = new Date(end)
   const dayOfWeek = current.getDay() === 0 ? 6 : current.getDay() - 1
   current.setDate(current.getDate() - dayOfWeek)
@@ -63,8 +82,7 @@ export function computeStreak(
       day.setDate(day.getDate() + d)
       if (day > end) break
       if (day < start) continue
-      const dateStr = formatDate(day)
-      if (!datesWithMeal.has(dateStr)) {
+      if (!datesWithMeal.has(formatDate(day))) {
         weekComplete = false
         break
       }
