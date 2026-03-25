@@ -9,6 +9,23 @@ export const SEASON_LABELS: Record<Season, string> = {
   hiver: "Hiver",
 }
 
+export interface MealieFood {
+  id: string
+  name: string
+  pluralName?: string | null
+  description?: string
+  labelId?: string | null
+  label?: { id: string; name: string; color?: string } | null
+}
+
+export interface MealieUnit {
+  id: string
+  name: string
+  pluralName?: string | null
+  abbreviation?: string
+  useAbbreviation?: boolean
+}
+
 export interface MealieIngredient {
   quantity?: number
   unit?: { id?: string; name: string }
@@ -17,6 +34,7 @@ export interface MealieIngredient {
   display?: string
   originalText?: string | null
   referenceId?: string
+  title?: string
 }
 
 export interface MealieInstruction {
@@ -48,8 +66,12 @@ export interface RecipeFilters {
 
 export interface RecipeFormIngredient {
   quantity: string
+  /** Nom de l'unité (ex: "gramme"). Résolu vers un id au moment de l'envoi. */
   unit: string
+  unitId?: string
+  /** Nom de l'aliment (ex: "farine"). Résolu ou créé au moment de l'envoi. */
   food: string
+  foodId?: string
   note: string
 }
 

@@ -86,9 +86,35 @@ export class RecipeRepository implements IRecipeRepository {
       recipeCategory: data.categories,
       recipeIngredient: data.recipeIngredient
         .filter((ing) => ing.quantity || ing.unit || ing.food || ing.note)
-        .map((ing) => ({
-          note: [ing.quantity, ing.unit, ing.food, ing.note].filter(Boolean).join(" "),
-        })),
+        .map((ing) => {
+          const quantity = ing.quantity ? parseFloat(ing.quantity) : undefined
+          const hasFood = Boolean(ing.foodId)
+          const hasUnit = Boolean(ing.unitId)
+
+          if (hasFood) {
+            // Ingrédient structuré avec aliment résolu
+            return {
+              quantity: quantity ?? 0,
+              unit: hasUnit ? { id: ing.unitId } : null,
+              food: { id: ing.foodId },
+              note: ing.note || "",
+              title: "",
+            }
+          }
+
+          // Fallback : ingrédient en texte libre (note)
+          const noteParts = [
+            ing.quantity,
+            ing.unit,
+            ing.food,
+            ing.note,
+          ].filter(Boolean)
+          return {
+            note: noteParts.join(" "),
+            quantity: quantity ?? 0,
+            title: "",
+          }
+        }),
       recipeInstructions: data.recipeInstructions
         .filter((step) => step.text.trim())
         .map((step, i) => ({

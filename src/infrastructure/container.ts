@@ -12,6 +12,8 @@ import { PlanningRepository } from "./mealie/repositories/PlanningRepository.ts"
 import { ShoppingRepository } from "./mealie/repositories/ShoppingRepository.ts"
 import { CategoryRepository } from "./mealie/repositories/CategoryRepository.ts"
 import { TagRepository } from "./mealie/repositories/TagRepository.ts"
+import { FoodRepository } from "./mealie/repositories/FoodRepository.ts"
+import { UnitRepository } from "./mealie/repositories/UnitRepository.ts"
 
 // Use cases — recipe
 import { GetRecipesUseCase } from "../application/recipe/usecases/GetRecipesUseCase.ts"
@@ -39,6 +41,9 @@ import { ClearListUseCase } from "../application/shopping/usecases/ClearListUseC
 // Use cases — organizer
 import { GetCategoriesUseCase } from "../application/organizer/usecases/GetCategoriesUseCase.ts"
 import { GetTagsUseCase } from "../application/organizer/usecases/GetTagsUseCase.ts"
+import { GetFoodsUseCase } from "../application/organizer/usecases/GetFoodsUseCase.ts"
+import { CreateFoodUseCase } from "../application/organizer/usecases/CreateFoodUseCase.ts"
+import { GetUnitsUseCase } from "../application/organizer/usecases/GetUnitsUseCase.ts"
 
 // --- Singleton repository instances ---
 
@@ -47,13 +52,16 @@ export const planningRepository = new PlanningRepository()
 export const shoppingRepository = new ShoppingRepository()
 export const categoryRepository = new CategoryRepository()
 export const tagRepository = new TagRepository()
+export const foodRepository = new FoodRepository()
+export const unitRepository = new UnitRepository()
+
 // --- Singleton use case instances — recipe ---
 
 export const getRecipesUseCase = new GetRecipesUseCase(recipeRepository)
 export const getRecipeUseCase = new GetRecipeUseCase(recipeRepository)
 export const getRecipesByIdsUseCase = new GetRecipesByIdsUseCase(recipeRepository)
-export const createRecipeUseCase = new CreateRecipeUseCase(recipeRepository)
-export const updateRecipeUseCase = new UpdateRecipeUseCase(recipeRepository)
+export const createRecipeUseCase = new CreateRecipeUseCase(recipeRepository, foodRepository, unitRepository)
+export const updateRecipeUseCase = new UpdateRecipeUseCase(recipeRepository, foodRepository, unitRepository)
 export const updateSeasonsUseCase = new UpdateSeasonsUseCase(recipeRepository)
 export const updateCategoriesUseCase = new UpdateCategoriesUseCase(recipeRepository)
 
@@ -77,3 +85,6 @@ export const clearListUseCase = new ClearListUseCase(shoppingRepository)
 
 export const getCategoriesUseCase = new GetCategoriesUseCase(categoryRepository)
 export const getTagsUseCase = new GetTagsUseCase(tagRepository)
+export const getFoodsUseCase = new GetFoodsUseCase(foodRepository)
+export const createFoodUseCase = new CreateFoodUseCase(foodRepository)
+export const getUnitsUseCase = new GetUnitsUseCase(unitRepository)
