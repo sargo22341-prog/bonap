@@ -23,6 +23,7 @@ import { CreateRecipeUseCase } from "../application/recipe/usecases/CreateRecipe
 import { UpdateRecipeUseCase } from "../application/recipe/usecases/UpdateRecipeUseCase.ts"
 import { UpdateSeasonsUseCase } from "../application/recipe/usecases/UpdateSeasonsUseCase.ts"
 import { UpdateCategoriesUseCase } from "../application/recipe/usecases/UpdateCategoriesUseCase.ts"
+import { FetchAiImageUseCase } from "../application/recipe/usecases/FetchAiImageUseCase.ts"
 
 // Use cases — planning
 import { GetWeekPlanningUseCase } from "../application/planning/usecases/GetWeekPlanningUseCase.ts"
@@ -64,6 +65,7 @@ export const createRecipeUseCase = new CreateRecipeUseCase(recipeRepository, foo
 export const updateRecipeUseCase = new UpdateRecipeUseCase(recipeRepository, foodRepository, unitRepository)
 export const updateSeasonsUseCase = new UpdateSeasonsUseCase(recipeRepository)
 export const updateCategoriesUseCase = new UpdateCategoriesUseCase(recipeRepository)
+export const fetchAiImageUseCase = new FetchAiImageUseCase()
 
 // --- Singleton use case instances — planning ---
 

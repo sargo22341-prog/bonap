@@ -6,6 +6,7 @@ import { useCategories } from "../hooks/useCategories.ts"
 import { useFoods } from "../hooks/useFoods.ts"
 import { useUnits } from "../hooks/useUnits.ts"
 import { useRecipeForm } from "../hooks/useRecipeForm.ts"
+import { useAiImage } from "../hooks/useAiImage.ts"
 import { Button } from "../components/ui/button.tsx"
 import { Badge } from "../components/ui/badge.tsx"
 import { Input } from "../components/ui/input.tsx"
@@ -19,6 +20,7 @@ import {
   ImagePlus,
   Check,
   UtensilsCrossed,
+  Sparkles,
 } from "lucide-react"
 import { useState, useRef, useCallback, useEffect, type ReactNode, type ChangeEvent } from "react"
 import { CookingMode } from "../components/CookingMode.tsx"
@@ -289,6 +291,7 @@ export function RecipeDetailPage() {
   const { foods } = useFoods()
   const { units } = useUnits()
   const { updateRecipe, loading: saving, error: saveError } = useRecipeForm()
+  const { fetchAiImage, loading: aiImageLoading, error: aiImageError } = useAiImage()
 
   // ─── Local editable state (initialized from recipe) ────────────────────────
 
@@ -319,6 +322,14 @@ export function RecipeDetailPage() {
     patch({ imageFile: file })
     setImagePreview(URL.createObjectURL(file))
     setIsDirty(true)
+  }
+
+  const handleAiImage = async () => {
+    if (!recipe) return
+    const previewUrl = await fetchAiImage(recipe.name, recipe.slug)
+    if (previewUrl) {
+      setImagePreview(previewUrl)
+    }
   }
 
   // ─── Categories & Seasons (saved immediately, no dirty needed) ─────────────
@@ -510,39 +521,68 @@ export function RecipeDetailPage() {
       {recipe && formData && (
         <article className="space-y-6">
           {/* Image */}
-          <div
-            className="group relative overflow-hidden rounded-[var(--radius-xl)] cursor-pointer"
-            onClick={() => fileInputRef.current?.click()}
-            title="Cliquer pour changer la photo"
-          >
-            {imagePreview ? (
-              <>
-                <img
-                  src={imagePreview}
-                  alt={recipe.name}
-                  className="aspect-video w-full object-cover"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
-                  <span className="flex flex-col items-center gap-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100">
-                    <ImagePlus className="h-7 w-7" />
-                    <span className="text-xs font-medium">Changer la photo</span>
-                  </span>
+          <div className="space-y-2">
+            <div
+              className="group relative overflow-hidden rounded-[var(--radius-xl)] cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+              title="Cliquer pour changer la photo"
+            >
+              {imagePreview ? (
+                <>
+                  <img
+                    src={imagePreview}
+                    alt={recipe.name}
+                    className="aspect-video w-full object-cover"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
+                    <span className="flex flex-col items-center gap-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                      <ImagePlus className="h-7 w-7" />
+                      <span className="text-xs font-medium">Changer la photo</span>
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-[var(--radius-xl)] border-2 border-dashed border-border bg-muted/30 text-muted-foreground transition-colors hover:border-ring hover:bg-muted/50">
+                  <ImagePlus className="h-8 w-8" />
+                  <span className="text-sm">Cliquer pour ajouter une photo</span>
                 </div>
-              </>
-            ) : (
-              <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-[var(--radius-xl)] border-2 border-dashed border-border bg-muted/30 text-muted-foreground transition-colors hover:border-ring hover:bg-muted/50">
-                <ImagePlus className="h-8 w-8" />
-                <span className="text-sm">Cliquer pour ajouter une photo</span>
-              </div>
-            )}
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+
+            {/* Bouton photo via IA */}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void handleAiImage()}
+                disabled={aiImageLoading || saving}
+                className="gap-1.5"
+              >
+                {aiImageLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Recherche en cours…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Photo via IA
+                  </>
+                )}
+              </Button>
+              {aiImageError && (
+                <p className="text-xs text-destructive">{aiImageError}</p>
+              )}
+            </div>
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleImageChange}
-          />
 
           {/* Titre */}
           <div className="space-y-3">
