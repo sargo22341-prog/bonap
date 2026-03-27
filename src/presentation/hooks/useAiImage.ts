@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react"
 import { fetchAiImageUseCase, recipeRepository } from "../../infrastructure/container.ts"
 import type { ImageProvider } from "../../application/recipe/usecases/FetchAiImageUseCase.ts"
+import { getIngressBasename } from "../../shared/utils/env.ts"
 
 interface UseAiImageResult {
   fetchAiImage: (recipeName: string, recipeSlug: string, recipeId: string, provider: ImageProvider) => Promise<string | null>
@@ -43,7 +44,7 @@ export function useAiImage(): UseAiImageResult {
       await recipeRepository.uploadImage(recipeSlug, file)
 
       // 4. URL Mealie avec cache-buster basé sur le timestamp courant (image vient d'être uploadée)
-      return `/api/media/recipes/${recipeId}/images/original.webp?t=${Date.now()}`
+      return `${getIngressBasename()}/api/media/recipes/${recipeId}/images/original.webp?t=${Date.now()}`
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue")
       return null

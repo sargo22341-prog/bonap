@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom"
 import { UtensilsCrossed, CalendarDays, BarChart2, ShoppingCart, ChevronLeft, ChevronRight, ExternalLink, Settings, Sparkles } from "lucide-react"
 import { cn } from "../../lib/utils.ts"
-import { getEnv } from "../../shared/utils/env.ts"
+import { getEnv, getIngressBasename } from "../../shared/utils/env.ts"
 
 const navItems = [
   { to: "/planning", label: "Planning", icon: CalendarDays },
@@ -37,7 +37,7 @@ export function Sidebar({ collapsed, onToggleCollapsed }: SidebarProps) {
       >
         {!collapsed ? (
           <>
-            <img src="/logo_bonap.png" alt="bonap" className="h-9 object-contain" />
+            <img src={`${getIngressBasename()}/logo_bonap.png`} alt="bonap" className="h-9 object-contain" />
             <button
               type="button"
               onClick={onToggleCollapsed}
