@@ -10,7 +10,7 @@ arch:
 
 # Pre-built image published by CI to GHCR.
 # HA Supervisor substitutes {arch} automatically (e.g. latest-amd64).
-image: ghcr.io/aymericlefeyer/bonap-ha-addon:latest-{arch}
+image: ghcr.io/aymericlefeyer/bonap-ha-addon-{arch}
 
 ports:
   3000/tcp: 3000

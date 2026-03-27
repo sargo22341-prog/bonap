@@ -21,8 +21,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # HA addon image name convention: <repo>-<slug>
-  IMAGE_NAME: ${{ github.repository }}-ha-addon
 
 jobs:
   build-and-push:
@@ -50,6 +48,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Get addon version
+        id: version
+        run: echo "version=$(grep '^version:' ha-addon/bonap/config.yaml | tr -d '"' | awk '{print $2}')" >> $GITHUB_OUTPUT
+
       - name: Set up QEMU (for cross-arch builds)
         uses: docker/setup-qemu-action@v3
 
@@ -64,16 +66,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest-${{ matrix.arch }},enable={{is_default_branch}}
-            type=raw,value=latest,enable=${{ matrix.arch == 'amd64' && github.ref == 'refs/heads/main' }}
-            type=sha,prefix=${{ matrix.arch }}-,format=short
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -81,8 +73,9 @@ jobs:
           file: ha-addon/bonap/Dockerfile
           platforms: ${{ matrix.platform }}
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ env.REGISTRY }}/aymericlefeyer/bonap-ha-addon-${{ matrix.arch }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/aymericlefeyer/bonap-ha-addon-${{ matrix.arch }}:latest
           build-args: |
             BUILD_FROM=${{ matrix.build_from }}
           cache-from: type=gha,scope=ha-${{ matrix.arch }}
