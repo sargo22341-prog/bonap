@@ -38,13 +38,13 @@ jobs:
         include:
           - arch: amd64
             platform: linux/amd64
-            build_from: ghcr.io/hassio-addons/base:alpine
+            build_from: alpine:3.20
           - arch: aarch64
             platform: linux/arm64
-            build_from: ghcr.io/hassio-addons/base:alpine
+            build_from: alpine:3.20
           - arch: armv7
             platform: linux/arm/v7
-            build_from: ghcr.io/hassio-addons/base:alpine
+            build_from: alpine:3.20
 
     steps:
       - name: Checkout repository

@@ -1,20 +1,22 @@
-#!/usr/bin/with-contenv bashio
+#!/bin/sh
 # =============================================================================
 # Bonap — Home Assistant addon entrypoint
 #
-# Reads options set in the HA UI (via /data/options.json) using bashio,
+# Reads options from /data/options.json (written by HA Supervisor),
 # injects them as window.__ENV__ into the static HTML, and starts nginx.
 # =============================================================================
 set -e
 
+OPTIONS_FILE=/data/options.json
+
 # ---------------------------------------------------------------------------
 # Read options from Home Assistant
 # ---------------------------------------------------------------------------
-MEALIE_URL="$(bashio::config 'mealie_url')"
-MEALIE_TOKEN="$(bashio::config 'mealie_token')"
+MEALIE_URL="$(jq -r '.mealie_url' "${OPTIONS_FILE}")"
+MEALIE_TOKEN="$(jq -r '.mealie_token' "${OPTIONS_FILE}")"
 
-bashio::log.info "Starting Bonap..."
-bashio::log.info "Mealie URL: ${MEALIE_URL}"
+echo "[Bonap] Starting..."
+echo "[Bonap] Mealie URL: ${MEALIE_URL}"
 
 # ---------------------------------------------------------------------------
 # Inject runtime configuration into the SPA via window.__ENV__
@@ -27,14 +29,11 @@ window.__ENV__ = {
 };
 EOF
 
-bashio::log.debug "env-config.js written."
-
 # ---------------------------------------------------------------------------
 # Configure the nginx /api proxy: use MEALIE_URL as the internal target.
 # ---------------------------------------------------------------------------
 export MEALIE_INTERNAL_URL="${MEALIE_URL%/}"
 
-# Substitute the variable in the nginx config template
 envsubst '${MEALIE_INTERNAL_URL}' \
   < /etc/nginx/templates/default.conf.template \
   > /etc/nginx/http.d/default.conf
@@ -42,5 +41,5 @@ envsubst '${MEALIE_INTERNAL_URL}' \
 # ---------------------------------------------------------------------------
 # Start nginx in the foreground
 # ---------------------------------------------------------------------------
-bashio::log.info "Bonap available on port 3000."
+echo "[Bonap] Available on port 3000."
 exec nginx -g "daemon off;"

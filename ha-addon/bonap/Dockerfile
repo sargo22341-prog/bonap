@@ -16,7 +16,7 @@
 # =============================================================================
 
 # Global ARG — must be declared before the first FROM to be usable in a FROM instruction
-ARG BUILD_FROM=ghcr.io/hassio-addons/base:alpine
+ARG BUILD_FROM=alpine:3.20
 
 # Stage 1 — Build Vite app
 FROM node:20-alpine AS builder
@@ -40,7 +40,7 @@ RUN npm run build
 FROM ${BUILD_FROM}
 
 # Install nginx and envsubst (gettext package provides envsubst)
-RUN apk add --no-cache nginx gettext
+RUN apk add --no-cache nginx gettext jq
 
 # Static build output from stage 1
 COPY --from=builder /app/dist /usr/share/nginx/html
