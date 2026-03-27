@@ -20,3 +20,14 @@ export function getEnv(key: keyof NonNullable<Window["__ENV__"]>): string {
 export function isDockerRuntime(): boolean {
   return typeof window !== "undefined" && window.__ENV__ !== undefined
 }
+
+/**
+ * Retourne le préfixe de path HA ingress si l'app est servie via HA Supervisor
+ * (ex: "/api/hassio_ingress/abc123"), sinon "".
+ * Permet de préfixer les appels API pour qu'ils passent par le proxy nginx de l'addon.
+ */
+export function getIngressBasename(): string {
+  if (typeof window === "undefined") return ""
+  const match = window.location.pathname.match(/^(\/api\/hassio_ingress\/[^/]+)/)
+  return match ? match[1] : ""
+}

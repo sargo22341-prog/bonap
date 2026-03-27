@@ -5,14 +5,16 @@ import {
   MealieServerError,
   MealieUnauthorizedError,
 } from "../../../shared/types/errors.ts"
-import { getEnv, isDockerRuntime } from "../../../shared/utils/env.ts"
+import { getEnv, getIngressBasename, isDockerRuntime } from "../../../shared/utils/env.ts"
 
 // En dev : /api est proxié par Vite → VITE_MEALIE_URL (pas de CORS).
-// En prod Docker : /api est proxié par nginx → MEALIE_INTERNAL_URL (pas de CORS, même principe).
+// En prod Docker standard : /api est proxié par nginx → MEALIE_INTERNAL_URL.
+// En prod HA addon : nginx est accessible via l'ingress path, les appels doivent
+//   être préfixés par /api/hassio_ingress/<token> pour passer par HA.
 // En prod sans Docker : requête directe vers VITE_MEALIE_URL depuis le navigateur.
 function getBaseUrl(): string {
   if (import.meta.env.DEV) return ""
-  if (isDockerRuntime()) return ""
+  if (isDockerRuntime()) return getIngressBasename()
   return getEnv("VITE_MEALIE_URL").replace(/\/+$/, "")
 }
 
