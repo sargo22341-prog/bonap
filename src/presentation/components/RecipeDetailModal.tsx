@@ -5,6 +5,7 @@ import { Loader2, UtensilsCrossed } from "lucide-react"
 import { RecipeIngredientsList } from "./RecipeIngredientsList.tsx"
 import { RecipeInstructionsList } from "./RecipeInstructionsList.tsx"
 import { formatDuration } from "../../shared/utils/duration.ts"
+import { recipeImageUrl } from "../../shared/utils/image.ts"
 import { Button } from "./ui/button.tsx"
 import { CookingMode } from "./CookingMode.tsx"
 import type { MealieIngredient, MealieInstruction } from "../../shared/types/mealie.ts"
@@ -80,7 +81,7 @@ export function RecipeDetailModal({ slug, onOpenChange }: RecipeDetailModalProps
           {recipe && (
             <article className="space-y-6 p-1">
               <img
-                src={`/api/media/recipes/${recipe.id}/images/original.webp`}
+                src={recipeImageUrl(recipe, "original")}
                 alt={recipe.name}
                 className="aspect-video w-full rounded-lg object-cover"
               />

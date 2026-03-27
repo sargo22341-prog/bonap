@@ -23,6 +23,7 @@ import { getRecipesUseCase, getRecipeUseCase } from "../../infrastructure/contai
 import { RecipeIngredientsList } from "../components/RecipeIngredientsList.tsx"
 import { RecipeInstructionsList } from "../components/RecipeInstructionsList.tsx"
 import { cn } from "../../lib/utils.ts"
+import { recipeImageUrl } from "../../shared/utils/image.ts"
 
 const TIME_OPTIONS = [
   { label: "< 30 min", value: 30 },
@@ -597,7 +598,7 @@ function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDrawerPro
             {/* Image */}
             <div className="relative">
               <img
-                src={`/api/media/recipes/${recipe.id}/images/original.webp`}
+                src={recipeImageUrl(recipe, "original")}
                 alt={recipe.name}
                 className="aspect-video w-full object-cover"
               />

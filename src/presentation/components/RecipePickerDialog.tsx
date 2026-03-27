@@ -10,6 +10,7 @@ import {
 import { Input } from "./ui/input.tsx"
 import { useRecipesInfinite } from "../hooks/useRecipesInfinite.ts"
 import type { MealieRecipe } from "../../shared/types/mealie.ts"
+import { recipeImageUrl } from "../../shared/utils/image.ts"
 
 // ─── Isolated list ────────────────────────────────────────────────────────────
 // Separate component: only re-renders when `search` (debounced) changes,
@@ -59,7 +60,7 @@ function RecipeList({
           >
             <div className="relative aspect-square w-full overflow-hidden rounded-[var(--radius-md)] bg-muted">
               <img
-                src={`/api/media/recipes/${recipe.id}/images/min-original.webp`}
+                src={recipeImageUrl(recipe, "min-original")}
                 alt={recipe.name}
                 className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                 loading="lazy"

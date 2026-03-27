@@ -3,6 +3,7 @@ import { SeasonBadge } from "./SeasonBadge.tsx"
 import type { MealieRecipe } from "../../shared/types/mealie.ts"
 import { getRecipeSeasonsFromTags } from "../../shared/utils/season.ts"
 import { cn } from "../../lib/utils.ts"
+import { recipeImageUrl } from "../../shared/utils/image.ts"
 
 interface RecipeCardProps {
   recipe: MealieRecipe
@@ -11,7 +12,7 @@ interface RecipeCardProps {
 }
 
 export function RecipeCard({ recipe, onSelect, selected }: RecipeCardProps) {
-  const imageUrl = `/api/media/recipes/${recipe.id}/images/min-original.webp`
+  const imageUrl = recipeImageUrl(recipe, "min-original")
   const seasons = getRecipeSeasonsFromTags(recipe.tags)
   const categories = recipe.recipeCategory ?? []
 

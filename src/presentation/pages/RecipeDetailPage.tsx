@@ -7,6 +7,8 @@ import { useFoods } from "../hooks/useFoods.ts"
 import { useUnits } from "../hooks/useUnits.ts"
 import { useRecipeForm } from "../hooks/useRecipeForm.ts"
 import { useAiImage } from "../hooks/useAiImage.ts"
+import { type ImageProvider, IMAGE_PROVIDERS } from "../../application/recipe/usecases/FetchAiImageUseCase.ts"
+import { recipeImageUrl } from "../../shared/utils/image.ts"
 import { Button } from "../components/ui/button.tsx"
 import { Badge } from "../components/ui/badge.tsx"
 import { Input } from "../components/ui/input.tsx"
@@ -292,6 +294,7 @@ export function RecipeDetailPage() {
   const { units } = useUnits()
   const { updateRecipe, loading: saving, error: saveError } = useRecipeForm()
   const { fetchAiImage, loading: aiImageLoading, error: aiImageError } = useAiImage()
+  const [aiProvider, setAiProvider] = useState<ImageProvider>("wikipedia-en")
 
   // ─── Local editable state (initialized from recipe) ────────────────────────
 
@@ -305,7 +308,7 @@ export function RecipeDetailPage() {
   useEffect(() => {
     if (recipe && !formData) {
       setFormData(buildFormData(recipe))
-      setImagePreview(`/api/media/recipes/${recipe.id}/images/original.webp`)
+      setImagePreview(recipeImageUrl(recipe, "original"))
     }
   }, [recipe, formData])
 
@@ -326,10 +329,8 @@ export function RecipeDetailPage() {
 
   const handleAiImage = async () => {
     if (!recipe) return
-    const previewUrl = await fetchAiImage(recipe.name, recipe.slug)
-    if (previewUrl) {
-      setImagePreview(previewUrl)
-    }
+    const mealieUrl = await fetchAiImage(recipe.name, recipe.slug, recipe.id, aiProvider)
+    if (mealieUrl) setImagePreview(mealieUrl)
   }
 
   // ─── Categories & Seasons (saved immediately, no dirty needed) ─────────────
@@ -419,7 +420,7 @@ export function RecipeDetailPage() {
     if (updated) {
       setRecipe(updated)
       setFormData(buildFormData(updated))
-      setImagePreview(`/api/media/recipes/${updated.id}/images/original.webp`)
+      setImagePreview(recipeImageUrl(updated, "original"))
       setIsDirty(false)
     }
   }
@@ -472,7 +473,7 @@ export function RecipeDetailPage() {
                 variant="ghost"
                 onClick={() => {
                   setFormData(buildFormData(recipe))
-                  setImagePreview(`/api/media/recipes/${recipe.id}/images/original.webp`)
+                  setImagePreview(recipeImageUrl(recipe, "original"))
                   setIsDirty(false)
                 }}
                 disabled={saving}
@@ -556,31 +557,30 @@ export function RecipeDetailPage() {
               onChange={handleImageChange}
             />
 
-            {/* Bouton photo via IA */}
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => void handleAiImage()}
-                disabled={aiImageLoading || saving}
-                className="gap-1.5"
+            {/* Bouton photo via IA — WIP */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span title="WIP — fonctionnalité en cours de développement">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled
+                  className="gap-1.5 cursor-not-allowed"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Photo via IA
+                </Button>
+              </span>
+              <select
+                value={aiProvider}
+                onChange={(e) => setAiProvider(e.target.value as ImageProvider)}
+                disabled
+                className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground opacity-50 cursor-not-allowed"
               >
-                {aiImageLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Recherche en cours…
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Photo via IA
-                  </>
-                )}
-              </Button>
-              {aiImageError && (
-                <p className="text-xs text-destructive">{aiImageError}</p>
-              )}
+                {IMAGE_PROVIDERS.map((p) => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -839,7 +839,7 @@ export function RecipeDetailPage() {
                 size="sm"
                 onClick={() => {
                   setFormData(buildFormData(recipe))
-                  setImagePreview(`/api/media/recipes/${recipe.id}/images/original.webp`)
+                  setImagePreview(recipeImageUrl(recipe, "original"))
                   setIsDirty(false)
                 }}
                 disabled={saving}

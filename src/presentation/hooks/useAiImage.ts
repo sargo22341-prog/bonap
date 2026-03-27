@@ -1,17 +1,16 @@
 import { useState, useCallback } from "react"
-import { fetchAiImageUseCase } from "../../infrastructure/container.ts"
-import { recipeRepository } from "../../infrastructure/container.ts"
+import { fetchAiImageUseCase, recipeRepository } from "../../infrastructure/container.ts"
+import type { ImageProvider } from "../../application/recipe/usecases/FetchAiImageUseCase.ts"
 
 interface UseAiImageResult {
-  fetchAiImage: (recipeName: string, recipeSlug: string) => Promise<string | null>
+  fetchAiImage: (recipeName: string, recipeSlug: string, recipeId: string, provider: ImageProvider) => Promise<string | null>
   loading: boolean
   error: string | null
 }
 
 /**
  * Hook pour récupérer et uploader une image de recette via IA.
- * Le LLM suggère une URL d'image, le hook la télécharge et l'uploade via l'API Mealie.
- * Retourne l'URL locale pour prévisualisation (object URL).
+ * Retourne l'URL Mealie avec cache-buster après upload réussi.
  */
 export function useAiImage(): UseAiImageResult {
   const [loading, setLoading] = useState(false)
@@ -20,47 +19,33 @@ export function useAiImage(): UseAiImageResult {
   const fetchAiImage = useCallback(async (
     recipeName: string,
     recipeSlug: string,
+    recipeId: string,
+    provider: ImageProvider,
   ): Promise<string | null> => {
     setLoading(true)
     setError(null)
 
     try {
-      // 1. Demander au LLM une URL d'image pertinente
-      const imageUrl = await fetchAiImageUseCase.execute(recipeName)
+      // 1. LLM → recherche selon le provider → URL d'image réelle
+      const imageUrl = await fetchAiImageUseCase.execute(recipeName, provider)
 
-      // 2. Télécharger l'image depuis l'URL suggérée
-      let imageFile: File
-      try {
-        const response = await fetch(imageUrl)
-        if (!response.ok) {
-          throw new Error(`Impossible de télécharger l'image (${response.status})`)
-        }
-        const contentType = response.headers.get("content-type") ?? "image/jpeg"
-        const blob = await response.blob()
-
-        // Déduire l'extension depuis le content-type ou l'URL
-        const ext = contentType.includes("png")
-          ? "png"
-          : contentType.includes("webp")
-          ? "webp"
-          : "jpg"
-        imageFile = new File([blob], `ai-image.${ext}`, { type: contentType })
-      } catch (downloadErr) {
-        throw new Error(
-          `Impossible de télécharger l'image proposée par l'IA. ` +
-          `URL : ${imageUrl}. ` +
-          `Détail : ${downloadErr instanceof Error ? downloadErr.message : "Erreur inconnue"}`,
-        )
+      // 2. Télécharger l'image
+      const response = await fetch(imageUrl)
+      if (!response.ok) {
+        throw new Error(`Impossible de télécharger l'image (${response.status}) : ${imageUrl}`)
       }
+      const contentType = response.headers.get("content-type") ?? "image/jpeg"
+      const blob = await response.blob()
+      const ext = contentType.includes("png") ? "png" : contentType.includes("webp") ? "webp" : "jpg"
+      const file = new File([blob], `ai-image.${ext}`, { type: contentType })
 
-      // 3. Uploader l'image dans Mealie
-      await recipeRepository.uploadImage(recipeSlug, imageFile)
+      // 3. Uploader directement dans Mealie
+      await recipeRepository.uploadImage(recipeSlug, file)
 
-      // 4. Retourner une object URL pour la prévisualisation immédiate
-      return URL.createObjectURL(imageFile)
+      // 4. URL Mealie avec cache-buster basé sur le timestamp courant (image vient d'être uploadée)
+      return `/api/media/recipes/${recipeId}/images/original.webp?t=${Date.now()}`
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Une erreur est survenue"
-      setError(message)
+      setError(err instanceof Error ? err.message : "Une erreur est survenue")
       return null
     } finally {
       setLoading(false)

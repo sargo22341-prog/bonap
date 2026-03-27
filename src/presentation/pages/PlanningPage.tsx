@@ -11,6 +11,7 @@ import { RecipeDetailModal } from "../components/RecipeDetailModal.tsx"
 import type { MealieMealPlan, MealieRecipe } from "../../shared/types/mealie.ts"
 import { formatDate } from "../../shared/utils/date.ts"
 import { cn } from "../../lib/utils.ts"
+import { recipeImageUrl } from "../../shared/utils/image.ts"
 
 const DAY_LABELS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"]
 
@@ -74,7 +75,7 @@ function MobileMealSection({ meals, previousMeal, onAdd, onDelete, onLeftovers, 
           >
             {meal.recipe && (
               <img
-                src={`/api/media/recipes/${meal.recipe.id}/images/min-original.webp`}
+                src={recipeImageUrl(meal.recipe, "min-original")}
                 alt={name}
                 className="h-14 w-14 shrink-0 object-cover"
               />
@@ -213,7 +214,7 @@ function MealCell({
               <div className="flex items-center gap-2 p-2">
                 {meal.recipe && (
                   <img
-                    src={`/api/media/recipes/${meal.recipe.id}/images/min-original.webp`}
+                    src={recipeImageUrl(meal.recipe, "min-original")}
                     alt={name}
                     className="h-[72px] w-[72px] shrink-0 rounded-[var(--radius-md)] object-cover"
                   />
@@ -308,7 +309,7 @@ export function PlanningPage() {
   const [pendingSlot, setPendingSlot] = useState<{ date: string; entryType: string } | null>(null)
   const [previewSlug, setPreviewSlug] = useState<string | null>(null)
 
-  const handlePreviewOpenChange = (open: boolean) => {
+const handlePreviewOpenChange = (open: boolean) => {
     if (!open) setPreviewSlug(null)
   }
 

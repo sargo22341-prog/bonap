@@ -14,6 +14,7 @@ import {
 } from "../../infrastructure/container.ts"
 import type { MealieRecipe, MealieMealPlan } from "../../shared/types/mealie.ts"
 import { isSeasonTag } from "../../shared/utils/season.ts"
+import { recipeImageUrl } from "../../shared/utils/image.ts"
 import { cn } from "../../lib/utils.ts"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -311,7 +312,7 @@ interface SuggestionCardProps {
 }
 
 function SuggestionCard({ suggestion, recipe, isAdded, onAdd }: SuggestionCardProps) {
-  const imageUrl = recipe ? `/api/media/recipes/${recipe.id}/images/min-original.webp` : null
+  const imageUrl = recipe ? recipeImageUrl(recipe, "min-original") : null
   const [imgError, setImgError] = useState(false)
 
   return (

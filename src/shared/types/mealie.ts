@@ -102,6 +102,7 @@ export interface MealieRecipe {
   name: string
   description?: string
   image?: string
+  dateUpdated?: string
   recipeCategory?: MealieCategory[]
   tags?: MealieTag[]
   prepTime?: string
