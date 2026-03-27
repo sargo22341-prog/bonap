@@ -1,127 +1,155 @@
-import { useState, useRef } from "react"
-import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, Loader2, Plus, Trash2, GripVertical, ImagePlus, X } from "lucide-react"
-import { Button } from "../components/ui/button.tsx"
-import { Input } from "../components/ui/input.tsx"
-import { Label } from "../components/ui/label.tsx"
-import { Badge } from "../components/ui/badge.tsx"
-import { Autocomplete } from "../components/ui/autocomplete.tsx"
-import { useRecipe } from "../hooks/useRecipe.ts"
+import { useState, useRef, type ChangeEvent } from "react"
+import { useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { useRecipeForm } from "../hooks/useRecipeForm.ts"
 import { useCategories } from "../hooks/useCategories.ts"
-import { useTags } from "../hooks/useTags.ts"
 import { useFoods } from "../hooks/useFoods.ts"
 import { useUnits } from "../hooks/useUnits.ts"
+import { Button } from "../components/ui/button.tsx"
+import { Badge } from "../components/ui/badge.tsx"
+import { Input } from "../components/ui/input.tsx"
+import { SeasonBadge } from "../components/SeasonBadge.tsx"
+import { Autocomplete } from "../components/ui/autocomplete.tsx"
+import {
+  InlineEditText,
+  InlineEditDuration,
+} from "../components/RecipeEditorShared.tsx"
+import {
+  Loader2,
+  Plus,
+  Trash2,
+  GripVertical,
+  ImagePlus,
+  Check,
+} from "lucide-react"
 import type {
-  MealieRecipe,
   RecipeFormData,
   RecipeFormIngredient,
   RecipeFormInstruction,
   Season,
 } from "../../shared/types/mealie.ts"
 import { SEASONS, SEASON_LABELS } from "../../shared/types/mealie.ts"
-import { getRecipeSeasonsFromTags, isSeasonTag } from "../../shared/utils/season.ts"
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── État initial ──────────────────────────────────────────────────────────────
 
-function parsePrepTimeToMinutes(value?: string): string {
-  if (!value) return ""
-  if (/^\d+$/.test(value.trim())) {
-    const n = parseInt(value.trim(), 10)
-    return n > 0 ? String(n) : ""
-  }
-  const match = value.match(/PT(?:(\d+)H)?(?:(\d+)M)?/)
-  if (!match) return ""
-  const hours = parseInt(match[1] ?? "0")
-  const minutes = parseInt(match[2] ?? "0")
-  const total = hours * 60 + minutes
-  return total > 0 ? String(total) : ""
-}
-
-function buildInitialIngredients(recipe?: MealieRecipe): RecipeFormIngredient[] {
-  if (!recipe?.recipeIngredient?.length) {
-    return [{ quantity: "1", unit: "", unitId: undefined, food: "", foodId: undefined, note: "" }]
-  }
-  const structured = recipe.recipeIngredient
-    .filter((ing) => ing.food?.name || ing.unit?.name || (ing.quantity != null && ing.quantity !== 0) || ing.note)
-    .map((ing) => ({
-      quantity: ing.quantity != null && ing.quantity !== 0 ? String(ing.quantity) : "",
-      unit: ing.unit?.name ?? "",
-      unitId: ing.unit?.id,
-      food: ing.food?.name ?? "",
-      foodId: ing.food?.id,
-      note: ing.note ?? "",
-    }))
-  return [...structured, { quantity: "1", unit: "", unitId: undefined, food: "", foodId: undefined, note: "" }]
-}
-
-function buildInitialInstructions(recipe?: MealieRecipe): RecipeFormInstruction[] {
-  if (!recipe?.recipeInstructions?.length) return [{ text: "" }]
-  return recipe.recipeInstructions.map((step) => ({ text: step.text }))
-}
-
-function buildInitialFormData(recipe?: MealieRecipe): RecipeFormData {
+function buildEmptyFormData(): RecipeFormData {
   return {
-    name: recipe?.name ?? "",
-    description: recipe?.description ?? "",
-    prepTime: parsePrepTimeToMinutes(recipe?.prepTime),
-    cookTime: parsePrepTimeToMinutes(recipe?.cookTime),
-    recipeIngredient: buildInitialIngredients(recipe),
-    recipeInstructions: buildInitialInstructions(recipe),
-    seasons: getRecipeSeasonsFromTags(recipe?.tags),
-    categories: (recipe?.recipeCategory ?? []).map((c) => ({ id: c.id, name: c.name, slug: c.slug })),
-    tags: (recipe?.tags ?? []).filter((t) => !isSeasonTag(t)).map((t) => ({ id: t.id, name: t.name, slug: t.slug })),
+    name: "",
+    description: "",
+    prepTime: "",
+    cookTime: "",
+    recipeIngredient: [
+      { quantity: "1", unit: "", unitId: undefined, food: "", foodId: undefined, note: "" },
+    ],
+    recipeInstructions: [{ text: "" }],
+    seasons: [],
+    categories: [],
+    tags: [],
   }
 }
 
-function formatMinutes(value: string): string {
-  const n = Number(value)
-  if (!n || n <= 0) return ""
-  const h = Math.floor(n / 60)
-  const m = n % 60
-  if (h > 0 && m > 0) return `${h} h ${m} min`
-  if (h > 0) return `${h} h`
-  return `${m} min`
-}
+// ─── Page création recette ─────────────────────────────────────────────────────
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-
-function FormSkeleton() {
-  return (
-    <div className="animate-pulse space-y-6 max-w-2xl mx-auto">
-      <div className="h-8 w-1/3 rounded-md bg-muted" />
-      <div className="h-10 w-full rounded-md bg-muted" />
-      <div className="h-24 w-full rounded-md bg-muted" />
-      <div className="flex gap-4">
-        <div className="h-10 w-32 rounded-md bg-muted" />
-        <div className="h-10 w-32 rounded-md bg-muted" />
-      </div>
-      <div className="h-40 w-full rounded-md bg-muted" />
-      <div className="h-40 w-full rounded-md bg-muted" />
-    </div>
-  )
-}
-
-// ─── Form content ─────────────────────────────────────────────────────────────
-
-interface RecipeFormContentProps {
-  recipe?: MealieRecipe
-  isEditing: boolean
-}
-
-function RecipeFormContent({ recipe, isEditing }: RecipeFormContentProps) {
+export function RecipeFormPage() {
   const navigate = useNavigate()
-  const { createRecipe, updateRecipe, loading, error } = useRecipeForm()
-  const { categories } = useCategories()
-  const { tags } = useTags()
+  const { createRecipe, loading: saving, error: saveError } = useRecipeForm()
+  const { categories: allCategories } = useCategories()
   const { foods } = useFoods()
   const { units } = useUnits()
 
-  const [formData, setFormData] = useState<RecipeFormData>(() => buildInitialFormData(recipe))
-  const [imagePreview, setImagePreview] = useState<string | null>(
-    recipe?.id ? `/api/media/recipes/${recipe.id}/images/original.webp` : null,
-  )
+  const [formData, setFormData] = useState<RecipeFormData>(buildEmptyFormData)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const patch = (partial: Partial<RecipeFormData>) => {
+    setFormData((prev) => ({ ...prev, ...partial }))
+  }
+
+  // ─── Image ──────────────────────────────────────────────────────────────────
+
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    patch({ imageFile: file })
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  // ─── Catégories ─────────────────────────────────────────────────────────────
+
+  const handleToggleCategory = (cat: { id: string; name: string; slug: string }) => {
+    const isActive = formData.categories.some((c) => c.id === cat.id)
+    patch({
+      categories: isActive
+        ? formData.categories.filter((c) => c.id !== cat.id)
+        : [...formData.categories, { id: cat.id, name: cat.name, slug: cat.slug }],
+    })
+  }
+
+  // ─── Saisons ────────────────────────────────────────────────────────────────
+
+  const handleToggleSeason = (season: Season) => {
+    const active = formData.seasons.includes(season)
+    patch({
+      seasons: active
+        ? formData.seasons.filter((s) => s !== season)
+        : [...formData.seasons, season],
+    })
+  }
+
+  // ─── Ingrédients ────────────────────────────────────────────────────────────
+
+  const addIngredient = () => {
+    patch({
+      recipeIngredient: [
+        ...formData.recipeIngredient,
+        { quantity: "1", unit: "", unitId: undefined, food: "", foodId: undefined, note: "" },
+      ],
+    })
+  }
+
+  const removeIngredient = (index: number) => {
+    patch({ recipeIngredient: formData.recipeIngredient.filter((_, i) => i !== index) })
+  }
+
+  const updateIngredientField = (index: number, partial: Partial<RecipeFormIngredient>) => {
+    patch({
+      recipeIngredient: formData.recipeIngredient.map((ing, i) =>
+        i === index ? { ...ing, ...partial } : ing,
+      ),
+    })
+  }
+
+  // ─── Instructions ────────────────────────────────────────────────────────────
+
+  const addInstruction = () => {
+    patch({
+      recipeInstructions: [...formData.recipeInstructions, { text: "" }],
+    })
+  }
+
+  const removeInstruction = (index: number) => {
+    patch({ recipeInstructions: formData.recipeInstructions.filter((_, i) => i !== index) })
+  }
+
+  const updateInstruction = (index: number, value: string) => {
+    patch({
+      recipeInstructions: formData.recipeInstructions.map(
+        (s, i): RecipeFormInstruction => (i === index ? { text: value } : s),
+      ),
+    })
+  }
+
+  // ─── Soumission ──────────────────────────────────────────────────────────────
+
+  const handleCreate = async () => {
+    if (!formData.name.trim()) return
+    const result = await createRecipe(formData)
+    if (result) {
+      navigate(`/recipes/${result.slug}`)
+    }
+  }
+
+  // ─── Options autocomplete ─────────────────────────────────────────────────────
 
   const foodOptions = foods.map((f) => ({ id: f.id, label: f.name }))
   const unitOptions = units.map((u) => ({
@@ -129,476 +157,369 @@ function RecipeFormContent({ recipe, isEditing }: RecipeFormContentProps) {
     label: u.useAbbreviation && u.abbreviation ? u.abbreviation : u.name,
   }))
 
-  // --- Image ---
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setFormData((prev) => ({ ...prev, imageFile: file }))
-    const url = URL.createObjectURL(file)
-    setImagePreview(url)
-  }
-
-  const removeImage = () => {
-    setFormData((prev) => ({ ...prev, imageFile: undefined }))
-    setImagePreview(null)
-    if (fileInputRef.current) fileInputRef.current.value = ""
-  }
-
-  // --- Ingredients ---
-
-  const addIngredient = () => {
-    setFormData((prev) => ({
-      ...prev,
-      recipeIngredient: [
-        ...prev.recipeIngredient,
-        { quantity: "1", unit: "", unitId: undefined, food: "", foodId: undefined, note: "" },
-      ],
-    }))
-  }
-
-  const removeIngredient = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      recipeIngredient: prev.recipeIngredient.filter((_, i) => i !== index),
-    }))
-  }
-
-  const updateIngredientField = (index: number, patch: Partial<RecipeFormIngredient>) => {
-    setFormData((prev) => ({
-      ...prev,
-      recipeIngredient: prev.recipeIngredient.map((ing, i) => (i === index ? { ...ing, ...patch } : ing)),
-    }))
-  }
-
-  // --- Instructions ---
-
-  const addInstruction = () => {
-    setFormData((prev) => ({
-      ...prev,
-      recipeInstructions: [...prev.recipeInstructions, { text: "" }],
-    }))
-  }
-
-  const removeInstruction = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      recipeInstructions: prev.recipeInstructions.filter((_, i) => i !== index),
-    }))
-  }
-
-  const updateInstruction = (index: number, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      recipeInstructions: prev.recipeInstructions.map((step, i) => (i === index ? { text: value } : step)),
-    }))
-  }
-
-  // --- Submit ---
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formData.name.trim()) return
-
-    let result: MealieRecipe | null
-    if (isEditing && recipe) {
-      result = await updateRecipe(recipe.slug, formData)
-    } else {
-      result = await createRecipe(formData)
-    }
-
-    if (result) {
-      navigate(`/recipes/${result.slug}`)
-    }
-  }
+  // ─── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      {error && (
-        <div className="rounded-lg border border-destructive/20 bg-destructive/8 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-
-      {/* Photo */}
-      <div className="space-y-2">
-        <Label>Photo</Label>
-        {imagePreview ? (
-          <div className="relative w-full overflow-hidden rounded-xl aspect-video bg-muted">
-            <img src={imagePreview} alt="Aperçu" className="w-full h-full object-cover" />
-            <button
-              type="button"
-              onClick={removeImage}
-              className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-foreground shadow backdrop-blur-sm hover:bg-background transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/30 py-10 text-muted-foreground transition-colors hover:border-ring hover:bg-muted/50"
-          >
-            <ImagePlus className="h-8 w-8" />
-            <span className="text-sm">Cliquer pour ajouter une photo</span>
-          </button>
-        )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleImageChange}
-        />
-      </div>
-
-      {/* Nom */}
-      <div className="space-y-2">
-        <Label htmlFor="recipe-name">
-          Titre <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="recipe-name"
-          type="text"
-          placeholder="Nom de la recette"
-          value={formData.name}
-          onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-          required
-          disabled={loading}
-          autoFocus
-        />
-      </div>
-
-      {/* Description */}
-      <div className="space-y-2">
-        <Label htmlFor="recipe-description">Description</Label>
-        <textarea
-          id="recipe-description"
-          placeholder="Décrivez brièvement la recette…"
-          value={formData.description}
-          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-          disabled={loading}
-          rows={3}
-          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-        />
-      </div>
-
-      {/* Temps */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="recipe-prep-time">Préparation (min)</Label>
-          <div className="flex items-center gap-2">
-            <Input
-              id="recipe-prep-time"
-              type="number"
-              min="0"
-              step="5"
-              placeholder="15"
-              value={formData.prepTime}
-              onChange={(e) => setFormData((prev) => ({ ...prev, prepTime: e.target.value }))}
-              disabled={loading}
-              className="w-24"
-            />
-            {formData.prepTime && (
-              <span className="text-sm text-muted-foreground">{formatMinutes(formData.prepTime)}</span>
-            )}
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="recipe-cook-time">Cuisson (min)</Label>
-          <div className="flex items-center gap-2">
-            <Input
-              id="recipe-cook-time"
-              type="number"
-              min="0"
-              step="5"
-              placeholder="30"
-              value={formData.cookTime}
-              onChange={(e) => setFormData((prev) => ({ ...prev, cookTime: e.target.value }))}
-              disabled={loading}
-              className="w-24"
-            />
-            {formData.cookTime && (
-              <span className="text-sm text-muted-foreground">{formatMinutes(formData.cookTime)}</span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Saisons */}
-      <div className="space-y-2">
-        <Label>Saisons</Label>
-        <div className="flex flex-wrap gap-2">
-          {SEASONS.map((season: Season) => {
-            const active = formData.seasons.includes(season)
-            return (
-              <Badge
-                key={season}
-                variant={active ? "default" : "outline"}
-                className="cursor-pointer select-none transition-colors"
-                onClick={() => {
-                  if (loading) return
-                  setFormData((prev) => ({
-                    ...prev,
-                    seasons: active ? prev.seasons.filter((s) => s !== season) : [...prev.seasons, season],
-                  }))
-                }}
-              >
-                {SEASON_LABELS[season]}
-              </Badge>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Catégories */}
-      {categories.length > 0 && (
-        <div className="space-y-2">
-          <Label>Catégorie</Label>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => {
-              const active = formData.categories.some((c) => c.id === cat.id)
-              return (
-                <Badge
-                  key={cat.id}
-                  variant={active ? "default" : "outline"}
-                  className="cursor-pointer select-none transition-colors"
-                  onClick={() => {
-                    if (loading) return
-                    setFormData((prev) => ({
-                      ...prev,
-                      categories: active
-                        ? prev.categories.filter((c) => c.id !== cat.id)
-                        : [...prev.categories, { id: cat.id, name: cat.name, slug: cat.slug }],
-                    }))
-                  }}
-                >
-                  {cat.name}
-                </Badge>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Mots-clés */}
-      {tags.filter((t) => !isSeasonTag(t)).length > 0 && (
-        <div className="space-y-2">
-          <Label>Mots-clés</Label>
-          <div className="flex flex-wrap gap-2">
-            {tags.filter((t) => !isSeasonTag(t)).map((tag) => {
-              const active = formData.tags.some((t) => t.id === tag.id)
-              return (
-                <Badge
-                  key={tag.id}
-                  variant={active ? "secondary" : "outline"}
-                  className="cursor-pointer select-none transition-colors"
-                  onClick={() => {
-                    if (loading) return
-                    setFormData((prev) => ({
-                      ...prev,
-                      tags: active
-                        ? prev.tags.filter((t) => t.id !== tag.id)
-                        : [...prev.tags, { id: tag.id, name: tag.name, slug: tag.slug }],
-                    }))
-                  }}
-                >
-                  {tag.name}
-                </Badge>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Ingrédients */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label>Ingrédients</Label>
-          <Button type="button" variant="outline" size="sm" onClick={addIngredient} disabled={loading} className="gap-1.5">
-            <Plus className="h-3.5 w-3.5" />
-            Ajouter
-          </Button>
-        </div>
-
-        <div className="hidden sm:grid sm:grid-cols-[16px_80px_1.5fr_1fr_32px] sm:gap-2 sm:items-center px-1">
-          <span />
-          <span className="text-xs text-muted-foreground font-medium">Qté</span>
-          <span className="text-xs text-muted-foreground font-medium">Aliment</span>
-          <span className="text-xs text-muted-foreground font-medium">Unité</span>
-          <span />
-        </div>
-
-        <div className="space-y-2">
-          {formData.recipeIngredient.map((ing, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-[16px_60px_1.5fr_1fr_32px] sm:grid-cols-[16px_80px_1.5fr_1fr_32px] gap-2 items-center"
-            >
-              <GripVertical className="h-4 w-4 text-muted-foreground" />
-
-              <Input
-                type="text"
-                inputMode="decimal"
-                placeholder="Qté"
-                value={ing.quantity}
-                onChange={(e) => updateIngredientField(index, { quantity: e.target.value })}
-                disabled={loading}
-                className="min-w-0 px-2"
-                aria-label={`Quantité ingrédient ${index + 1}`}
-              />
-
-              <Autocomplete
-                value={ing.food}
-                onChange={(value, option) =>
-                  updateIngredientField(index, {
-                    food: value,
-                    foodId: option && option.id !== "__create__" ? option.id : undefined,
-                  })
-                }
-                options={foodOptions}
-                placeholder="Aliment…"
-                disabled={loading}
-                allowCreate
-                createLabel={(v) => `Créer "${v}"`}
-                aria-label={`Aliment ingrédient ${index + 1}`}
-              />
-
-              <Autocomplete
-                value={ing.unit}
-                onChange={(value, option) =>
-                  updateIngredientField(index, { unit: value, unitId: option?.id })
-                }
-                options={unitOptions}
-                placeholder="Unité…"
-                disabled={loading}
-                aria-label={`Unité ingrédient ${index + 1}`}
-              />
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeIngredient(index)}
-                disabled={loading}
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                aria-label={`Supprimer ingrédient ${index + 1}`}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Instructions */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label>Instructions</Label>
-          <Button type="button" variant="outline" size="sm" onClick={addInstruction} disabled={loading} className="gap-1.5">
-            <Plus className="h-3.5 w-3.5" />
-            Ajouter
-          </Button>
-        </div>
-
-        <div className="space-y-2">
-          {formData.recipeInstructions.map((step, index) => (
-            <div key={index} className="flex items-start gap-2">
-              <span className="mt-2 shrink-0 text-sm font-medium text-muted-foreground w-6 text-right">
-                {index + 1}.
-              </span>
-              <textarea
-                placeholder={`Étape ${index + 1}…`}
-                value={step.text}
-                onChange={(e) => updateInstruction(index, e.target.value)}
-                disabled={loading}
-                rows={2}
-                className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                aria-label={`Étape ${index + 1}`}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeInstruction(index)}
-                disabled={loading}
-                className="mt-1 h-8 w-8 text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex justify-end gap-3 pt-2 border-t border-border">
-        <Button type="button" variant="outline" onClick={() => navigate(-1)} disabled={loading}>
-          Annuler
-        </Button>
-        <Button type="submit" disabled={loading || !formData.name.trim()}>
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isEditing ? "Enregistrement…" : "Création…"}
-            </>
-          ) : isEditing ? (
-            "Enregistrer"
-          ) : (
-            "Créer la recette"
-          )}
-        </Button>
-      </div>
-    </form>
-  )
-}
-
-// ─── Page ──────────────────────────────────────────────────────────────────────
-
-export function RecipeFormPage() {
-  const { slug } = useParams<{ slug?: string }>()
-  const navigate = useNavigate()
-  const isEditing = Boolean(slug)
-
-  // En mode édition, on charge la recette existante
-  const { recipe, loading: recipeLoading, error: recipeError } = useRecipe(slug)
-
-  const title = isEditing ? "Modifier la recette" : "Nouvelle recette"
-
-  return (
-    <div className="min-h-full">
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
       {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(isEditing && slug ? `/recipes/${slug}` : "/recipes")}
-          className="shrink-0"
-        >
-          <ArrowLeft className="h-4 w-4" />
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/recipes">&larr; Recettes</Link>
         </Button>
-        <h1 className="font-heading text-lg font-semibold tracking-tight">{title}</h1>
+
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate("/recipes")}
+            disabled={saving}
+          >
+            Annuler
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => void handleCreate()}
+            disabled={saving || !formData.name.trim()}
+            className="gap-1.5"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Création…
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4" />
+                Créer la recette
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        {recipeLoading && <FormSkeleton />}
+      {/* Erreur */}
+      {saveError && (
+        <div className="rounded-[var(--radius-xl)] border border-destructive/20 bg-destructive/8 p-4 text-sm text-destructive">
+          {saveError}
+        </div>
+      )}
 
-        {recipeError && (
-          <div className="rounded-lg border border-destructive/20 bg-destructive/8 px-4 py-3 text-sm text-destructive">
-            {recipeError}
+      <article className="space-y-6">
+        {/* Image */}
+        <div className="space-y-2">
+          <div
+            className="group relative overflow-hidden rounded-[var(--radius-xl)] cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+            title="Cliquer pour ajouter une photo"
+          >
+            {imagePreview ? (
+              <>
+                <img
+                  src={imagePreview}
+                  alt="Aperçu"
+                  className="aspect-video w-full object-cover"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
+                  <span className="flex flex-col items-center gap-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    <ImagePlus className="h-7 w-7" />
+                    <span className="text-xs font-medium">Changer la photo</span>
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-[var(--radius-xl)] border-2 border-dashed border-border bg-muted/30 text-muted-foreground transition-colors hover:border-ring hover:bg-muted/50">
+                <ImagePlus className="h-8 w-8" />
+                <span className="text-sm">Cliquer pour ajouter une photo</span>
+              </div>
+            )}
           </div>
-        )}
-
-        {(!isEditing || recipe) && !recipeLoading && (
-          <RecipeFormContent
-            key={`${isEditing ? "edit" : "new"}-${recipe?.id ?? "new"}`}
-            recipe={recipe ?? undefined}
-            isEditing={isEditing}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageChange}
           />
-        )}
-      </div>
+        </div>
+
+        {/* Titre + métadonnées */}
+        <div className="space-y-3">
+          <InlineEditText
+            value={formData.name}
+            displayValue={
+              formData.name ? (
+                <span className="font-heading text-2xl font-bold leading-snug tracking-tight">
+                  {formData.name}
+                </span>
+              ) : undefined
+            }
+            onChange={(v) => patch({ name: v })}
+            placeholder="Nom de la recette"
+            as="h1"
+            inputClassName="font-heading text-2xl font-bold"
+            disabled={saving}
+            autoFocus
+          />
+
+          {/* Catégories */}
+          {allCategories.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {allCategories.map((cat) => {
+                const active = formData.categories.some((c) => c.id === cat.id)
+                return (
+                  <Badge
+                    key={cat.id}
+                    variant={active ? "default" : "outline"}
+                    className="cursor-pointer select-none transition-colors text-xs"
+                    onClick={() => handleToggleCategory(cat)}
+                  >
+                    {cat.name}
+                  </Badge>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Saisons */}
+          <div className="space-y-1.5">
+            {formData.seasons.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {formData.seasons.map((season) => (
+                  <SeasonBadge key={season} season={season} size="md" />
+                ))}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-1.5">
+              {SEASONS.map((season: Season) => {
+                const active = formData.seasons.includes(season)
+                return (
+                  <Badge
+                    key={season}
+                    variant={active ? "default" : "outline"}
+                    className="cursor-pointer select-none transition-colors text-xs"
+                    onClick={() => handleToggleSeason(season)}
+                  >
+                    {SEASON_LABELS[season]}
+                  </Badge>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Durées */}
+          <div className="flex flex-wrap gap-4">
+            <InlineEditDuration
+              label="Préparation"
+              value={formData.prepTime}
+              onChange={(v) => patch({ prepTime: v })}
+              disabled={saving}
+            />
+            <InlineEditDuration
+              label="Cuisson"
+              value={formData.cookTime}
+              onChange={(v) => patch({ cookTime: v })}
+              disabled={saving}
+            />
+          </div>
+
+          {/* Description */}
+          <InlineEditText
+            value={formData.description}
+            onChange={(v) => patch({ description: v })}
+            placeholder="Ajouter une description…"
+            multiline
+            rows={3}
+            as="p"
+            className="text-sm text-muted-foreground leading-relaxed"
+            disabled={saving}
+          />
+        </div>
+
+        {/* Ingrédients */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-lg font-bold tracking-tight">Ingrédients</h2>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addIngredient}
+              disabled={saving}
+              className="gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Ajouter
+            </Button>
+          </div>
+
+          <div className="hidden sm:grid sm:grid-cols-[16px_70px_1fr_1fr_1.5fr_32px] sm:gap-2 sm:items-center px-1">
+            <span />
+            <span className="text-xs text-muted-foreground font-medium">Qté</span>
+            <span className="text-xs text-muted-foreground font-medium">Unité</span>
+            <span className="text-xs text-muted-foreground font-medium">Ingrédient</span>
+            <span className="text-xs text-muted-foreground font-medium">Notes</span>
+            <span />
+          </div>
+
+          <div className="space-y-2">
+            {formData.recipeIngredient.map((ing, index) => (
+              <div
+                key={index}
+                className="grid grid-cols-[16px_55px_1fr_1fr_32px] sm:grid-cols-[16px_70px_1fr_1fr_1.5fr_32px] gap-2 items-center"
+              >
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Qté"
+                  value={ing.quantity}
+                  onChange={(e) => updateIngredientField(index, { quantity: e.target.value })}
+                  disabled={saving}
+                  className="min-w-0 px-2"
+                  aria-label={`Quantité ingrédient ${index + 1}`}
+                />
+
+                <Autocomplete
+                  value={ing.unit}
+                  onChange={(value, option) =>
+                    updateIngredientField(index, { unit: value, unitId: option?.id })
+                  }
+                  options={unitOptions}
+                  placeholder="Unité…"
+                  disabled={saving}
+                  inputClassName="bg-white dark:bg-zinc-900"
+                  aria-label={`Unité ingrédient ${index + 1}`}
+                />
+
+                <Autocomplete
+                  value={ing.food}
+                  onChange={(value, option) =>
+                    updateIngredientField(index, {
+                      food: value,
+                      foodId: option && option.id !== "__create__" ? option.id : undefined,
+                    })
+                  }
+                  options={foodOptions}
+                  placeholder="Ingrédient…"
+                  disabled={saving}
+                  allowCreate
+                  createLabel={(v) => `Créer "${v}"`}
+                  inputClassName="bg-white dark:bg-zinc-900"
+                  aria-label={`Ingrédient ${index + 1}`}
+                />
+
+                <Input
+                  type="text"
+                  placeholder="Notes…"
+                  value={ing.note}
+                  onChange={(e) => updateIngredientField(index, { note: e.target.value })}
+                  disabled={saving}
+                  className="hidden sm:block min-w-0 px-2"
+                  aria-label={`Notes ingrédient ${index + 1}`}
+                />
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeIngredient(index)}
+                  disabled={saving || formData.recipeIngredient.length <= 1}
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  aria-label={`Supprimer ingrédient ${index + 1}`}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Instructions */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-lg font-bold tracking-tight">Instructions</h2>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addInstruction}
+              disabled={saving}
+              className="gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Ajouter
+            </Button>
+          </div>
+
+          <ol className="space-y-4">
+            {formData.recipeInstructions.map((step, index) => (
+              <li key={index} className="flex gap-3 items-start">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/8 text-[11px] font-bold text-primary mt-1">
+                  {index + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <textarea
+                    value={step.text}
+                    onChange={(e) => updateInstruction(index, e.target.value)}
+                    placeholder={`Étape ${index + 1}…`}
+                    disabled={saving}
+                    rows={2}
+                    className={[
+                      "w-full rounded-md border-transparent bg-transparent px-2 py-1 text-sm text-muted-foreground leading-relaxed",
+                      "placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:border-input",
+                      "focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring",
+                      "hover:bg-muted/30 transition-colors resize-none",
+                      "disabled:cursor-not-allowed disabled:opacity-50",
+                    ].join(" ")}
+                    aria-label={`Étape ${index + 1}`}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeInstruction(index)}
+                  disabled={saving}
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0 mt-0.5"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* Sticky bar création */}
+        <div className="sticky bottom-4 flex justify-end gap-2 rounded-[var(--radius-xl)] border border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur-sm">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/recipes")}
+            disabled={saving}
+          >
+            Annuler
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => void handleCreate()}
+            disabled={saving || !formData.name.trim()}
+            className="gap-1.5"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Création…
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4" />
+                Créer la recette
+              </>
+            )}
+          </Button>
+        </div>
+      </article>
     </div>
   )
 }

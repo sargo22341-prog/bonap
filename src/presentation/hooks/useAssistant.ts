@@ -139,6 +139,7 @@ function buildTools(): Record<string, AssistantTool> {
           name,
           description,
           prepTime: "",
+          cookTime: "",
           recipeIngredient: ingredients.map((note) => ({ quantity: "", unit: "", food: "", note })),
           recipeInstructions: instructions.map((text) => ({ text })),
           seasons: [],

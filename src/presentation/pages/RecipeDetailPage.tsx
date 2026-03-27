@@ -15,6 +15,11 @@ import { Input } from "../components/ui/input.tsx"
 import { SeasonBadge } from "../components/SeasonBadge.tsx"
 import { Autocomplete } from "../components/ui/autocomplete.tsx"
 import {
+  InlineEditText,
+  InlineEditDuration,
+  parsePrepTimeToMinutes,
+} from "../components/RecipeEditorShared.tsx"
+import {
   Loader2,
   Plus,
   Trash2,
@@ -24,7 +29,7 @@ import {
   UtensilsCrossed,
   Sparkles,
 } from "lucide-react"
-import { useState, useRef, useCallback, useEffect, type ReactNode, type ChangeEvent } from "react"
+import { useState, useRef, useCallback, useEffect, type ChangeEvent } from "react"
 import { CookingMode } from "../components/CookingMode.tsx"
 import type {
   MealieRecipe,
@@ -36,24 +41,7 @@ import type {
 } from "../../shared/types/mealie.ts"
 import { SEASONS, SEASON_LABELS } from "../../shared/types/mealie.ts"
 import { getRecipeSeasonsFromTags, isSeasonTag } from "../../shared/utils/season.ts"
-import { formatDuration } from "../../shared/utils/duration.ts"
 import { cn } from "../../lib/utils.ts"
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function parsePrepTimeToMinutes(value?: string): string {
-  if (!value) return ""
-  if (/^\d+$/.test(value.trim())) {
-    const n = parseInt(value.trim(), 10)
-    return n > 0 ? String(n) : ""
-  }
-  const match = value.match(/PT(?:(\d+)H)?(?:(\d+)M)?/)
-  if (!match) return ""
-  const hours = parseInt(match[1] ?? "0")
-  const minutes = parseInt(match[2] ?? "0")
-  const total = hours * 60 + minutes
-  return total > 0 ? String(total) : ""
-}
 
 function buildFormData(recipe: MealieRecipe): RecipeFormData {
   const structured =
@@ -96,16 +84,6 @@ function buildFormData(recipe: MealieRecipe): RecipeFormData {
   }
 }
 
-function formatMinutes(value: string): string {
-  const n = Number(value)
-  if (!n || n <= 0) return ""
-  const h = Math.floor(n / 60)
-  const m = n % 60
-  if (h > 0 && m > 0) return `${h} h ${m} min`
-  if (h > 0) return `${h} h`
-  return `${m} min`
-}
-
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function RecipeDetailSkeleton() {
@@ -133,155 +111,6 @@ function RecipeDetailSkeleton() {
   )
 }
 
-// ─── Inline editable field ─────────────────────────────────────────────────────
-
-interface InlineEditTextProps {
-  value: string
-  displayValue?: ReactNode
-  onChange: (v: string) => void
-  placeholder?: string
-  className?: string
-  inputClassName?: string
-  multiline?: boolean
-  rows?: number
-  as?: "h1" | "p" | "span"
-  disabled?: boolean
-}
-
-function InlineEditText({
-  value,
-  displayValue,
-  onChange,
-  placeholder,
-  className,
-  inputClassName,
-  multiline = false,
-  rows = 3,
-  as: Tag = "p",
-  disabled = false,
-}: InlineEditTextProps) {
-  const [editing, setEditing] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (editing) {
-      if (multiline && textareaRef.current) {
-        textareaRef.current.focus()
-        const len = textareaRef.current.value.length
-        textareaRef.current.setSelectionRange(len, len)
-      } else if (!multiline && inputRef.current) {
-        inputRef.current.focus()
-        const len = inputRef.current.value.length
-        inputRef.current.setSelectionRange(len, len)
-      }
-    }
-  }, [editing, multiline])
-
-  const sharedInputClass = cn(
-    "w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-    "placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-    "disabled:cursor-not-allowed disabled:opacity-50",
-    inputClassName,
-  )
-
-  if (editing) {
-    if (multiline) {
-      return (
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onBlur={() => setEditing(false)}
-          placeholder={placeholder}
-          rows={rows}
-          disabled={disabled}
-          className={cn(sharedInputClass, "resize-none", className)}
-        />
-      )
-    }
-    return (
-      <input
-        ref={inputRef}
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={() => setEditing(false)}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={cn(sharedInputClass, className)}
-      />
-    )
-  }
-
-  return (
-    <Tag
-      onClick={() => !disabled && setEditing(true)}
-      className={cn(
-        "cursor-text rounded-md px-1 -mx-1 transition-colors",
-        !disabled && "hover:bg-muted/50",
-        !value && "text-muted-foreground italic",
-        className,
-      )}
-      title={disabled ? undefined : "Cliquer pour modifier"}
-    >
-      {displayValue ?? (value || placeholder)}
-    </Tag>
-  )
-}
-
-// ─── Duration inline edit ──────────────────────────────────────────────────────
-
-interface InlineEditDurationProps {
-  label: string
-  value: string
-  displayRaw?: string
-  onChange: (v: string) => void
-  disabled?: boolean
-}
-
-function InlineEditDuration({ label, value, displayRaw, onChange, disabled }: InlineEditDurationProps) {
-  const [editing, setEditing] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (editing) inputRef.current?.focus()
-  }, [editing])
-
-  if (editing) {
-    return (
-      <span className="flex items-center gap-1 text-sm">
-        <span className="text-muted-foreground">{label} :</span>
-        <Input
-          ref={inputRef}
-          type="number"
-          min="0"
-          step="5"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onBlur={() => setEditing(false)}
-          disabled={disabled}
-          className="h-6 w-20 px-2 py-0 text-sm"
-        />
-        <span className="text-xs text-muted-foreground">min</span>
-      </span>
-    )
-  }
-
-  return (
-    <span
-      onClick={() => !disabled && setEditing(true)}
-      className={cn(
-        "text-sm text-muted-foreground rounded px-1 -mx-1 transition-colors cursor-text",
-        !disabled && "hover:bg-muted/50",
-      )}
-      title={disabled ? undefined : "Cliquer pour modifier"}
-    >
-      {label} : {displayRaw ? formatDuration(displayRaw) : (value ? formatMinutes(value) : "—")}
-    </span>
-  )
-}
-
 // ─── WYSIWYG Page ──────────────────────────────────────────────────────────────
 
 export function RecipeDetailPage() {
@@ -293,7 +122,7 @@ export function RecipeDetailPage() {
   const { foods } = useFoods()
   const { units } = useUnits()
   const { updateRecipe, loading: saving, error: saveError } = useRecipeForm()
-  const { fetchAiImage, loading: aiImageLoading, error: aiImageError } = useAiImage()
+  const { fetchAiImage } = useAiImage()
   const [aiProvider, setAiProvider] = useState<ImageProvider>("wikipedia-en")
 
   // ─── Local editable state (initialized from recipe) ────────────────────────
@@ -565,6 +394,7 @@ export function RecipeDetailPage() {
                   variant="outline"
                   size="sm"
                   disabled
+                  onClick={() => void handleAiImage()}
                   className="gap-1.5 cursor-not-allowed"
                 >
                   <Sparkles className="h-4 w-4" />

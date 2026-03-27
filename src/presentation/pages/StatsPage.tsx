@@ -1,5 +1,5 @@
 import { useStats, type StatsPeriod } from "../hooks/useStats.ts"
-import { TrendingUp, Calendar, RefreshCw, Zap, Layers } from "lucide-react"
+import { Calendar, RefreshCw, Zap, Layers } from "lucide-react"
 import { cn } from "../../lib/utils.ts"
 
 const PERIODS: { value: StatsPeriod; label: string }[] = [
