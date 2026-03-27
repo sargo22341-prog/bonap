@@ -19,7 +19,8 @@
 ARG BUILD_FROM=alpine:3.20
 
 # Stage 1 — Build Vite app
-FROM node:20-alpine AS builder
+# Force amd64: Node 20 doesn't support armv7, and the output (static files) is arch-agnostic.
+FROM --platform=linux/amd64 node:20-alpine AS builder
 
 WORKDIR /app
 
