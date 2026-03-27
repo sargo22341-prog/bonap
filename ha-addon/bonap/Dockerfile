@@ -15,6 +15,9 @@
 # the correct architecture-specific base image at build time (see build.yaml).
 # =============================================================================
 
+# Global ARG — must be declared before the first FROM to be usable in a FROM instruction
+ARG BUILD_FROM=ghcr.io/hassio-addons/base:alpine
+
 # Stage 1 — Build Vite app
 FROM node:20-alpine AS builder
 
@@ -34,7 +37,6 @@ RUN npm run build
 # =============================================================================
 # Stage 2 — Serve with HA base image (provides bashio + s6-overlay)
 # =============================================================================
-ARG BUILD_FROM=ghcr.io/hassio-addons/base:alpine
 FROM ${BUILD_FROM}
 
 # Install nginx and envsubst (gettext package provides envsubst)
