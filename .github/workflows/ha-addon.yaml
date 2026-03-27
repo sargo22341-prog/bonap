@@ -40,7 +40,7 @@ jobs:
 
       - name: Get addon version
         id: version
-        run: echo "version=$(grep '^version:' ha-addon/bonap/config.yaml | tr -d '"' | awk '{print $2}')" >> $GITHUB_OUTPUT
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU (for cross-arch builds)
         uses: docker/setup-qemu-action@v3
@@ -60,7 +60,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ha-addon/bonap/Dockerfile
+          file: ha-addon/Dockerfile
           platforms: ${{ matrix.platform }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
