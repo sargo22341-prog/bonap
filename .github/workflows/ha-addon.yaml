@@ -4,20 +4,10 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "ha-addon/**"
-      - "src/**"
-      - "public/**"
-      - "index.html"
-      - "package.json"
-      - "package-lock.json"
-      - "vite.config.ts"
-      - "tsconfig*.json"
+
   pull_request:
     branches:
       - main
-    paths:
-      - "ha-addon/**"
 
 env:
   REGISTRY: ghcr.io
