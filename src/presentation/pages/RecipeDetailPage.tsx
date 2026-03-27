@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import { useRecipe } from "../hooks/useRecipe.ts"
 import { useUpdateSeasons } from "../hooks/useUpdateSeasons.ts"
 import { useUpdateCategories } from "../hooks/useUpdateCategories.ts"
@@ -18,7 +18,6 @@ import {
   GripVertical,
   ImagePlus,
   Check,
-  Pencil,
 } from "lucide-react"
 import { useState, useRef, useCallback, useEffect, type ReactNode, type ChangeEvent } from "react"
 import type {
@@ -64,6 +63,7 @@ function buildFormData(recipe: MealieRecipe): RecipeFormData {
         food: ing.food?.name ?? "",
         foodId: ing.food?.id,
         note: ing.note ?? "",
+        referenceId: ing.referenceId,
       })) ?? []
 
   return {
@@ -76,7 +76,7 @@ function buildFormData(recipe: MealieRecipe): RecipeFormData {
       { quantity: "1", unit: "", unitId: undefined, food: "", foodId: undefined, note: "" },
     ],
     recipeInstructions: recipe.recipeInstructions?.length
-      ? recipe.recipeInstructions.map((s) => ({ text: s.text }))
+      ? recipe.recipeInstructions.map((s) => ({ text: s.text, id: s.id }))
       : [{ text: "" }],
     seasons: getRecipeSeasonsFromTags(recipe.tags),
     categories: (recipe.recipeCategory ?? []).map((c) => ({
@@ -280,7 +280,6 @@ function InlineEditDuration({ label, value, displayRaw, onChange, disabled }: In
 
 export function RecipeDetailPage() {
   const { slug } = useParams<{ slug: string }>()
-  const navigate = useNavigate()
   const { recipe, loading, error, setRecipe } = useRecipe(slug)
   const { updateSeasons } = useUpdateSeasons()
   const { updateCategories } = useUpdateCategories()
@@ -464,17 +463,6 @@ export function RecipeDetailPage() {
           </div>
         )}
 
-        {!isDirty && recipe && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => navigate(`/recipes/${recipe.slug}/edit`)}
-            className="gap-1.5 text-muted-foreground"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-            Formulaire complet
-          </Button>
-        )}
       </div>
 
       {/* Errors */}
@@ -638,11 +626,12 @@ export function RecipeDetailPage() {
               </Button>
             </div>
 
-            <div className="hidden sm:grid sm:grid-cols-[16px_80px_1.5fr_1fr_32px] sm:gap-2 sm:items-center px-1">
+            <div className="hidden sm:grid sm:grid-cols-[16px_70px_1fr_1fr_1.5fr_32px] sm:gap-2 sm:items-center px-1">
               <span />
               <span className="text-xs text-muted-foreground font-medium">Qté</span>
-              <span className="text-xs text-muted-foreground font-medium">Aliment</span>
               <span className="text-xs text-muted-foreground font-medium">Unité</span>
+              <span className="text-xs text-muted-foreground font-medium">Ingrédient</span>
+              <span className="text-xs text-muted-foreground font-medium">Notes</span>
               <span />
             </div>
 
@@ -650,7 +639,7 @@ export function RecipeDetailPage() {
               {formData.recipeIngredient.map((ing, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-[16px_60px_1.5fr_1fr_32px] sm:grid-cols-[16px_80px_1.5fr_1fr_32px] gap-2 items-center"
+                  className="grid grid-cols-[16px_55px_1fr_1fr_32px] sm:grid-cols-[16px_70px_1fr_1fr_1.5fr_32px] gap-2 items-center"
                 >
                   <GripVertical className="h-4 w-4 text-muted-foreground" />
 
@@ -666,6 +655,18 @@ export function RecipeDetailPage() {
                   />
 
                   <Autocomplete
+                    value={ing.unit}
+                    onChange={(value, option) =>
+                      updateIngredientField(index, { unit: value, unitId: option?.id })
+                    }
+                    options={unitOptions}
+                    placeholder="Unité…"
+                    disabled={saving}
+                    inputClassName="bg-white dark:bg-zinc-900"
+                    aria-label={`Unité ingrédient ${index + 1}`}
+                  />
+
+                  <Autocomplete
                     value={ing.food}
                     onChange={(value, option) =>
                       updateIngredientField(index, {
@@ -674,22 +675,22 @@ export function RecipeDetailPage() {
                       })
                     }
                     options={foodOptions}
-                    placeholder="Aliment…"
+                    placeholder="Ingrédient…"
                     disabled={saving}
                     allowCreate
                     createLabel={(v) => `Créer "${v}"`}
-                    aria-label={`Aliment ingrédient ${index + 1}`}
+                    inputClassName="bg-white dark:bg-zinc-900"
+                    aria-label={`Ingrédient ${index + 1}`}
                   />
 
-                  <Autocomplete
-                    value={ing.unit}
-                    onChange={(value, option) =>
-                      updateIngredientField(index, { unit: value, unitId: option?.id })
-                    }
-                    options={unitOptions}
-                    placeholder="Unité…"
+                  <Input
+                    type="text"
+                    placeholder="Notes…"
+                    value={ing.note}
+                    onChange={(e) => updateIngredientField(index, { note: e.target.value })}
                     disabled={saving}
-                    aria-label={`Unité ingrédient ${index + 1}`}
+                    className="hidden sm:block min-w-0 px-2"
+                    aria-label={`Notes ingrédient ${index + 1}`}
                   />
 
                   <Button
@@ -697,7 +698,7 @@ export function RecipeDetailPage() {
                     variant="ghost"
                     size="icon"
                     onClick={() => removeIngredient(index)}
-                    disabled={saving}
+                    disabled={saving || formData.recipeIngredient.length <= 1}
                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
                     aria-label={`Supprimer ingrédient ${index + 1}`}
                   >

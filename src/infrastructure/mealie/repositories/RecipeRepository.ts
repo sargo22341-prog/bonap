@@ -78,54 +78,51 @@ export class RecipeRepository implements IRecipeRepository {
   }
 
   async update(slug: string, data: RecipeFormData): Promise<MealieRecipe> {
-    const seasonTags = await this.resolveSeasonTags(data.seasons)
+    const [current, seasonTags] = await Promise.all([
+      this.getBySlug(slug),
+      this.resolveSeasonTags(data.seasons),
+    ])
+
+    const mappedIngredients = data.recipeIngredient
+      .filter((ing) => ing.food || ing.note || ing.unit || (ing.quantity && ing.quantity !== "1"))
+      .map((ing) => {
+        const original = ing.referenceId
+          ? current.recipeIngredient?.find((i) => i.referenceId === ing.referenceId)
+          : undefined
+
+        const quantity = ing.quantity ? parseFloat(ing.quantity) : 0
+        const hasFood = Boolean(ing.foodId)
+        const hasUnit = Boolean(ing.unitId)
+
+        return {
+          ...(original ?? {}),
+          quantity,
+          unit: hasUnit ? { id: ing.unitId, name: ing.unit } : (original?.unit ?? null),
+          food: hasFood ? { id: ing.foodId, name: ing.food } : (original?.food ?? null),
+          note: ing.note || (!hasFood && !hasUnit ? ing.food : "") || "",
+        }
+      })
+
     const payload = {
+      ...current,
       name: data.name,
-      description: data.description || undefined,
-      prepTime: this.minutesToIso(data.prepTime),
-      cookTime: this.minutesToIso(data.cookTime),
-      recipeCategory: data.categories,
-      recipeIngredient: data.recipeIngredient
-        .filter((ing) => ing.quantity || ing.unit || ing.food || ing.note)
-        .map((ing) => {
-          const quantity = ing.quantity ? parseFloat(ing.quantity) : undefined
-          const hasFood = Boolean(ing.foodId)
-          const hasUnit = Boolean(ing.unitId)
-
-          if (hasFood) {
-            // Ingrédient structuré avec aliment résolu
-            return {
-              quantity: quantity ?? 0,
-              unit: hasUnit ? { id: ing.unitId, name: ing.unit } : null,
-              food: { id: ing.foodId, name: ing.food },
-              note: ing.note || "",
-              title: null,
-              disableAmount: false,
-            }
-          }
-
-          // Fallback : ingrédient en texte libre (note)
-          const noteParts = [
-            ing.quantity,
-            ing.unit,
-            ing.food,
-            ing.note,
-          ].filter(Boolean)
-          return {
-            note: noteParts.join(" "),
-            quantity: quantity ?? 0,
-            title: "",
-          }
-        }),
+      description: data.description || current.description,
+      prepTime: this.minutesToIso(data.prepTime) ?? current.prepTime,
+      cookTime: this.minutesToIso(data.cookTime) ?? current.cookTime,
+      recipeCategory: data.categories.map((c) => {
+        const orig = current.recipeCategory?.find((rc) => rc.id === c.id)
+        return orig ? { ...orig, ...c } : c
+      }),
+      recipeIngredient: mappedIngredients,
       recipeInstructions: data.recipeInstructions
         .filter((step) => step.text.trim())
-        .map((step, i) => ({
-          id: String(i),
+        .map((step) => ({
+          id: step.id ?? crypto.randomUUID(),
           text: step.text,
         })),
       tags: [...data.tags, ...seasonTags],
     }
-    return mealieApiClient.patch<MealieRecipe>(`/api/recipes/${slug}`, payload)
+    return mealieApiClient.put<MealieRecipe>(`/api/recipes/${slug}`, payload)
   }
 
   async uploadImage(slug: string, file: File): Promise<void> {

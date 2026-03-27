@@ -14,6 +14,7 @@ interface AutocompleteProps {
   placeholder?: string
   disabled?: boolean
   className?: string
+  inputClassName?: string
   /** Afficher une option "Créer …" quand la valeur ne correspond à aucun item */
   allowCreate?: boolean
   createLabel?: (value: string) => string
@@ -27,6 +28,7 @@ export function Autocomplete({
   placeholder,
   disabled,
   className,
+  inputClassName,
   allowCreate = false,
   createLabel = (v) => `Créer "${v}"`,
   "aria-label": ariaLabel,
@@ -137,7 +139,7 @@ export function Autocomplete({
       style={dropdownStyle}
       className={cn(
         "max-h-48 overflow-auto rounded-md border border-border",
-        "bg-popover text-popover-foreground shadow-md",
+        "bg-white dark:bg-zinc-900 text-foreground shadow-md",
       )}
     >
       {visibleItems.map((item, i) => (
@@ -191,6 +193,7 @@ export function Autocomplete({
           "placeholder:text-muted-foreground",
           "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
           "disabled:cursor-not-allowed disabled:opacity-50",
+          inputClassName,
         )}
       />
 

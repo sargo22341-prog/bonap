@@ -41,6 +41,7 @@ function buildInitialIngredients(recipe?: MealieRecipe): RecipeFormIngredient[] 
       food: ing.food?.name ?? "",
       foodId: ing.food?.id,
       note: ing.note ?? "",
+      referenceId: ing.referenceId,
     }))
   // Toujours une ligne vide à la fin pour faciliter l'ajout
   return [...structured, { quantity: "1", unit: "", unitId: undefined, food: "", foodId: undefined, note: "" }]
@@ -50,7 +51,7 @@ function buildInitialInstructions(recipe?: MealieRecipe): RecipeFormInstruction[
   if (!recipe?.recipeInstructions?.length) {
     return [{ text: "" }]
   }
-  return recipe.recipeInstructions.map((step) => ({ text: step.text }))
+  return recipe.recipeInstructions.map((step) => ({ text: step.text, id: step.id }))
 }
 
 function parsePrepTimeToMinutes(value?: string): string {

@@ -73,10 +73,14 @@ export interface RecipeFormIngredient {
   food: string
   foodId?: string
   note: string
+  /** UUID Mealie — préservé pour retrouver l'ingrédient original lors du PUT */
+  referenceId?: string
 }
 
 export interface RecipeFormInstruction {
   text: string
+  /** UUID Mealie — préservé pour ne pas recréer les instructions à chaque save */
+  id?: string
 }
 
 export interface RecipeFormData {
