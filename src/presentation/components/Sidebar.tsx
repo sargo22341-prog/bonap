@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom"
 import { UtensilsCrossed, CalendarDays, BarChart2, ShoppingCart, ChevronLeft, ChevronRight, ExternalLink, Settings, Sparkles } from "lucide-react"
 import { cn } from "../../lib/utils.ts"
+import { getEnv } from "../../shared/utils/env.ts"
 
 const navItems = [
   { to: "/planning", label: "Planning", icon: CalendarDays },
@@ -138,7 +139,7 @@ export function Sidebar({ collapsed, onToggleCollapsed }: SidebarProps) {
         </NavLink>
 
         <a
-          href={import.meta.env.VITE_MEALIE_URL}
+          href={getEnv("VITE_MEALIE_URL")}
           target="_blank"
           rel="noopener noreferrer"
           className={cn(

@@ -5,14 +5,20 @@ import {
   MealieServerError,
   MealieUnauthorizedError,
 } from "../../../shared/types/errors.ts"
+import { getEnv, isDockerRuntime } from "../../../shared/utils/env.ts"
 
-// In dev, /api requests are proxied by Vite to VITE_MEALIE_URL (no CORS).
-// In prod, VITE_MEALIE_URL must be set and directly reachable.
-const baseUrl =
-  import.meta.env.DEV
-    ? ""
-    : (import.meta.env.VITE_MEALIE_URL as string).replace(/\/+$/, "")
-const token = import.meta.env.VITE_MEALIE_TOKEN as string
+// En dev : /api est proxié par Vite → VITE_MEALIE_URL (pas de CORS).
+// En prod Docker : /api est proxié par nginx → MEALIE_INTERNAL_URL (pas de CORS, même principe).
+// En prod sans Docker : requête directe vers VITE_MEALIE_URL depuis le navigateur.
+function getBaseUrl(): string {
+  if (import.meta.env.DEV) return ""
+  if (isDockerRuntime()) return ""
+  return getEnv("VITE_MEALIE_URL").replace(/\/+$/, "")
+}
+
+function getToken(): string {
+  return getEnv("VITE_MEALIE_TOKEN")
+}
 
 export class MealieApiClient implements IMealieApiClient {
   private async request<T>(
@@ -20,10 +26,10 @@ export class MealieApiClient implements IMealieApiClient {
     path: string,
     body?: unknown,
   ): Promise<T> {
-    const url = `${baseUrl}${path}`
+    const url = `${getBaseUrl()}${path}`
 
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${getToken()}`,
       "Content-Type": "application/json",
     }
 
@@ -79,10 +85,10 @@ export class MealieApiClient implements IMealieApiClient {
     const formData = new FormData()
     formData.append("image", file)
     formData.append("extension", file.name.split(".").pop() ?? "jpg")
-    const url = `${baseUrl}/api/recipes/${slug}/image`
+    const url = `${getBaseUrl()}/api/recipes/${slug}/image`
     const response = await fetch(url, {
       method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
       body: formData,
     })
     if (!response.ok) {
@@ -92,10 +98,10 @@ export class MealieApiClient implements IMealieApiClient {
   }
 
   async postSse<T>(path: string, body: unknown): Promise<T> {
-    const response = await fetch(`${baseUrl}${path}`, {
+    const response = await fetch(`${getBaseUrl()}${path}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${getToken()}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),

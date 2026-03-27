@@ -25,6 +25,7 @@ import { getRecipesUseCase } from "../../infrastructure/container.ts"
 import { extractFoodKey } from "../../shared/utils/food.ts"
 import type { ShoppingItem, ShoppingLabel } from "../../domain/shopping/entities/ShoppingItem.ts"
 import { cn } from "../../lib/utils.ts"
+import { getEnv } from "../../shared/utils/env.ts"
 
 // ─── Couleur déterministe par nom de catégorie ─────────────────────────────────
 
@@ -830,7 +831,7 @@ export function ShoppingPage() {
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
             </button>
             <a
-              href={`${(import.meta.env.VITE_MEALIE_URL as string ?? "").replace(/\/+$/, "")}/group/data/labels`}
+              href={`${getEnv("VITE_MEALIE_URL").replace(/\/+$/, "")}/group/data/labels`}
               target="_blank"
               rel="noopener noreferrer"
               className={cn(

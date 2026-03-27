@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { getEnv } from "../../shared/utils/env.ts"
 import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, Check, Sun, Moon, Monitor, Palette, Bot, Server } from "lucide-react"
 import { Button } from "../components/ui/button.tsx"
 import { Input } from "../components/ui/input.tsx"
@@ -287,7 +288,7 @@ export function SettingsPage() {
             <Label className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-[0.10em]">VITE_MEALIE_URL</Label>
             <Input
               readOnly
-              value={(import.meta.env.VITE_MEALIE_URL as string) || "Non défini"}
+              value={getEnv("VITE_MEALIE_URL") || "Non défini"}
               className="bg-secondary/40 font-mono text-xs"
             />
           </div>
@@ -296,7 +297,7 @@ export function SettingsPage() {
             <Input
               readOnly
               type="password"
-              value={(import.meta.env.VITE_MEALIE_TOKEN as string) || "Non défini"}
+              value={getEnv("VITE_MEALIE_TOKEN") || "Non défini"}
               className="bg-secondary/40 font-mono text-xs"
             />
           </div>

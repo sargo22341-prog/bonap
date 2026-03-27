@@ -19,6 +19,7 @@ import {
 import type { MealieRecipe, MealieCategory, Season } from "../../shared/types/mealie.ts"
 import { SEASONS, SEASON_LABELS } from "../../shared/types/mealie.ts"
 import { getCurrentSeason, getRecipeSeasonsFromTags, isSeasonTag } from "../../shared/utils/season.ts"
+import { getEnv } from "../../shared/utils/env.ts"
 import { getRecipesUseCase, getRecipeUseCase } from "../../infrastructure/container.ts"
 import { RecipeIngredientsList } from "../components/RecipeIngredientsList.tsx"
 import { RecipeInstructionsList } from "../components/RecipeInstructionsList.tsx"
@@ -231,7 +232,7 @@ export function RecipesPage() {
 
             {/* Importer depuis Mealie */}
             <a
-              href={`${(import.meta.env.VITE_MEALIE_URL as string ?? "").replace(/\/+$/, "")}/g/home/r/create/url`}
+              href={`${getEnv("VITE_MEALIE_URL").replace(/\/+$/, "")}/g/home/r/create/url`}
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
