@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  --primary: oklch(0.62 0.18 42);
+  --primary-light: oklch(0.72 0.16 42);
+  --primary-glow: oklch(0.62 0.18 42 / 0.3);
+  --primary-subtle: oklch(0.62 0.18 42 / 0.1);
+  --bg: oklch(0.10 0.01 260);
+  --bg-card: oklch(0.14 0.01 260);
+  --bg-card-hover: oklch(0.17 0.01 260);
+  --border: oklch(0.22 0.01 260);
+  --text: oklch(0.95 0 0);
+  --text-muted: oklch(0.65 0.02 260);
+}
+
+/* Code blocks restent sombres dans les deux thèmes */
+:root {
+  --code-bg-header: oklch(0.12 0.01 260);
+  --code-bg-body: oklch(0.09 0.01 260);
+  --code-btn-hover: oklch(0.18 0.01 260 / 0.6);
+  --alert-info-bg: oklch(0.14 0.04 240);
+  --alert-info-border: oklch(0.35 0.08 240);
+  --alert-info-color: oklch(0.75 0.12 240);
+  --alert-warn-bg: oklch(0.14 0.06 80);
+  --alert-warn-border: oklch(0.45 0.12 80);
+  --alert-warn-color: oklch(0.80 0.15 80);
+}
+
+[data-theme="light"] {
+  --bg: oklch(0.97 0.005 260);
+  --bg-card: oklch(1 0 0);
+  --bg-card-hover: oklch(0.95 0.005 260);
+  --border: oklch(0.88 0.01 260);
+  --text: oklch(0.15 0.02 260);
+  --text-muted: oklch(0.45 0.02 260);
+  --alert-info-bg: oklch(0.93 0.04 240);
+  --alert-info-border: oklch(0.65 0.09 240);
+  --alert-info-color: oklch(0.40 0.12 240);
+  --alert-warn-bg: oklch(0.94 0.05 70);
+  --alert-warn-border: oklch(0.70 0.12 70);
+  --alert-warn-color: oklch(0.45 0.14 70);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.4 0.05 250);
+  border-radius: 3px;
+}
+
+code, pre {
+  font-family: 'JetBrains Mono', monospace;
+}
