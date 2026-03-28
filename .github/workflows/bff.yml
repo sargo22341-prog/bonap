@@ -12,9 +12,40 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  prepare:
+    name: Bump BFF version
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump patch version
+        id: version
+        run: |
+          cd bff
+          npm version patch --no-git-tag-version
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Commit and push version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bff/package.json
+          git commit -m "chore(bff): bump version to ${{ steps.version.outputs.version }} [skip ci]"
+          git push
+
   build-and-push:
     name: Build and push BFF image (${{ matrix.arch }})
     runs-on: ubuntu-latest
+    needs: prepare
     permissions:
       contents: read
       packages: write
@@ -33,6 +64,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -47,10 +80,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get version
-        id: version
-        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -59,6 +88,47 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/aymericlefeyer/bonap-trmnl-${{ matrix.arch }}:latest
-            ${{ env.REGISTRY }}/aymericlefeyer/bonap-trmnl-${{ matrix.arch }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/aymericlefeyer/bonap-trmnl-${{ matrix.arch }}:${{ needs.prepare.outputs.version }}
           cache-from: type=gha,scope=bff-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=bff-${{ matrix.arch }}
+
+  release:
+    name: Create BFF GitHub release
+    runs-on: ubuntu-latest
+    needs: [prepare, build-and-push]
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Generate changelog
+        run: |
+          git-cliff \
+            --tag "bff-v${{ needs.prepare.outputs.version }}" \
+            --unreleased \
+            --strip all \
+            --include-path "bff/**" \
+            > /tmp/release_notes.md
+
+      - name: Create release if not exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="bff-v${{ needs.prepare.outputs.version }}"
+          if gh release view "${VERSION}" &>/dev/null; then
+            echo "Release ${VERSION} already exists, skipping."
+          else
+            gh release create "${VERSION}" \
+              --title "BFF v${{ needs.prepare.outputs.version }}" \
+              --notes-file /tmp/release_notes.md \
+              --target main
+          fi
