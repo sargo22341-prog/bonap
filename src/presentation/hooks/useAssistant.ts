@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react"
+import { generateId } from "../../shared/utils/id.ts"
 import { sendAssistantMessage } from "../../infrastructure/llm/AssistantService.ts"
 import type { AnthropicMessage, AssistantTool } from "../../infrastructure/llm/AssistantService.ts"
 import {
@@ -169,7 +170,7 @@ export function useAssistant() {
   }, [])
 
   const sendMessage = useCallback(async (text: string) => {
-    const userMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text }
+    const userMsg: ChatMessage = { id: generateId(), role: "user", content: text }
     setMessages((prev) => [...prev, userMsg])
     setLoading(true)
 
@@ -188,7 +189,7 @@ export function useAssistant() {
     ]
 
     // Create streaming assistant message
-    const assistantId = crypto.randomUUID()
+    const assistantId = generateId()
     setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "", isStreaming: true }])
 
     const tools = buildTools()
@@ -202,7 +203,7 @@ export function useAssistant() {
         setMessages((prev) => [
           ...prev,
           {
-            id: crypto.randomUUID(),
+            id: generateId(),
             role: "tool",
             content: toolLabel(event.name),
             toolName: event.name,

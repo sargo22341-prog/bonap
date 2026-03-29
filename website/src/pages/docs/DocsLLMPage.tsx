@@ -46,10 +46,26 @@ export default function DocsLLMPage() {
       </ul>
 
       <Alert type="info">
-        La clé API est stockée dans le <strong>localStorage</strong> de votre navigateur.
+        Par défaut, la clé API est stockée dans le <strong>localStorage</strong> de votre navigateur.
         Elle n'est jamais envoyée au serveur Bonap — les appels LLM partent directement
         depuis votre navigateur vers le provider.
       </Alert>
+
+      <DocH2>Configuration via variables d'environnement</DocH2>
+      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.7, marginBottom: '1rem' }}>
+        Pour partager la configuration IA entre tous vos appareils sans avoir à la re-saisir,
+        définissez les variables d'environnement suivantes dans Docker ou l'addon Home Assistant.
+        Elles ont la priorité sur le localStorage et les champs correspondants deviennent en lecture seule dans l'interface.
+      </p>
+      <DocsTable
+        headers={['Variable', 'Description', 'Exemple']}
+        rows={[
+          { cells: ['LLM_PROVIDER', 'Fournisseur IA', 'anthropic'] },
+          { cells: ['LLM_API_KEY', 'Clé API du provider', 'sk-ant-...'] },
+          { cells: ['LLM_MODEL', 'Modèle à utiliser', 'claude-sonnet-4-6'] },
+          { cells: ['LLM_OLLAMA_URL', 'URL Ollama (si provider=ollama)', 'http://ollama:11434'] },
+        ]}
+      />
 
       <DocH2>Providers supportés</DocH2>
       <DocsTable

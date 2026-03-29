@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
 import { getEnv } from "../../shared/utils/env.ts"
-import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, Check, Sun, Moon, Monitor, Palette, Bot, Server } from "lucide-react"
+import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, Check, Sun, Moon, Monitor, Palette, Bot, Server, Info } from "lucide-react"
 import { Button } from "../components/ui/button.tsx"
 import { Input } from "../components/ui/input.tsx"
 import { Label } from "../components/ui/label.tsx"
-import { llmConfigService } from "../../infrastructure/llm/LLMConfigService.ts"
+import { llmConfigService, getLLMEnvFields } from "../../infrastructure/llm/LLMConfigService.ts"
 import type { LLMConfig, LLMProvider } from "../../shared/types/llm.ts"
 import { LLM_PROVIDERS } from "../../shared/types/llm.ts"
 import { useTheme } from "../hooks/useTheme.ts"
@@ -13,6 +13,14 @@ import type { Theme } from "../../infrastructure/theme/ThemeService.ts"
 import { cn } from "../../lib/utils.ts"
 
 type TestStatus = { state: "idle" } | { state: "loading" } | { state: "ok"; message: string } | { state: "error"; message: string }
+
+function EnvBadge() {
+  return (
+    <span className="rounded-full border border-border bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      env
+    </span>
+  )
+}
 
 const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "Clair", icon: Sun },
@@ -23,6 +31,7 @@ const THEME_OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
 export function SettingsPage() {
   const { theme, setTheme, accentColor, setAccentColor } = useTheme()
   const [config, setConfig] = useState<LLMConfig>(() => llmConfigService.load())
+  const envFields = getLLMEnvFields()
   const [showKey, setShowKey] = useState(false)
   const [testStatus, setTestStatus] = useState<TestStatus>({ state: "idle" })
   const [saved, setSaved] = useState(false)
@@ -143,19 +152,24 @@ export function SettingsPage() {
 
         {/* Sélecteur de fournisseur */}
         <div className="space-y-2.5">
-          <Label>Fournisseur</Label>
+          <div className="flex items-center gap-2">
+            <Label>Fournisseur</Label>
+            {envFields.has("provider") && <EnvBadge />}
+          </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {(Object.keys(LLM_PROVIDERS) as LLMProvider[]).map((p) => (
               <button
                 key={p}
                 type="button"
-                onClick={() => handleProviderChange(p)}
+                onClick={() => !envFields.has("provider") && handleProviderChange(p)}
+                disabled={envFields.has("provider")}
                 className={cn(
                   "rounded-[var(--radius-lg)] border px-3 py-2",
                   "text-sm font-semibold transition-all duration-150",
                   config.provider === p
                     ? "border-primary bg-primary text-primary-foreground shadow-[0_1px_3px_oklch(0.58_0.175_38/0.25)]"
                     : "border-border bg-card text-foreground hover:bg-secondary",
+                  envFields.has("provider") && "cursor-not-allowed opacity-70",
                 )}
               >
                 {LLM_PROVIDERS[p].label}
@@ -167,15 +181,19 @@ export function SettingsPage() {
         {/* Clé API */}
         {providerInfo.needsKey && (
           <div className="space-y-2.5">
-            <Label htmlFor="api-key">Clé API</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="api-key">Clé API</Label>
+              {envFields.has("apiKey") && <EnvBadge />}
+            </div>
             <div className="relative">
               <Input
                 id="api-key"
                 type={showKey ? "text" : "password"}
-                placeholder={`Clé ${providerInfo.label}`}
+                placeholder={envFields.has("apiKey") ? "Définie via variable d'environnement" : `Clé ${providerInfo.label}`}
                 value={config.apiKey}
                 onChange={(e) => setConfig((prev) => ({ ...prev, apiKey: e.target.value }))}
-                className="pr-10"
+                readOnly={envFields.has("apiKey")}
+                className={cn("pr-10", envFields.has("apiKey") && "bg-secondary/40")}
                 autoComplete="off"
               />
               <button
@@ -194,13 +212,18 @@ export function SettingsPage() {
         {config.provider === "ollama" && (
           <div className="space-y-4">
             <div className="space-y-2.5">
-              <Label htmlFor="ollama-url">URL de l'instance Ollama</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="ollama-url">URL de l'instance Ollama</Label>
+                {envFields.has("ollamaBaseUrl") && <EnvBadge />}
+              </div>
               <Input
                 id="ollama-url"
                 type="text"
                 placeholder="http://localhost:11434"
                 value={config.ollamaBaseUrl}
                 onChange={(e) => setConfig((prev) => ({ ...prev, ollamaBaseUrl: e.target.value }))}
+                readOnly={envFields.has("ollamaBaseUrl")}
+                className={cn(envFields.has("ollamaBaseUrl") && "bg-secondary/40")}
               />
             </div>
             <div className="space-y-2.5">
@@ -219,13 +242,17 @@ export function SettingsPage() {
         {/* Sélecteur de modèle */}
         {config.provider !== "ollama" && providerInfo.models.length > 0 && (
           <div className="space-y-2.5">
-            <Label>Modèle</Label>
+            <div className="flex items-center gap-2">
+              <Label>Modèle</Label>
+              {envFields.has("model") && <EnvBadge />}
+            </div>
             <div className="flex flex-wrap gap-2">
               {providerInfo.models.map((m) => (
                 <button
                   key={m}
                   type="button"
-                  onClick={() => setConfig((prev) => ({ ...prev, model: m }))}
+                  onClick={() => !envFields.has("model") && setConfig((prev) => ({ ...prev, model: m }))}
+                  disabled={envFields.has("model")}
                   className={cn(
                     "rounded-[var(--radius-lg)] border px-3 py-1.5",
                     "text-xs font-mono font-semibold transition-all duration-150",
@@ -269,6 +296,26 @@ export function SettingsPage() {
           {saved && testStatus.state === "idle" && (
             <span className="text-xs text-muted-foreground animate-fade-in">Sauvegardé</span>
           )}
+        </div>
+      </section>
+
+      {/* ── Section À propos ── */}
+      <section className="rounded-[var(--radius-2xl)] border border-border/50 bg-card shadow-subtle p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-lg)] bg-primary/8">
+            <Info className="h-4 w-4 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-base font-bold leading-none">À propos</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Informations sur l'application.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <img src="/bonap.png" alt="Bonap" className="h-6 w-6 rounded-md object-cover" />
+            <span className="text-sm font-semibold">Bonap</span>
+            <span className="rounded-full border border-border bg-secondary px-2.5 py-0.5 text-xs font-mono font-semibold text-muted-foreground">
+              v{__APP_VERSION__}
+            </span>
+          </div>
         </div>
       </section>
 

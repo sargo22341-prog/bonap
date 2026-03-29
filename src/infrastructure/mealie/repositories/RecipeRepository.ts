@@ -10,6 +10,7 @@ import type {
   Season,
 } from "../../../shared/types/mealie.ts"
 import { isSeasonTag } from "../../../shared/utils/season.ts"
+import { generateId } from "../../../shared/utils/id.ts"
 import { mealieApiClient } from "../api/index.ts"
 
 interface MealieTagObject { id?: string; name: string; slug: string }
@@ -117,7 +118,7 @@ export class RecipeRepository implements IRecipeRepository {
       recipeInstructions: data.recipeInstructions
         .filter((step) => step.text.trim())
         .map((step) => ({
-          id: step.id ?? crypto.randomUUID(),
+          id: step.id ?? generateId(),
           text: step.text,
         })),
       tags: [...data.tags, ...seasonTags],

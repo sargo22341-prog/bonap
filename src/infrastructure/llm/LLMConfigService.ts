@@ -3,19 +3,44 @@ import { DEFAULT_LLM_CONFIG } from "../../shared/types/llm.ts"
 
 const STORAGE_KEY = "bonap_llm_config"
 
+function getEnvOverrides(): Partial<LLMConfig> {
+  const env = window.__ENV__
+  if (!env) return {}
+  const overrides: Partial<LLMConfig> = {}
+  if (env.LLM_PROVIDER) overrides.provider = env.LLM_PROVIDER as LLMProvider
+  if (env.LLM_API_KEY) overrides.apiKey = env.LLM_API_KEY
+  if (env.LLM_MODEL) overrides.model = env.LLM_MODEL
+  if (env.LLM_OLLAMA_URL) overrides.ollamaBaseUrl = env.LLM_OLLAMA_URL
+  return overrides
+}
+
+export function getLLMEnvFields(): Set<keyof LLMConfig> {
+  const env = window.__ENV__
+  const fields = new Set<keyof LLMConfig>()
+  if (env?.LLM_PROVIDER) fields.add("provider")
+  if (env?.LLM_API_KEY) fields.add("apiKey")
+  if (env?.LLM_MODEL) fields.add("model")
+  if (env?.LLM_OLLAMA_URL) fields.add("ollamaBaseUrl")
+  return fields
+}
+
 export class LLMConfigService {
   load(): LLMConfig {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
-      if (!raw) return { ...DEFAULT_LLM_CONFIG }
-      return { ...DEFAULT_LLM_CONFIG, ...JSON.parse(raw) } as LLMConfig
+      const stored = raw ? (JSON.parse(raw) as Partial<LLMConfig>) : {}
+      return { ...DEFAULT_LLM_CONFIG, ...stored, ...getEnvOverrides() } as LLMConfig
     } catch {
-      return { ...DEFAULT_LLM_CONFIG }
+      return { ...DEFAULT_LLM_CONFIG, ...getEnvOverrides() } as LLMConfig
     }
   }
 
   save(config: LLMConfig): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+    // Ne pas écraser les champs gérés par les variables d'environnement
+    const envFields = getLLMEnvFields()
+    const toSave = { ...config }
+    for (const field of envFields) delete toSave[field]
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
   }
 
   isConfigured(): boolean {

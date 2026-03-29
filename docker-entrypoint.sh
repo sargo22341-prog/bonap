@@ -7,11 +7,19 @@ set -e
 # Variables supportées :
 #   VITE_MEALIE_URL    — URL Mealie accessible depuis le navigateur (ex: http://mealie:9000)
 #   VITE_MEALIE_TOKEN  — Token Bearer Mealie
+#   LLM_PROVIDER       — Fournisseur IA (anthropic, openai, google, ollama)
+#   LLM_API_KEY        — Clé API du fournisseur IA
+#   LLM_MODEL          — Modèle IA (ex: claude-sonnet-4-5)
+#   LLM_OLLAMA_URL     — URL de l'instance Ollama (si provider=ollama)
 
 cat > /usr/share/nginx/html/env-config.js <<EOF
 window.__ENV__ = {
   VITE_MEALIE_URL: "${VITE_MEALIE_URL:-}",
-  VITE_MEALIE_TOKEN: "${VITE_MEALIE_TOKEN:-}"
+  VITE_MEALIE_TOKEN: "${VITE_MEALIE_TOKEN:-}",
+  LLM_PROVIDER: "${LLM_PROVIDER:-}",
+  LLM_API_KEY: "${LLM_API_KEY:-}",
+  LLM_MODEL: "${LLM_MODEL:-}",
+  LLM_OLLAMA_URL: "${LLM_OLLAMA_URL:-}"
 };
 EOF
 

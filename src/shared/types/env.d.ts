@@ -4,9 +4,15 @@
  * En développement sans Docker, window.__ENV__ est undefined et l'app
  * retombe sur import.meta.env (variables Vite injectées au build).
  */
+declare const __APP_VERSION__: string
+
 interface Window {
   __ENV__?: {
     VITE_MEALIE_URL?: string
     VITE_MEALIE_TOKEN?: string
+    LLM_PROVIDER?: string
+    LLM_API_KEY?: string
+    LLM_MODEL?: string
+    LLM_OLLAMA_URL?: string
   }
 }
