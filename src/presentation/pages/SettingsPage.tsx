@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { getEnv } from "../../shared/utils/env.ts"
-import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, Check, Sun, Moon, Monitor, Palette, Bot, Server, Info } from "lucide-react"
+import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, Check, Sun, Moon, Monitor, Palette, Bot, Server, Info, Lock } from "lucide-react"
 import { Button } from "../components/ui/button.tsx"
 import { Input } from "../components/ui/input.tsx"
 import { Label } from "../components/ui/label.tsx"
@@ -146,9 +146,26 @@ export function SettingsPage() {
           </div>
           <div>
             <h2 className="text-base font-bold leading-none">Fournisseur IA</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Utilisé pour l'assistant, les suggestions et la vision. La clé est stockée localement.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {envFields.size > 0
+                ? "Certains paramètres sont gérés via variables d'environnement."
+                : "Utilisé pour l'assistant, les suggestions et la vision. La clé est stockée localement."}
+            </p>
           </div>
         </div>
+
+        {/* Bannière env */}
+        {envFields.size > 0 && (
+          <div className="flex items-start gap-3 rounded-[var(--radius-lg)] border border-border bg-secondary/50 px-4 py-3">
+            <Lock className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Les champs marqués <span className="font-semibold text-foreground">ENV</span> sont verrouillés.
+              Pour les modifier, mettez à jour les variables d'environnement dans la{" "}
+              <span className="font-semibold text-foreground">configuration de l'addon Home Assistant</span>{" "}
+              ou votre <span className="font-semibold text-foreground">docker-compose.yml</span>, puis redémarrez.
+            </p>
+          </div>
+        )}
 
         {/* Sélecteur de fournisseur */}
         <div className="space-y-2.5">
