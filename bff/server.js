@@ -160,7 +160,17 @@ app.get('/next_meal', async (req, res) => {
       return res.json({ empty: true })
     }
 
-    const recipe = next.recipe ?? {}
+    // mealplans ne contient pas recipeIngredient/recipeInstructions → fetch du détail
+    const base = next.recipe ?? {}
+    let recipe = base
+    if (base.slug) {
+      try {
+        recipe = await fetchMealie(`/api/recipes/${base.slug}`)
+      } catch {
+        // fallback sur les données partielles
+      }
+    }
+
     res.json({
       empty: false,
       type: next.entryType,
