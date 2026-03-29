@@ -103,7 +103,10 @@ app.get('/planning', async (req, res) => {
         .map(m => ({
           type: m.entryType,
           label: SLOT_LABELS[m.entryType] ?? m.entryType,
-          name: m.recipe?.name ?? m.title ?? ''
+          name: m.recipe?.name ?? m.title ?? '',
+          image_url: m.recipe?.id
+            ? `${MEALIE_URL}/api/media/recipes/${m.recipe.id}/images/min-original.webp`
+            : ''
         }))
 
       result.push({
