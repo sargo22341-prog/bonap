@@ -73,3 +73,12 @@ body {
 code, pre {
   font-family: 'JetBrains Mono', monospace;
 }
+
+.trmnl-icon-wrap {
+  background: oklch(0.3 0.01 260);
+  color: oklch(0.75 0.02 260);
+}
+[data-theme="light"] .trmnl-icon-wrap {
+  background: oklch(0.75 0.02 260);
+  color: oklch(0.3 0.01 260);
+}

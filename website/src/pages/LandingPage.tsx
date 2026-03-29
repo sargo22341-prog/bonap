@@ -563,12 +563,11 @@ export default function LandingPage() {
           }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-              <div style={{
+              <div className="trmnl-icon-wrap" style={{
                 width: '40px', height: '40px', borderRadius: '10px',
-                background: 'oklch(0.3 0.01 260)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <Monitor size={20} color="var(--text-muted)" />
+                <Monitor size={20} color="currentColor" />
               </div>
               <h3 style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>
                 Template TRMNL
