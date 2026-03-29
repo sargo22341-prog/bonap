@@ -22,13 +22,6 @@
 
     <!-- Contenu -->
     <div style="flex: 1; display: flex; flex-direction: column; padding: 18px 20px 14px 20px; gap: 10px; overflow: hidden; min-width: 0;">
-
-      <!-- Label + date -->
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span class="description" style="font-size: 13px; font-weight: 700; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.07em;">{{ label }}</span>
-        <span class="description" style="font-size: 12px; opacity: 0.3;">{{ date }}</span>
-      </div>
-
       <!-- Nom -->
       <div class="title" style="font-size: 30px; font-weight: 800; line-height: 1.1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">{{ name }}</div>
 
@@ -39,18 +32,14 @@
 
         <!-- Ingrédients -->
         {% if ingredients.size > 0 %}
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; overflow: hidden; min-width: 0;">
+        <div style="flex: 2; display: flex; flex-direction: column; gap: 4px; overflow: hidden; min-width: 0;">
           <span class="description" style="font-size: 11px; font-weight: 700; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px;">Ingrédients</span>
-          {% for ing in ingredients limit: 7 %}
+          {% for ing in ingredients %}
           <div style="display: flex; gap: 6px; align-items: baseline; min-width: 0;">
             <span class="description" style="font-size: 13px; opacity: 0.3; flex-shrink: 0;">·</span>
             <span class="description" style="font-size: 13px; line-height: 1.35; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">{{ ing }}</span>
           </div>
           {% endfor %}
-          {% assign remaining = ingredients.size | minus: 7 %}
-          {% if remaining > 0 %}
-          <span class="description" style="font-size: 12px; opacity: 0.35; font-style: italic; margin-top: 2px;">+{{ remaining }} autres</span>
-          {% endif %}
         </div>
         {% endif %}
 
@@ -61,18 +50,14 @@
 
         <!-- Étapes -->
         {% if instructions.size > 0 %}
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; overflow: hidden; min-width: 0;">
+        <div style="flex: 3; display: flex; flex-direction: column; gap: 6px; overflow: hidden; min-width: 0;">
           <span class="description" style="font-size: 11px; font-weight: 700; opacity: 0.4; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px;">Étapes</span>
-          {% for step in instructions limit: 4 %}
+          {% for step in instructions %}
           <div style="display: flex; gap: 7px; align-items: flex-start; min-width: 0;">
             <span class="description" style="font-size: 12px; font-weight: 700; opacity: 0.35; flex-shrink: 0; margin-top: 1px;">{{ forloop.index }}.</span>
             <span class="description" style="font-size: 13px; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">{{ step }}</span>
           </div>
           {% endfor %}
-          {% assign remaining_steps = instructions.size | minus: 4 %}
-          {% if remaining_steps > 0 %}
-          <span class="description" style="font-size: 12px; opacity: 0.35; font-style: italic; margin-top: 2px;">+{{ remaining_steps }} étapes</span>
-          {% endif %}
         </div>
         {% endif %}
 
@@ -85,6 +70,6 @@
   <div class="title_bar">
     <img class="image" src="https://raw.githubusercontent.com/AymericLeFeyer/bonap/main/public/bonap.png" />
     <div class="title">Prochain repas</div>
-    <div class="instance">{{ label }} · {{ date }}</div>
+    <div class="instance">{% if type == "lunch" %}Ce midi{% else %}Ce soir{% endif %}</div>
   </div>
 </div>
