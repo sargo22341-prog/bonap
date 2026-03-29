@@ -1,4 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
 import LandingPage from './pages/LandingPage'
 import DocsLayout from './pages/docs/DocsLayout'
 import DocsIntroPage from './pages/docs/DocsIntroPage'
@@ -13,6 +20,7 @@ import DocsLLMPage from './pages/docs/DocsLLMPage'
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/docs" element={<Navigate to="/docs/introduction" replace />} />
