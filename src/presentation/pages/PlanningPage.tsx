@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
+import { createPortal } from "react-dom"
 import {
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
   Plus, Loader2, AlertCircle, Copy, Eye, Trash2, ShoppingCart, CheckCircle2,
@@ -57,9 +58,10 @@ interface MobileMealSectionProps {
   onDelete: (id: number) => void
   onLeftovers: () => void
   onView: (slug: string) => void
+  onMealTouchStart: (meal: MealieMealPlan, e: React.TouchEvent) => void
 }
 
-function MobileMealSection({ meals, previousMeal, onAdd, onDelete, onLeftovers, onView }: MobileMealSectionProps) {
+function MobileMealSection({ meals, previousMeal, onAdd, onDelete, onLeftovers, onView, onMealTouchStart }: MobileMealSectionProps) {
   const isEmpty = meals.length === 0
   return (
     <div className="flex flex-col gap-2 px-3 pb-3">
@@ -68,9 +70,11 @@ function MobileMealSection({ meals, previousMeal, onAdd, onDelete, onLeftovers, 
         return (
           <div
             key={meal.id}
+            onTouchStart={(e) => onMealTouchStart(meal, e)}
             className={cn(
               "flex items-center gap-3 rounded-[var(--radius-lg)]",
               "bg-card border border-border/40 shadow-subtle overflow-hidden",
+              "touch-none select-none",
             )}
           >
             {meal.recipe && (
@@ -291,6 +295,8 @@ function MealCell({
 
 // ─── PlanningPage ─────────────────────────────────────────────────────────────
 
+const DRAG_THRESHOLD = 10
+
 export function PlanningPage() {
   const {
     mealPlans, loading, error, centerDate, nbDays, setNbDays,
@@ -309,7 +315,17 @@ export function PlanningPage() {
   const [pendingSlot, setPendingSlot] = useState<{ date: string; entryType: string } | null>(null)
   const [previewSlug, setPreviewSlug] = useState<string | null>(null)
 
-const handlePreviewOpenChange = (open: boolean) => {
+  // ── Mobile touch drag state ──
+  const touchDragRef = useRef<{
+    meal: MealieMealPlan
+    startX: number
+    startY: number
+    active: boolean
+  } | null>(null)
+  const [ghostState, setGhostState] = useState<{ meal: MealieMealPlan; x: number; y: number } | null>(null)
+  const [mobileDragOver, setMobileDragOver] = useState<{ date: string; type: string } | null>(null)
+
+  const handlePreviewOpenChange = (open: boolean) => {
     if (!open) setPreviewSlug(null)
   }
 
@@ -355,7 +371,7 @@ const handlePreviewOpenChange = (open: boolean) => {
     await addMeal(formatDate(date), entryType, prev.recipe.id)
   }
 
-  const handleDrop = async (
+  const handleDrop = useCallback(async (
     draggedMeal: MealieMealPlan,
     targetDate: string,
     targetType: string,
@@ -364,7 +380,66 @@ const handlePreviewOpenChange = (open: boolean) => {
     if (!draggedMeal.recipe) return
     await deleteMeal(draggedMeal.id)
     await addMeal(targetDate, targetType, draggedMeal.recipe.id)
-  }
+  }, [deleteMeal, addMeal])
+
+  // Use a ref so touch handlers always call the latest version without re-mounting the effect
+  const handleDropRef = useRef(handleDrop)
+  useEffect(() => { handleDropRef.current = handleDrop }, [handleDrop])
+
+  // ── Mobile touch D&D handlers ──
+  const handleMealTouchStart = useCallback((meal: MealieMealPlan, e: React.TouchEvent) => {
+    const touch = e.touches[0]
+    touchDragRef.current = {
+      meal,
+      startX: touch.clientX,
+      startY: touch.clientY,
+      active: false,
+    }
+  }, [])
+
+  useEffect(() => {
+    const onTouchMove = (e: TouchEvent) => {
+      if (!touchDragRef.current) return
+      const touch = e.touches[0]
+      const dx = touch.clientX - touchDragRef.current.startX
+      const dy = touch.clientY - touchDragRef.current.startY
+
+      if (!touchDragRef.current.active && Math.sqrt(dx * dx + dy * dy) > DRAG_THRESHOLD) {
+        touchDragRef.current.active = true
+      }
+
+      if (touchDragRef.current.active) {
+        e.preventDefault() // prevent scroll during drag
+        setGhostState({ meal: touchDragRef.current.meal, x: touch.clientX, y: touch.clientY })
+
+        const el = document.elementFromPoint(touch.clientX, touch.clientY)
+        const slot = el?.closest<HTMLElement>("[data-date][data-type]")
+        setMobileDragOver(slot ? { date: slot.dataset.date!, type: slot.dataset.type! } : null)
+      }
+    }
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (!touchDragRef.current) return
+      if (touchDragRef.current.active) {
+        const touch = e.changedTouches[0]
+        const el = document.elementFromPoint(touch.clientX, touch.clientY)
+        const slot = el?.closest<HTMLElement>("[data-date][data-type]")
+        if (slot) {
+          void handleDropRef.current(touchDragRef.current.meal, slot.dataset.date!, slot.dataset.type!)
+        }
+      }
+      touchDragRef.current = null
+      setGhostState(null)
+      setMobileDragOver(null)
+    }
+
+    document.addEventListener("touchmove", onTouchMove, { passive: false })
+    document.addEventListener("touchend", onTouchEnd)
+    return () => {
+      document.removeEventListener("touchmove", onTouchMove)
+      document.removeEventListener("touchend", onTouchEnd)
+    }
+  }, [])
 
   return (
     <div className="flex flex-col gap-4">
@@ -471,7 +546,7 @@ const handlePreviewOpenChange = (open: boolean) => {
         <>
           {/* ── Vue mobile : cartes verticales ── */}
           <div className="flex flex-col gap-3 md:hidden">
-            {days.slice(1).map((date) => {
+            {days.map((date) => {
               const isToday = new Date().toDateString() === date.toDateString()
               const dayLabel = DAY_LABELS[date.getDay()]
               return (
@@ -495,8 +570,18 @@ const handlePreviewOpenChange = (open: boolean) => {
                     const dateStr = formatDate(date)
                     const meals = getMeals(date, key)
                     const prevMeal = getPreviousMeal(date, key)
+                    const isDropTarget = mobileDragOver?.date === dateStr && mobileDragOver.type === key
                     return (
-                      <div key={key} className={cn(color, "border-t border-border/40")}>
+                      <div
+                        key={key}
+                        data-date={dateStr}
+                        data-type={key}
+                        className={cn(
+                          color,
+                          "border-t border-border/40",
+                          isDropTarget && "ring-2 ring-inset ring-primary/40 bg-primary/6",
+                        )}
+                      >
                         <div className="px-3 pt-2 pb-1">
                           <span className="text-[9.5px] font-bold uppercase tracking-[0.10em] text-muted-foreground/60">
                             {label}
@@ -509,6 +594,7 @@ const handlePreviewOpenChange = (open: boolean) => {
                           onDelete={deleteMeal}
                           onLeftovers={() => handleLeftovers(date, key)}
                           onView={setPreviewSlug}
+                          onMealTouchStart={handleMealTouchStart}
                         />
                       </div>
                     )
@@ -590,6 +676,35 @@ const handlePreviewOpenChange = (open: boolean) => {
             </table>
           </div>
         </>
+      )}
+
+      {/* ── Ghost de drag mobile ── */}
+      {ghostState && createPortal(
+        <div
+          className={cn(
+            "fixed pointer-events-none z-50",
+            "flex items-center gap-2 p-2 pr-3",
+            "max-w-[200px] rounded-[var(--radius-lg)] overflow-hidden",
+            "bg-card border border-primary/50 shadow-xl opacity-90",
+          )}
+          style={{
+            left: ghostState.x - 100,
+            top: ghostState.y - 28,
+            transform: "rotate(2deg) scale(1.03)",
+          }}
+        >
+          {ghostState.meal.recipe && (
+            <img
+              src={recipeImageUrl(ghostState.meal.recipe, "min-original")}
+              alt=""
+              className="h-10 w-10 shrink-0 rounded-[var(--radius-md)] object-cover"
+            />
+          )}
+          <span className="text-[12px] font-medium leading-snug line-clamp-2">
+            {ghostState.meal.recipe?.name ?? ghostState.meal.title ?? "Repas"}
+          </span>
+        </div>,
+        document.body,
       )}
 
       <RecipePickerDialog
