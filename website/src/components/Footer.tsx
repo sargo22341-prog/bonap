@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Github, ChefHat } from 'lucide-react'
+import { Github } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -18,19 +18,9 @@ export default function Footer() {
         gap: '1rem',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{
-            width: '28px',
-            height: '28px',
-            borderRadius: '6px',
-            background: 'var(--primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <ChefHat size={15} color="white" />
-          </div>
+          <img src="/bonap.png" alt="Bonap" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'cover' }} />
           <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            © 2025 AymericLeFeyer
+            © 2026 AyLabs™
           </span>
         </div>
 
@@ -39,15 +29,7 @@ export default function Footer() {
             href="https://github.com/AymericLeFeyer/bonap"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-              color: 'var(--text-muted)',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-              transition: 'color 0.2s',
-            }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem', transition: 'color 0.2s' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
           >
@@ -56,12 +38,7 @@ export default function Footer() {
           </a>
           <Link
             to="/docs"
-            style={{
-              color: 'var(--text-muted)',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-              transition: 'color 0.2s',
-            }}
+            style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem', transition: 'color 0.2s' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
           >
@@ -71,12 +48,7 @@ export default function Footer() {
             href="https://mealie.io"
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              color: 'var(--text-muted)',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-              transition: 'color 0.2s',
-            }}
+            style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.875rem', transition: 'color 0.2s' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
           >

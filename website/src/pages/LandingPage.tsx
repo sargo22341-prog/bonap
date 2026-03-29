@@ -13,7 +13,7 @@ import {
   Server,
   ExternalLink,
   ArrowRight,
-  Clock,
+  Monitor,
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -567,29 +567,15 @@ export default function LandingPage() {
                 width: '40px', height: '40px', borderRadius: '10px',
                 background: 'oklch(0.3 0.01 260)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-muted)',
               }}>
-                <Clock size={20} />
+                <Monitor size={20} color="var(--text-muted)" />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <h3 style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>
-                  Template TRMNL
-                </h3>
-                <span style={{
-                  padding: '0.15rem 0.5rem',
-                  borderRadius: '999px',
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  background: 'var(--bg-card-hover)',
-                  color: 'var(--text-muted)',
-                  border: '1px solid var(--border)',
-                }}>
-                  Bientôt
-                </span>
-              </div>
+              <h3 style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>
+                Template TRMNL
+              </h3>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-              Affiche ton planning repas sur ton écran e-ink TRMNL. Template en cours de développement.
+              Affiche ton planning repas et le prochain repas sur ton écran e-ink TRMNL.
             </p>
             <Link
               to="/docs/extras/trmnl"

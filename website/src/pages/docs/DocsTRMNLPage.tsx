@@ -1,12 +1,42 @@
-import { Monitor, Github } from 'lucide-react'
+import { useState } from 'react'
+import { Monitor, Github, X } from 'lucide-react'
 import { DocH1, DocH2, DocLead, CodeBlock, Alert, Step } from '../../components/docs/DocsComponents'
 
 const bffPort = '3001'
 const templatesUrl = 'https://github.com/AymericLeFeyer/bonap/tree/main/trmnl'
 
+const screenshots = [
+  { src: '/trmnl.jpeg', label: 'Aperçu général' },
+  { src: '/planning.png', label: 'Planning 3 jours' },
+  { src: '/next_meal.png', label: 'Prochain repas' },
+]
+
 export default function DocsTRMNLPage() {
+  const [lightbox, setLightbox] = useState<string | null>(null)
+
   return (
     <div>
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(0,0,0,0.85)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '1.5rem', cursor: 'zoom-out',
+          }}
+        >
+          <button
+            onClick={() => setLightbox(null)}
+            style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'white', cursor: 'pointer', opacity: 0.7 }}
+          >
+            <X size={28} />
+          </button>
+          <img src={lightbox} alt="" style={{ maxWidth: '100%', maxHeight: '90vh', borderRadius: '10px', objectFit: 'contain' }} onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
         <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--primary-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', flexShrink: 0 }}>
           <Monitor size={20} />
@@ -21,18 +51,16 @@ export default function DocsTRMNLPage() {
 
       {/* Screenshots */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-        <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-          <img src="/trmnl.jpeg" alt="Aperçu TRMNL" style={{ width: '100%', display: 'block' }} />
-          <div style={{ padding: '0.625rem 0.875rem', background: 'var(--bg-card)', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>Aperçu général</div>
-        </div>
-        <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-          <img src="/planning.png" alt="Planning 3 jours" style={{ width: '100%', display: 'block' }} />
-          <div style={{ padding: '0.625rem 0.875rem', background: 'var(--bg-card)', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>Planning 3 jours</div>
-        </div>
-        <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-          <img src="/next_meal.png" alt="Prochain repas" style={{ width: '100%', display: 'block' }} />
-          <div style={{ padding: '0.625rem 0.875rem', background: 'var(--bg-card)', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>Prochain repas</div>
-        </div>
+        {screenshots.map(({ src, label }) => (
+          <div
+            key={src}
+            onClick={() => setLightbox(src)}
+            style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border)', cursor: 'zoom-in' }}
+          >
+            <img src={src} alt={label} style={{ width: '100%', display: 'block' }} />
+            <div style={{ padding: '0.625rem 0.875rem', background: 'var(--bg-card)', fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>{label}</div>
+          </div>
+        ))}
       </div>
 
       <DocH2>Comment ça marche</DocH2>
