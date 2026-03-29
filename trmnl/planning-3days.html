@@ -10,10 +10,7 @@
         <div class="content" style="display: flex; flex-direction: column; height: 100%; gap: 8px; min-width: 0; overflow: hidden;">
 
           <!-- En-tête du jour -->
-          <div style="margin-bottom: 4px;">
-            <div class="title" style="font-size: 20px; font-weight: 800; line-height: 1.1;">{{ day.label }}</div>
-            <div class="description" style="font-size: 10px; opacity: 0.4; margin-top: 1px;">{{ day.display }}</div>
-          </div>
+          <div class="title" style="font-size: 20px; font-weight: 800; line-height: 1.1; margin-bottom: 4px;">{{ day.label }}</div>
 
           {% if day.meals.size == 0 %}
             <div class="description" style="font-size: 12px; opacity: 0.25; font-style: italic;">Rien de planifié</div>
