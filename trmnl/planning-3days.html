@@ -6,7 +6,7 @@
       {% for day in days %}
 
       <div class="item stretch">
-        <div class="meta" style="margin-right: 8px;"></div>
+        {% unless forloop.first %}<div class="meta" style="margin-right: 8px;"></div>{% endunless %}
         <div class="content" style="display: flex; flex-direction: column; height: 100%; gap: 8px; min-width: 0; overflow: hidden;">
 
           <!-- En-tête du jour -->
