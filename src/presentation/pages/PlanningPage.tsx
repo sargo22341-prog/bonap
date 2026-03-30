@@ -55,88 +55,60 @@ interface MobileMealSectionProps {
   meals: MealieMealPlan[]
   previousMeal: MealieMealPlan | null
   onAdd: () => void
-  onDelete: (id: number) => void
-  onLeftovers: () => void
-  onView: (slug: string) => void
   onMealTouchStart: (meal: MealieMealPlan, e: React.TouchEvent) => void
 }
 
-function MobileMealSection({ meals, previousMeal, onAdd, onDelete, onLeftovers, onView, onMealTouchStart }: MobileMealSectionProps) {
+function MobileMealSection({ meals, previousMeal, onAdd, onMealTouchStart }: MobileMealSectionProps) {
   const isEmpty = meals.length === 0
   return (
     <div className="flex flex-col gap-2 px-3 pb-3">
       {meals.map((meal) => {
-        const name = meal.recipe?.name ?? meal.title ?? "Sans titre"
         return (
           <div
             key={meal.id}
             onTouchStart={(e) => onMealTouchStart(meal, e)}
             className={cn(
-              "flex items-center gap-3 rounded-[var(--radius-lg)]",
+              "rounded-[var(--radius-lg)]",
               "bg-card border border-border/40 shadow-subtle overflow-hidden",
               "touch-none select-none",
             )}
           >
-            {meal.recipe && (
+            {meal.recipe ? (
               <img
                 src={recipeImageUrl(meal.recipe, "min-original")}
-                alt={name}
-                className="h-14 w-14 shrink-0 object-cover"
+                alt={meal.recipe.name ?? "Repas"}
+                className="w-full aspect-square object-cover"
               />
+            ) : (
+              <div className="w-full aspect-square bg-secondary flex items-center justify-center">
+                <span className="text-[11px] text-muted-foreground font-medium px-2 text-center">
+                  {meal.title ?? "Sans titre"}
+                </span>
+              </div>
             )}
-            <span className="flex-1 text-[13px] font-medium leading-snug line-clamp-2 pr-1">{name}</span>
-            <div className="flex shrink-0 flex-col border-l border-border/40">
-              {meal.recipe?.slug && (
-                <button
-                  type="button"
-                  onClick={() => onView(meal.recipe!.slug)}
-                  className="flex items-center justify-center p-2.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => onDelete(meal.id)}
-                className="flex items-center justify-center p-2.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
           </div>
         )
       })}
-      <div className="flex gap-2">
+      <button
+        type="button"
+        onClick={onAdd}
+        className={cn(
+          "flex w-full items-center justify-center rounded-[var(--radius-lg)]",
+          "border border-dashed border-border/60 py-3",
+          "text-muted-foreground hover:border-primary/60 hover:text-primary hover:bg-primary/4",
+          "transition-all duration-150",
+        )}
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+      {isEmpty && previousMeal && (
         <button
           type="button"
-          onClick={onAdd}
-          className={cn(
-            "flex flex-1 items-center justify-center rounded-[var(--radius-lg)]",
-            "border border-dashed border-border/60 py-2",
-            "text-muted-foreground hover:border-primary/60 hover:text-primary hover:bg-primary/4",
-            "transition-all duration-150",
-          )}
-        >
-          <Plus className="h-3.5 w-3.5" />
-        </button>
-        {isEmpty && (
-          <button
-            type="button"
-            onClick={onLeftovers}
-            disabled={!previousMeal}
-            title={previousMeal ? `Copier "${previousMeal.recipe?.name ?? "le repas"}"` : "Aucun repas précédent"}
-            className={cn(
-              "flex items-center justify-center rounded-[var(--radius-lg)]",
-              "border border-dashed border-border/60 px-3 py-2",
-              "text-muted-foreground hover:border-primary/60 hover:text-primary hover:bg-primary/4",
-              "disabled:cursor-not-allowed disabled:opacity-30",
-              "transition-all duration-150",
-            )}
-          >
-            <Copy className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
+          onClick={() => {/* handled via menu */}}
+          disabled
+          className="hidden"
+        />
+      )}
     </div>
   )
 }
@@ -314,6 +286,8 @@ export function PlanningPage() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pendingSlot, setPendingSlot] = useState<{ date: string; entryType: string } | null>(null)
   const [previewSlug, setPreviewSlug] = useState<string | null>(null)
+  const [mobileMenuMeal, setMobileMenuMeal] = useState<MealieMealPlan | null>(null)
+  const mobileMenuMealRef = useRef<((meal: MealieMealPlan | null) => void) | null>(null)
 
   // ── Mobile touch drag state ──
   const touchDragRef = useRef<{
@@ -326,6 +300,8 @@ export function PlanningPage() {
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [ghostState, setGhostState] = useState<{ meal: MealieMealPlan; x: number; y: number } | null>(null)
   const [mobileDragOver, setMobileDragOver] = useState<{ date: string; type: string } | null>(null)
+
+  useEffect(() => { mobileMenuMealRef.current = setMobileMenuMeal }, [setMobileMenuMeal])
 
   const handlePreviewOpenChange = (open: boolean) => {
     if (!open) setPreviewSlug(null)
@@ -442,6 +418,9 @@ export function PlanningPage() {
         if (slot) {
           void handleDropRef.current(touchDragRef.current.meal, slot.dataset.date!, slot.dataset.type!)
         }
+      } else if (!touchDragRef.current.longPressReady) {
+        // Tap simple : ouvrir le menu
+        mobileMenuMealRef.current?.(touchDragRef.current.meal)
       }
       touchDragRef.current = null
       setGhostState(null)
@@ -614,9 +593,6 @@ export function PlanningPage() {
                             meals={meals}
                             previousMeal={prevMeal}
                             onAdd={() => handleAddMeal(dateStr, key)}
-                            onDelete={deleteMeal}
-                            onLeftovers={() => handleLeftovers(date, key)}
-                            onView={setPreviewSlug}
                             onMealTouchStart={handleMealTouchStart}
                           />
                         </div>
@@ -729,6 +705,54 @@ export function PlanningPage() {
           </span>
         </div>,
         document.body,
+      )}
+
+      {mobileMenuMeal && (
+        <div
+          className="fixed inset-0 z-40 flex items-end justify-center p-4"
+          onClick={() => setMobileMenuMeal(null)}
+        >
+          <div
+            className={cn(
+              "w-full max-w-sm rounded-[var(--radius-xl)]",
+              "bg-card border border-border/50 shadow-xl overflow-hidden",
+            )}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-border/40">
+              <p className="text-sm font-semibold line-clamp-1">
+                {mobileMenuMeal.recipe?.name ?? mobileMenuMeal.title ?? "Repas"}
+              </p>
+            </div>
+            <div className="flex flex-col">
+              {mobileMenuMeal.recipe?.slug && (
+                <button
+                  type="button"
+                  onClick={() => { setPreviewSlug(mobileMenuMeal.recipe!.slug); setMobileMenuMeal(null) }}
+                  className="flex items-center gap-3 px-4 py-3.5 text-sm hover:bg-secondary transition-colors"
+                >
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  Voir la recette
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { void deleteMeal(mobileMenuMeal.id); setMobileMenuMeal(null) }}
+                className="flex items-center gap-3 px-4 py-3.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+                Supprimer du planning
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileMenuMeal(null)}
+                className="flex items-center justify-center px-4 py-3 text-sm text-muted-foreground border-t border-border/40 hover:bg-secondary transition-colors"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <RecipePickerDialog
