@@ -295,7 +295,7 @@ function MealCell({
 
 // ─── PlanningPage ─────────────────────────────────────────────────────────────
 
-const DRAG_THRESHOLD = 10
+const DRAG_THRESHOLD = 8
 
 export function PlanningPage() {
   const {
@@ -321,7 +321,9 @@ export function PlanningPage() {
     startX: number
     startY: number
     active: boolean
+    longPressReady: boolean
   } | null>(null)
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [ghostState, setGhostState] = useState<{ meal: MealieMealPlan; x: number; y: number } | null>(null)
   const [mobileDragOver, setMobileDragOver] = useState<{ date: string; type: string } | null>(null)
 
@@ -395,12 +397,20 @@ export function PlanningPage() {
       startX: touch.clientX,
       startY: touch.clientY,
       active: false,
+      longPressReady: false,
     }
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current)
+    longPressTimerRef.current = setTimeout(() => {
+      if (touchDragRef.current) {
+        touchDragRef.current.longPressReady = true
+      }
+    }, 400)
   }, [])
 
   useEffect(() => {
     const onTouchMove = (e: TouchEvent) => {
       if (!touchDragRef.current) return
+      if (!touchDragRef.current.longPressReady) return
       const touch = e.touches[0]
       const dx = touch.clientX - touchDragRef.current.startX
       const dy = touch.clientY - touchDragRef.current.startY
@@ -421,6 +431,10 @@ export function PlanningPage() {
 
     const onTouchEnd = (e: TouchEvent) => {
       if (!touchDragRef.current) return
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current)
+        longPressTimerRef.current = null
+      }
       if (touchDragRef.current.active) {
         const touch = e.changedTouches[0]
         const el = document.elementFromPoint(touch.clientX, touch.clientY)
