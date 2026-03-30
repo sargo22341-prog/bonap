@@ -300,7 +300,7 @@ const DRAG_THRESHOLD = 10
 export function PlanningPage() {
   const {
     mealPlans, loading, error, centerDate, nbDays, setNbDays,
-    goToPrevDay, goToNextDay, goToPrevPeriod, goToNextPeriod, goToToday,
+    goToPrevDay, goToNextDay, goToPrevPeriod, goToNextPeriod, goToToday, goToTodayMobile,
     addMeal, deleteMeal,
   } = usePlanning()
 
@@ -330,6 +330,7 @@ export function PlanningPage() {
   }
 
   const days = Array.from({ length: nbDays }, (_, i) => addDays(centerDate, i - 1))
+  const mobileDays = Array.from({ length: nbDays }, (_, i) => addDays(centerDate, i))
 
   const handleAddToCart = async () => {
     const visibleDateStrs = new Set(days.map((d) => formatDate(d)))
@@ -441,6 +442,13 @@ export function PlanningPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      goToTodayMobile()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <div className="flex flex-col gap-4">
       {/* ── En-tête sticky ── */}
@@ -546,7 +554,7 @@ export function PlanningPage() {
         <>
           {/* ── Vue mobile : cartes verticales ── */}
           <div className="flex flex-col gap-3 md:hidden">
-            {days.map((date) => {
+            {mobileDays.map((date) => {
               const isToday = new Date().toDateString() === date.toDateString()
               const dayLabel = DAY_LABELS[date.getDay()]
               return (

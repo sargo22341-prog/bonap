@@ -107,6 +107,7 @@ export function usePlanning() {
   const goToPrevPeriod = () => setCenterDate((prev) => addDays(prev, -nbDays))
   const goToNextPeriod = () => setCenterDate((prev) => addDays(prev, nbDays))
   const goToToday = () => setCenterDate(currentWeekTuesday())
+  const goToTodayMobile = () => setCenterDate(today())
 
   const addMeal = useCallback(async (date: string, entryType: string, recipeId: string) => {
     const newMeal = await addMealUseCase.execute(date, entryType, recipeId)
@@ -130,6 +131,7 @@ export function usePlanning() {
     goToPrevPeriod,
     goToNextPeriod,
     goToToday,
+    goToTodayMobile,
     addMeal,
     deleteMeal,
   }
