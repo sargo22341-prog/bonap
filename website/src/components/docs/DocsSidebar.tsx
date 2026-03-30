@@ -102,6 +102,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
                   <NavLink
                     key={item.to}
                     to={item.to}
+                    end
                     onClick={onClose}
                     style={({ isActive }) => ({
                       display: 'block',

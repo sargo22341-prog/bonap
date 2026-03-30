@@ -283,6 +283,48 @@ export default function LandingPage() {
         `}</style>
       </section>
 
+      {/* Video */}
+      <section style={{ padding: '5rem 1.5rem', maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h2 style={{
+            fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)',
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+            color: 'var(--text)',
+            marginBottom: '0.5rem',
+          }}>
+            Voir Bonap en action
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>
+            Présentation complète de l'interface et des fonctionnalités.
+          </p>
+        </div>
+        <div style={{
+          position: 'relative',
+          paddingBottom: '56.25%',
+          height: 0,
+          borderRadius: '14px',
+          overflow: 'hidden',
+          border: '1px solid var(--border)',
+          boxShadow: '0 8px 40px oklch(0 0 0 / 0.3)',
+        }}>
+          <iframe
+            src="https://www.youtube.com/embed/ShaX-RX7mG8"
+            title="Bonap — présentation"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              border: 'none',
+            }}
+          />
+        </div>
+      </section>
+
       {/* Features Grid */}
       <section style={{ padding: '5rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
