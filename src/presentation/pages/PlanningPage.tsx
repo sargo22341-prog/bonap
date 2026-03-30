@@ -574,39 +574,41 @@ export function PlanningPage() {
                     <span className="text-[10px] font-bold uppercase tracking-[0.10em] mr-2 opacity-60">{dayLabel}</span>
                     {formatDayDate(date)}
                   </div>
-                  {MEAL_TYPES.map(({ key, label, color }) => {
-                    const dateStr = formatDate(date)
-                    const meals = getMeals(date, key)
-                    const prevMeal = getPreviousMeal(date, key)
-                    const isDropTarget = mobileDragOver?.date === dateStr && mobileDragOver.type === key
-                    return (
-                      <div
-                        key={key}
-                        data-date={dateStr}
-                        data-type={key}
-                        className={cn(
-                          color,
-                          "border-t border-border/40",
-                          isDropTarget && "ring-2 ring-inset ring-primary/40 bg-primary/6",
-                        )}
-                      >
-                        <div className="px-3 pt-2 pb-1">
-                          <span className="text-[9.5px] font-bold uppercase tracking-[0.10em] text-muted-foreground/60">
-                            {label}
-                          </span>
+                  <div className="grid grid-cols-2 divide-x divide-border/40">
+                    {MEAL_TYPES.map(({ key, label, color }) => {
+                      const dateStr = formatDate(date)
+                      const meals = getMeals(date, key)
+                      const prevMeal = getPreviousMeal(date, key)
+                      const isDropTarget = mobileDragOver?.date === dateStr && mobileDragOver.type === key
+                      return (
+                        <div
+                          key={key}
+                          data-date={dateStr}
+                          data-type={key}
+                          className={cn(
+                            color,
+                            "border-t border-border/40",
+                            isDropTarget && "ring-2 ring-inset ring-primary/40 bg-primary/6",
+                          )}
+                        >
+                          <div className="px-3 pt-2 pb-1">
+                            <span className="text-[9.5px] font-bold uppercase tracking-[0.10em] text-muted-foreground/60">
+                              {label}
+                            </span>
+                          </div>
+                          <MobileMealSection
+                            meals={meals}
+                            previousMeal={prevMeal}
+                            onAdd={() => handleAddMeal(dateStr, key)}
+                            onDelete={deleteMeal}
+                            onLeftovers={() => handleLeftovers(date, key)}
+                            onView={setPreviewSlug}
+                            onMealTouchStart={handleMealTouchStart}
+                          />
                         </div>
-                        <MobileMealSection
-                          meals={meals}
-                          previousMeal={prevMeal}
-                          onAdd={() => handleAddMeal(dateStr, key)}
-                          onDelete={deleteMeal}
-                          onLeftovers={() => handleLeftovers(date, key)}
-                          onView={setPreviewSlug}
-                          onMealTouchStart={handleMealTouchStart}
-                        />
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
               )
             })}
