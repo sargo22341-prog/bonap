@@ -15,7 +15,7 @@ import {
   ExternalLink,
   ArrowRight,
   Monitor,
-  Play,
+  X,
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -65,8 +65,6 @@ const features: FeatureCard[] = [
     gif: '/demo/stats.gif',
   },
 ]
-
-type ActiveTab = 'video' | number
 
 interface InstallCard {
   icon: React.ReactNode
@@ -130,7 +128,7 @@ function CodeBlock({ code }: { code: string }) {
 }
 
 export default function LandingPage() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('video')
+  const [lightbox, setLightbox] = useState<FeatureCard | null>(null)
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -296,8 +294,8 @@ export default function LandingPage() {
         `}</style>
       </section>
 
-      {/* Video + Features tabs */}
-      <section style={{ padding: '5rem 1.5rem', maxWidth: '960px', margin: '0 auto' }}>
+      {/* Video */}
+      <section style={{ padding: '5rem 1.5rem', maxWidth: '900px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h2 style={{
             fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)',
@@ -306,131 +304,35 @@ export default function LandingPage() {
             color: 'var(--text)',
             marginBottom: '0.5rem',
           }}>
-            Voir Bonap en action
+            Les origines de Bonap
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>
-            La vidéo de présentation, ou explorez chaque fonctionnalité.
+            Découvrez les origines du projet, et comment il a été réalisé.
           </p>
         </div>
-
-        {/* Tab buttons */}
         <div style={{
-          display: 'flex',
-          gap: '0.5rem',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          marginBottom: '1.5rem',
-        }}>
-          <button
-            onClick={() => setActiveTab('video')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-              padding: '0.4rem 0.875rem',
-              borderRadius: '999px',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              border: '1px solid',
-              transition: 'all 0.2s',
-              background: activeTab === 'video' ? 'var(--primary)' : 'transparent',
-              borderColor: activeTab === 'video' ? 'var(--primary)' : 'var(--border)',
-              color: activeTab === 'video' ? 'white' : 'var(--text-muted)',
-            }}
-          >
-            <Play size={13} />
-            Vidéo
-          </button>
-          {features.map((feature, i) => (
-            <button
-              key={feature.title}
-              onClick={() => setActiveTab(i)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.375rem',
-                padding: '0.4rem 0.875rem',
-                borderRadius: '999px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                border: '1px solid',
-                transition: 'all 0.2s',
-                background: activeTab === i ? 'var(--primary)' : 'transparent',
-                borderColor: activeTab === i ? 'var(--primary)' : 'var(--border)',
-                color: activeTab === i ? 'white' : 'var(--text-muted)',
-              }}
-            >
-              {feature.title}
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div style={{
+          position: 'relative',
+          paddingBottom: '56.25%',
+          height: 0,
           borderRadius: '14px',
           overflow: 'hidden',
           border: '1px solid var(--border)',
           boxShadow: '0 8px 40px oklch(0 0 0 / 0.3)',
-          background: 'var(--bg-card)',
         }}>
-          {activeTab === 'video' ? (
-            <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
-              <iframe
-                src="https://www.youtube.com/embed/ShaX-RX7mG8"
-                title="Bonap — présentation"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  border: 'none',
-                }}
-              />
-            </div>
-          ) : (
-            <div>
-              <div style={{
-                padding: '1.25rem 1.5rem',
-                borderBottom: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-              }}>
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '8px',
-                  background: 'var(--primary-subtle)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--primary)',
-                  flexShrink: 0,
-                }}>
-                  {features[activeTab as number].icon}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>
-                    {features[activeTab as number].title}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                    {features[activeTab as number].description}
-                  </div>
-                </div>
-              </div>
-              <img
-                key={features[activeTab as number].gif}
-                src={features[activeTab as number].gif}
-                alt={features[activeTab as number].title}
-                style={{ width: '100%', display: 'block' }}
-              />
-            </div>
-          )}
+          <iframe
+            src="https://www.youtube.com/embed/ShaX-RX7mG8"
+            title="Bonap — présentation"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              border: 'none',
+            }}
+          />
         </div>
       </section>
 
@@ -459,12 +361,13 @@ export default function LandingPage() {
           {features.map((feature) => (
             <div
               key={feature.title}
+              onClick={() => setLightbox(feature)}
               style={{
                 borderRadius: '12px',
                 background: 'var(--bg-card)',
                 border: '1px solid var(--border)',
                 transition: 'border-color 0.2s, background 0.2s, transform 0.2s',
-                cursor: 'default',
+                cursor: 'pointer',
                 overflow: 'hidden',
               }}
               onMouseEnter={(e) => {
@@ -515,6 +418,86 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1000,
+            background: 'oklch(0 0 0 / 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'var(--bg-card)',
+              borderRadius: '16px',
+              border: '1px solid var(--border)',
+              overflow: 'hidden',
+              maxWidth: '900px',
+              width: '100%',
+              boxShadow: '0 24px 80px oklch(0 0 0 / 0.5)',
+            }}
+          >
+            <div style={{
+              padding: '1rem 1.25rem',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+            }}>
+              <div style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '8px',
+                background: 'var(--primary-subtle)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--primary)',
+                flexShrink: 0,
+              }}>
+                {lightbox.icon}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>{lightbox.title}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>{lightbox.description}</div>
+              </div>
+              <button
+                onClick={() => setLightbox(null)}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border)',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--text-muted)',
+                  flexShrink: 0,
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <img
+              src={lightbox.gif}
+              alt={lightbox.title}
+              style={{ width: '100%', display: 'block' }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Installation */}
       <section style={{
