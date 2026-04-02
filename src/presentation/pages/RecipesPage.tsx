@@ -22,6 +22,7 @@ import { getCurrentSeason, getRecipeSeasonsFromTags, isSeasonTag } from "../../s
 import { getEnv } from "../../shared/utils/env.ts"
 import { getRecipesUseCase, getRecipeUseCase, addMealUseCase, deleteMealUseCase } from "../../infrastructure/container.ts"
 import { PlanningSlotPicker } from "../components/PlanningSlotPicker.tsx"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip.tsx"
 import { RecipeIngredientsList } from "../components/RecipeIngredientsList.tsx"
 import { RecipeInstructionsList } from "../components/RecipeInstructionsList.tsx"
 import { cn } from "../../lib/utils.ts"
@@ -560,50 +561,64 @@ function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDrawerPro
         <div className="flex items-center gap-1.5">
           {recipe && (
             <>
-              <button
-                type="button"
-                title="Planifier"
-                onClick={() => setPlanningPickerOpen(true)}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-[var(--radius-md)]",
-                  "border border-border px-2.5 py-1.5",
-                  "text-xs font-semibold text-muted-foreground",
-                  "hover:text-foreground hover:border-border/80 hover:bg-secondary",
-                  "transition-all duration-150",
-                )}
-              >
-                <CalendarPlus className="h-3.5 w-3.5" />
-                <span className="sm:hidden">Planifier</span>
-              </button>
-              <button
-                type="button"
-                title="Mode cuisine"
-                onClick={() => setCookingMode(true)}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-[var(--radius-md)]",
-                  "border border-border px-2.5 py-1.5",
-                  "text-xs font-semibold text-muted-foreground",
-                  "hover:text-foreground hover:border-border/80 hover:bg-secondary",
-                  "transition-all duration-150",
-                )}
-              >
-                <UtensilsCrossed className="h-3.5 w-3.5" />
-                <span className="sm:hidden">Mode cuisine</span>
-              </button>
-              <Link
-                to={`/recipes/${recipe.slug}`}
-                title="Page complète"
-                className={cn(
-                  "flex items-center gap-1.5 rounded-[var(--radius-md)]",
-                  "border border-border px-2.5 py-1.5",
-                  "text-xs font-semibold text-muted-foreground",
-                  "hover:text-foreground hover:border-border/80 hover:bg-secondary",
-                  "transition-all duration-150",
-                )}
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                <span className="sm:hidden">Page complète</span>
-              </Link>
+              <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => setPlanningPickerOpen(true)}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-[var(--radius-md)]",
+                        "border border-border px-2.5 py-1.5",
+                        "text-xs font-semibold text-muted-foreground",
+                        "hover:text-foreground hover:border-border/80 hover:bg-secondary",
+                        "transition-all duration-150",
+                      )}
+                    >
+                      <CalendarPlus className="h-3.5 w-3.5" />
+                      <span className="sm:hidden">Planifier</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="hidden sm:block">Planifier</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => setCookingMode(true)}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-[var(--radius-md)]",
+                        "border border-border px-2.5 py-1.5",
+                        "text-xs font-semibold text-muted-foreground",
+                        "hover:text-foreground hover:border-border/80 hover:bg-secondary",
+                        "transition-all duration-150",
+                      )}
+                    >
+                      <UtensilsCrossed className="h-3.5 w-3.5" />
+                      <span className="sm:hidden">Mode cuisine</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="hidden sm:block">Mode cuisine</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to={`/recipes/${recipe.slug}`}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-[var(--radius-md)]",
+                        "border border-border px-2.5 py-1.5",
+                        "text-xs font-semibold text-muted-foreground",
+                        "hover:text-foreground hover:border-border/80 hover:bg-secondary",
+                        "transition-all duration-150",
+                      )}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      <span className="sm:hidden">Page complète</span>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent className="hidden sm:block">Page complète</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </>
           )}
           <button
