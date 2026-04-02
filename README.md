@@ -5,6 +5,7 @@
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Self-hosted](https://img.shields.io/badge/self--hosted-✓-green)](https://mealie.io)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/S6S81X4N18)
 
 **Bonap** is a modern, ergonomic front-end for [Mealie](https://mealie.io) — a self-hosted recipe manager. It connects to your existing Mealie instance without touching its backend, and adds features like AI-powered suggestions, meal planning, a smart shopping list, and customizable themes.
 
