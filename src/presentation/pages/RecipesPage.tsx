@@ -562,6 +562,7 @@ function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDrawerPro
             <>
               <button
                 type="button"
+                title="Planifier"
                 onClick={() => setPlanningPickerOpen(true)}
                 className={cn(
                   "flex items-center gap-1.5 rounded-[var(--radius-md)]",
@@ -572,10 +573,11 @@ function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDrawerPro
                 )}
               >
                 <CalendarPlus className="h-3.5 w-3.5" />
-                Planifier
+                <span className="sm:hidden">Planifier</span>
               </button>
               <button
                 type="button"
+                title="Mode cuisine"
                 onClick={() => setCookingMode(true)}
                 className={cn(
                   "flex items-center gap-1.5 rounded-[var(--radius-md)]",
@@ -586,10 +588,11 @@ function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDrawerPro
                 )}
               >
                 <UtensilsCrossed className="h-3.5 w-3.5" />
-                Mode cuisine
+                <span className="sm:hidden">Mode cuisine</span>
               </button>
               <Link
                 to={`/recipes/${recipe.slug}`}
+                title="Page complète"
                 className={cn(
                   "flex items-center gap-1.5 rounded-[var(--radius-md)]",
                   "border border-border px-2.5 py-1.5",
@@ -599,7 +602,7 @@ function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDrawerPro
                 )}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                Page complète
+                <span className="sm:hidden">Page complète</span>
               </Link>
             </>
           )}
