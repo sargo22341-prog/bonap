@@ -442,7 +442,7 @@ export default function LandingPage() {
               borderRadius: '16px',
               border: '1px solid var(--border)',
               overflow: 'hidden',
-              maxWidth: '900px',
+              maxWidth: '1200px',
               width: '100%',
               boxShadow: '0 24px 80px oklch(0 0 0 / 0.5)',
             }}
