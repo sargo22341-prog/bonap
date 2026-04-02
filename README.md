@@ -258,6 +258,14 @@ In dev mode, Vite proxies AI provider APIs to avoid CORS:
 
 ---
 
+## Support
+
+If you find Bonap useful, consider buying me a coffee!
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/S6S81X4N18)
+
+---
+
 ## License
 
 MIT
