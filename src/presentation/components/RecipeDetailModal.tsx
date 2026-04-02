@@ -1,13 +1,15 @@
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog.tsx"
 import { useRecipe } from "../hooks/useRecipe.ts"
-import { Loader2, UtensilsCrossed } from "lucide-react"
+import { Loader2, UtensilsCrossed, CalendarPlus } from "lucide-react"
 import { RecipeIngredientsList } from "./RecipeIngredientsList.tsx"
 import { RecipeInstructionsList } from "./RecipeInstructionsList.tsx"
+import { PlanningSlotPicker } from "./PlanningSlotPicker.tsx"
 import { formatDuration } from "../../shared/utils/duration.ts"
 import { recipeImageUrl } from "../../shared/utils/image.ts"
 import { Button } from "./ui/button.tsx"
 import { CookingMode } from "./CookingMode.tsx"
+import { addMealUseCase, deleteMealUseCase } from "../../infrastructure/container.ts"
 import type { MealieIngredient, MealieInstruction } from "../../shared/types/mealie.ts"
 
 interface RecipeDetailModalProps {
@@ -24,6 +26,16 @@ interface CookingSnapshot {
 export function RecipeDetailModal({ slug, onOpenChange }: RecipeDetailModalProps) {
   const { recipe, loading, error } = useRecipe(slug ?? undefined)
   const [cookingSnapshot, setCookingSnapshot] = useState<CookingSnapshot | null>(null)
+  const [planningPickerOpen, setPlanningPickerOpen] = useState(false)
+
+  const handleSlotSelect = async (date: string, entryType: string, existingMealId?: number) => {
+    if (!recipe) return
+    if (existingMealId !== undefined) {
+      await deleteMealUseCase.execute(existingMealId)
+    }
+    await addMealUseCase.execute(date, entryType, recipe.id)
+    setPlanningPickerOpen(false)
+  }
 
   const handleStartCooking = () => {
     if (!recipe) return
@@ -46,21 +58,39 @@ export function RecipeDetailModal({ slug, onOpenChange }: RecipeDetailModalProps
         />
       )}
 
+      <PlanningSlotPicker
+        open={planningPickerOpen}
+        onOpenChange={setPlanningPickerOpen}
+        recipeName={recipe?.name ?? ""}
+        onSelect={handleSlotSelect}
+      />
+
       <Dialog open={!!slug} onOpenChange={onOpenChange}>
         <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-2xl">
           <DialogHeader>
             <div className="flex items-center justify-between gap-3 pr-6">
               <DialogTitle className="truncate">{recipe?.name ?? " "}</DialogTitle>
               {recipe && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleStartCooking}
-                  className="shrink-0 gap-1.5"
-                >
-                  <UtensilsCrossed className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Mode cuisine</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPlanningPickerOpen(true)}
+                    className="shrink-0 gap-1.5"
+                  >
+                    <CalendarPlus className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Planifier</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleStartCooking}
+                    className="shrink-0 gap-1.5"
+                  >
+                    <UtensilsCrossed className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Mode cuisine</span>
+                  </Button>
+                </div>
               )}
             </div>
           </DialogHeader>
