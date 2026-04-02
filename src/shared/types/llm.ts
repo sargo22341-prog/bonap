@@ -1,4 +1,4 @@
-export type LLMProvider = "anthropic" | "openai" | "google" | "ollama"
+export type LLMProvider = "anthropic" | "openai" | "google" | "mistral" | "perplexity" | "ollama"
 
 export interface LLMConfig {
   provider: LLMProvider
@@ -28,6 +28,16 @@ export const LLM_PROVIDERS: Record<LLMProvider, { label: string; models: string[
   google: {
     label: "Google",
     models: ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"],
+    needsKey: true,
+  },
+  mistral: {
+    label: "Mistral",
+    models: ["mistral-large-latest", "mistral-small-latest", "open-mistral-nemo"],
+    needsKey: true,
+  },
+  perplexity: {
+    label: "Perplexity",
+    models: ["sonar-pro", "sonar", "sonar-reasoning"],
     needsKey: true,
   },
   ollama: {

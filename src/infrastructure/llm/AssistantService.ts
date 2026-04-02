@@ -283,19 +283,28 @@ async function chatFallback(
 
   let text = ""
 
-  if (config.provider === "openai") {
-    const res = await fetch("/openai/v1/chat/completions", {
+  if (config.provider === "openai" || config.provider === "mistral" || config.provider === "perplexity") {
+    const endpoints: Record<string, string> = {
+      openai: "https://api.openai.com/v1/chat/completions",
+      mistral: "https://api.mistral.ai/v1/chat/completions",
+      perplexity: "https://api.perplexity.ai/chat/completions",
+    }
+    const res = await fetch(endpoints[config.provider], {
       method: "POST",
       headers: { Authorization: `Bearer ${config.apiKey}`, "content-type": "application/json" },
       body: JSON.stringify({ model: config.model, messages }),
     })
-    if (!res.ok) throw new Error(`OpenAI ${res.status}`)
+    if (!res.ok) throw new Error(`${config.provider} ${res.status}`)
     const data = await res.json() as { choices: Array<{ message: { content: string } }> }
     text = data.choices[0]?.message.content ?? ""
   } else if (config.provider === "google") {
-    const contents = messages.filter((m) => m.role === "user").map((m) => ({ parts: [{ text: m.content }] }))
+    // Gemini attend role "user"/"model" (pas "assistant"), et l'API supporte CORS directement
+    const contents = messages.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }))
     const res = await fetch(
-      `/google-ai/v1beta/models/${config.model}:generateContent?key=${config.apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent?key=${config.apiKey}`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },

@@ -17,6 +17,10 @@ export async function llmChat(systemPrompt: string, userMessage: string): Promis
       return callOpenAI(config, systemPrompt, userMessage)
     case "google":
       return callGoogle(config, systemPrompt, userMessage)
+    case "mistral":
+      return callMistral(config, systemPrompt, userMessage)
+    case "perplexity":
+      return callPerplexity(config, systemPrompt, userMessage)
     case "ollama":
       return callOllama(config, systemPrompt, userMessage)
     default:
@@ -89,6 +93,52 @@ async function callGoogle(config: LLMConfig, system: string, user: string): Prom
   }
   const data = await res.json() as { candidates: Array<{ content: { parts: Array<{ text: string }> } }> }
   return data.candidates[0]?.content.parts[0]?.text ?? ""
+}
+
+async function callMistral(config: LLMConfig, system: string, user: string): Promise<string> {
+  const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${config.apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.text().catch(() => res.statusText)
+    throw new Error(`Mistral ${res.status}: ${err}`)
+  }
+  const data = await res.json() as { choices: Array<{ message: { content: string } }> }
+  return data.choices[0]?.message.content ?? ""
+}
+
+async function callPerplexity(config: LLMConfig, system: string, user: string): Promise<string> {
+  const res = await fetch("https://api.perplexity.ai/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${config.apiKey}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.text().catch(() => res.statusText)
+    throw new Error(`Perplexity ${res.status}: ${err}`)
+  }
+  const data = await res.json() as { choices: Array<{ message: { content: string } }> }
+  return data.choices[0]?.message.content ?? ""
 }
 
 async function callOllama(config: LLMConfig, system: string, user: string): Promise<string> {
