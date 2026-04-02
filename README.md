@@ -60,7 +60,7 @@ docker run -d \
   -e VITE_MEALIE_URL=http://your-mealie-host:9000 \
   -e VITE_MEALIE_TOKEN=your_api_token \
   --restart unless-stopped \
-  ghcr.io/AymericLeFeyer/bonap:latest
+  ghcr.io/aymericlefeyer/bonap:latest
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -96,7 +96,7 @@ If you run Home Assistant OS or Supervised, you can install Bonap as a native HA
 2. Click the **three-dot menu** (top right) → **Repositories**
 3. Add the following URL:
    ```
-   https://github.com/AymericLeFeyer/bonap
+   https://github.com/AyLabsCode/aylabs-ha-addons
    ```
 4. Refresh — **Bonap** appears in the store. Install it.
 5. In the **Configuration** tab, set your Mealie URL and API token, then **Start**.
@@ -155,8 +155,8 @@ Open [http://localhost:5173](http://localhost:5173).
 ### Image
 
 ```
-ghcr.io/AymericLeFeyer/bonap:latest        # latest stable (main branch)
-ghcr.io/AymericLeFeyer/bonap:<sha>         # pinned to a specific commit
+ghcr.io/aymericlefeyer/bonap:latest        # latest stable (main branch)
+ghcr.io/aymericlefeyer/bonap:<sha>         # pinned to a specific commit
 ```
 
 ### Build stages

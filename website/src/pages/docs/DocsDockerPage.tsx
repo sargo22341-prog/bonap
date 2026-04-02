@@ -7,7 +7,7 @@ const dockerRunCmd = `docker run -d \\
   -e VITE_MEALIE_TOKEN=your_api_token \\
   --name bonap \\
   --restart unless-stopped \\
-  ghcr.io/AymericLeFeyer/bonap:latest`
+  ghcr.io/aymericlefeyer/bonap:latest`
 
 const dockerComposeCmd = `# docker-compose.full.yml
 version: "3.8"
@@ -23,7 +23,7 @@ services:
     restart: unless-stopped
 
   bonap:
-    image: ghcr.io/AymericLeFeyer/bonap:latest
+    image: ghcr.io/aymericlefeyer/bonap:latest
     ports:
       - "3000:80"
     environment:
@@ -117,11 +117,11 @@ export default function DocsDockerPage() {
       }}>
         {[
           {
-            tag: 'ghcr.io/AymericLeFeyer/bonap:latest',
+            tag: 'ghcr.io/aymericlefeyer/bonap:latest',
             desc: 'Build stable — branche main',
           },
           {
-            tag: 'ghcr.io/AymericLeFeyer/bonap:<sha>',
+            tag: 'ghcr.io/aymericlefeyer/bonap:<sha>',
             desc: 'Version spécifique par SHA de commit',
           },
         ].map((img) => (

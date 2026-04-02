@@ -96,7 +96,7 @@ const installCards: InstallCard[] = [
     icon: <Server size={20} />,
     title: 'Docker',
     description: 'Un seul conteneur, une seule commande. Compatible avec toute infrastructure Docker existante.',
-    command: 'docker run -d -p 3000:80 \\\n  -e VITE_MEALIE_URL=... \\\n  -e VITE_MEALIE_TOKEN=... \\\n  ghcr.io/AymericLeFeyer/bonap:latest',
+    command: 'docker run -d -p 3000:80 \\\n  -e VITE_MEALIE_URL=... \\\n  -e VITE_MEALIE_TOKEN=... \\\n  ghcr.io/aymericlefeyer/bonap:latest',
     to: '/docs/installation/docker',
     linkLabel: 'Guide Docker →',
   },
