@@ -1,22 +1,43 @@
 # Bonap
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker&logoColor=white)](https://github.com/AymericLeFeyer/bonap/pkgs/container/bonap)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Self-hosted](https://img.shields.io/badge/self--hosted-✓-green)](https://mealie.io)
+
 **Bonap** is a modern, ergonomic front-end for [Mealie](https://mealie.io) — a self-hosted recipe manager. It connects to your existing Mealie instance without touching its backend, and adds features like AI-powered suggestions, meal planning, a smart shopping list, and customizable themes.
 
 > [!NOTE]
 > Bonap is a pure front-end. It requires a running Mealie instance to work.
+
+![Bonap — aperçu des recettes](public/demo/recettes.png)
 
 ---
 
 ## Features
 
 - **Recipes** — grid view with search, filters (category, tag, duration, season), infinite scroll
-- **Recipe detail** — ingredients, step-by-step instructions, prep/cook time, seasons
-- **Recipe editor** — full create/edit form with ingredient autocomplete, AI-generated photo
+
+  ![Recettes](public/demo/recettes.gif)
+
 - **Meal planning** — weekly calendar (lunch + dinner), day-by-day navigation, leftovers shortcut
+
+  ![Planning](public/demo/planning.gif)
+
 - **Shopping list** — auto-populated from meal plan, grouped by label, "Regulars" second list
-- **AI suggestions** — 5 recipe suggestions based on season, recent history, and free-text criteria
-- **AI assistant** — floating chat drawer that can search recipes, add meals to the plan, and create new recipes
+
+  ![Courses](public/demo/courses.gif)
+
+- **AI suggestions & assistant** — 5 recipe suggestions + floating chat drawer (search, add to plan, create recipes)
+
+  ![IA](public/demo/ia.gif)
+
 - **Stats** — top recipes, top ingredients, streak, leftovers %, catalogue coverage
+
+  ![Stats](public/demo/stats.gif)
+
+- **Recipe editor** — full create/edit form with ingredient autocomplete, AI-generated photo
 - **Themes** — light / dark / system, 8 accent colors (oklch)
 
 ---

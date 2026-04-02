@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Github,
@@ -14,6 +15,7 @@ import {
   ExternalLink,
   ArrowRight,
   Monitor,
+  Play,
 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -22,6 +24,7 @@ interface FeatureCard {
   icon: React.ReactNode
   title: string
   description: string
+  gif: string
 }
 
 const features: FeatureCard[] = [
@@ -29,33 +32,41 @@ const features: FeatureCard[] = [
     icon: <UtensilsCrossed size={22} />,
     title: 'Recettes',
     description: 'Grille avec recherche, filtres par catégorie, tag, durée et saison, scroll infini.',
+    gif: '/demo/recettes.gif',
   },
   {
     icon: <CalendarDays size={22} />,
     title: 'Planning',
     description: 'Calendrier hebdomadaire (déjeuner + dîner), navigation fluide, raccourci restes.',
+    gif: '/demo/planning.gif',
   },
   {
     icon: <ShoppingCart size={22} />,
     title: 'Liste de courses',
     description: 'Auto-remplie depuis le planning, groupée par label, liste "Habituels" persistante.',
+    gif: '/demo/courses.gif',
   },
   {
     icon: <Sparkles size={22} />,
     title: 'Suggestions IA',
     description: '5 suggestions selon la saison, l\'historique et vos critères en texte libre.',
+    gif: '/demo/ia.gif',
   },
   {
     icon: <MessageSquare size={22} />,
     title: 'Assistant IA',
     description: 'Drawer flottant : cherche des recettes, ajoute au planning, crée des recettes.',
+    gif: '/demo/ia.gif',
   },
   {
     icon: <BarChart3 size={22} />,
     title: 'Statistiques',
     description: 'Top recettes, ingrédients fréquents, streak, % restes, couverture du catalogue.',
+    gif: '/demo/stats.gif',
   },
 ]
+
+type ActiveTab = 'video' | number
 
 interface InstallCard {
   icon: React.ReactNode
@@ -119,6 +130,8 @@ function CodeBlock({ code }: { code: string }) {
 }
 
 export default function LandingPage() {
+  const [activeTab, setActiveTab] = useState<ActiveTab>('video')
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <Navbar />
@@ -283,8 +296,8 @@ export default function LandingPage() {
         `}</style>
       </section>
 
-      {/* Video */}
-      <section style={{ padding: '5rem 1.5rem', maxWidth: '900px', margin: '0 auto' }}>
+      {/* Video + Features tabs */}
+      <section style={{ padding: '5rem 1.5rem', maxWidth: '960px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <h2 style={{
             fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)',
@@ -293,35 +306,131 @@ export default function LandingPage() {
             color: 'var(--text)',
             marginBottom: '0.5rem',
           }}>
-            Les origines de Bonap
+            Voir Bonap en action
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>
-            Découvrez les origines du projet, et comment il a été réalisé.
+            La vidéo de présentation, ou explorez chaque fonctionnalité.
           </p>
         </div>
+
+        {/* Tab buttons */}
         <div style={{
-          position: 'relative',
-          paddingBottom: '56.25%',
-          height: 0,
+          display: 'flex',
+          gap: '0.5rem',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          marginBottom: '1.5rem',
+        }}>
+          <button
+            onClick={() => setActiveTab('video')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              padding: '0.4rem 0.875rem',
+              borderRadius: '999px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              border: '1px solid',
+              transition: 'all 0.2s',
+              background: activeTab === 'video' ? 'var(--primary)' : 'transparent',
+              borderColor: activeTab === 'video' ? 'var(--primary)' : 'var(--border)',
+              color: activeTab === 'video' ? 'white' : 'var(--text-muted)',
+            }}
+          >
+            <Play size={13} />
+            Vidéo
+          </button>
+          {features.map((feature, i) => (
+            <button
+              key={feature.title}
+              onClick={() => setActiveTab(i)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                padding: '0.4rem 0.875rem',
+                borderRadius: '999px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: '1px solid',
+                transition: 'all 0.2s',
+                background: activeTab === i ? 'var(--primary)' : 'transparent',
+                borderColor: activeTab === i ? 'var(--primary)' : 'var(--border)',
+                color: activeTab === i ? 'white' : 'var(--text-muted)',
+              }}
+            >
+              {feature.title}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div style={{
           borderRadius: '14px',
           overflow: 'hidden',
           border: '1px solid var(--border)',
           boxShadow: '0 8px 40px oklch(0 0 0 / 0.3)',
+          background: 'var(--bg-card)',
         }}>
-          <iframe
-            src="https://www.youtube.com/embed/ShaX-RX7mG8"
-            title="Bonap — présentation"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              border: 'none',
-            }}
-          />
+          {activeTab === 'video' ? (
+            <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+              <iframe
+                src="https://www.youtube.com/embed/ShaX-RX7mG8"
+                title="Bonap — présentation"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                }}
+              />
+            </div>
+          ) : (
+            <div>
+              <div style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+              }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '8px',
+                  background: 'var(--primary-subtle)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--primary)',
+                  flexShrink: 0,
+                }}>
+                  {features[activeTab as number].icon}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text)' }}>
+                    {features[activeTab as number].title}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                    {features[activeTab as number].description}
+                  </div>
+                </div>
+              </div>
+              <img
+                key={features[activeTab as number].gif}
+                src={features[activeTab as number].gif}
+                alt={features[activeTab as number].title}
+                style={{ width: '100%', display: 'block' }}
+              />
+            </div>
+          )}
         </div>
       </section>
 
@@ -351,12 +460,12 @@ export default function LandingPage() {
             <div
               key={feature.title}
               style={{
-                padding: '1.5rem',
                 borderRadius: '12px',
                 background: 'var(--bg-card)',
                 border: '1px solid var(--border)',
                 transition: 'border-color 0.2s, background 0.2s, transform 0.2s',
                 cursor: 'default',
+                overflow: 'hidden',
               }}
               onMouseEnter={(e) => {
                 const el = e.currentTarget as HTMLDivElement
@@ -371,30 +480,37 @@ export default function LandingPage() {
                 el.style.transform = 'translateY(0)'
               }}
             >
-              <div style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '10px',
-                background: 'var(--primary-subtle)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--primary)',
-                marginBottom: '1rem',
-              }}>
-                {feature.icon}
+              <img
+                src={feature.gif}
+                alt={feature.title}
+                style={{ width: '100%', display: 'block', aspectRatio: '16/9', objectFit: 'cover' }}
+              />
+              <div style={{ padding: '1.25rem 1.5rem' }}>
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '10px',
+                  background: 'var(--primary-subtle)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--primary)',
+                  marginBottom: '0.875rem',
+                }}>
+                  {feature.icon}
+                </div>
+                <h3 style={{
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  color: 'var(--text)',
+                  marginBottom: '0.4rem',
+                }}>
+                  {feature.title}
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.6 }}>
+                  {feature.description}
+                </p>
               </div>
-              <h3 style={{
-                fontWeight: 700,
-                fontSize: '1rem',
-                color: 'var(--text)',
-                marginBottom: '0.4rem',
-              }}>
-                {feature.title}
-              </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.6 }}>
-                {feature.description}
-              </p>
             </div>
           ))}
         </div>
