@@ -75,7 +75,7 @@ function buildInitialFormData(recipe?: MealieRecipe): RecipeFormData {
     name: recipe?.name ?? "",
     description: recipe?.description ?? "",
     prepTime: parsePrepTimeToMinutes(recipe?.prepTime),
-    cookTime: parsePrepTimeToMinutes(recipe?.cookTime),
+    performTime: parsePrepTimeToMinutes(recipe?.performTime),
     recipeIngredient: buildInitialIngredients(recipe),
     recipeInstructions: buildInitialInstructions(recipe),
     seasons: getRecipeSeasonsFromTags(recipe?.tags),

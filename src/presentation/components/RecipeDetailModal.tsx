@@ -130,10 +130,10 @@ export function RecipeDetailModal({ slug, onOpenChange }: RecipeDetailModalProps
                   </div>
                 )}
 
-                {(recipe.prepTime || recipe.cookTime) && (
+                {(recipe.prepTime || recipe.performTime) && (
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     {recipe.prepTime && <span>Préparation : {formatDuration(recipe.prepTime)}</span>}
-                    {recipe.cookTime && <span>Cuisson : {formatDuration(recipe.cookTime)}</span>}
+                    {recipe.performTime && <span>Cuisson : {formatDuration(recipe.performTime)}</span>}
                   </div>
                 )}
               </div>

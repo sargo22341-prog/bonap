@@ -109,7 +109,7 @@ export class RecipeRepository implements IRecipeRepository {
       name: data.name,
       description: data.description || current.description,
       prepTime: this.minutesToIso(data.prepTime) ?? current.prepTime,
-      cookTime: this.minutesToIso(data.cookTime) ?? current.cookTime,
+      performTime: this.minutesToIso(data.performTime) ?? current.performTime,
       recipeCategory: data.categories.map((c) => {
         const orig = current.recipeCategory?.find((rc) => rc.id === c.id)
         return orig ? { ...orig, ...c } : c
