@@ -17,6 +17,7 @@ cat > /usr/share/nginx/html/env-config.js <<EOF
 window.__ENV__ = {
   VITE_MEALIE_URL: "${MEALIE_URL}",
   VITE_MEALIE_TOKEN: "${MEALIE_TOKEN}",
+  VITE_THEME: "${VITE_THEME:-}",
   LLM_PROVIDER: "${LLM_PROVIDER}",
   LLM_API_KEY: "${LLM_API_KEY}",
   LLM_MODEL: "${LLM_MODEL}",

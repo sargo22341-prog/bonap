@@ -1,3 +1,5 @@
+import { getEnv } from "../../shared/utils/env.ts"
+
 export type Theme = "light" | "dark" | "system"
 
 export interface AccentColor {
@@ -43,10 +45,23 @@ export class ThemeService {
   private _systemHandler: (() => void) | null = null
 
   getTheme(): Theme {
+    const envTheme = getEnv("VITE_THEME")
+
+    const isTheme = (v: any): v is Theme =>
+      v === "light" || v === "dark" || v === "system"
+    
+    // 1. ENV
+    if (isTheme(envTheme)) {
+      return envTheme
+    }
+
+    // 2. localStorage
     try {
       const stored = localStorage.getItem(THEME_KEY)
-      if (stored === "light" || stored === "dark" || stored === "system") return stored
-    } catch (_) {}
+      if (isTheme(stored)) return stored
+    } catch (_) { }
+
+    // 3. fallback
     return "system"
   }
 
