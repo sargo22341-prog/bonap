@@ -21,8 +21,9 @@ export const ACCENT_COLORS: AccentColor[] = [
 
 const THEME_KEY = "bonap_theme"
 const ACCENT_KEY = "bonap_accent"
+const ENV_ACCENT_COLORS = getEnv("VITE_ACCENT_COLORS")
+const DEFAULT_ACCENT = ACCENT_COLORS.find(c => c.id === ENV_ACCENT_COLORS) ?? ACCENT_COLORS[0]
 
-const DEFAULT_ACCENT = ACCENT_COLORS[0]
 
 function getSystemPreference(): "light" | "dark" {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
@@ -80,6 +81,7 @@ export class ThemeService {
         if (found) return found
       }
     } catch (_) {}
+    console.log(DEFAULT_ACCENT)
     return DEFAULT_ACCENT
   }
 

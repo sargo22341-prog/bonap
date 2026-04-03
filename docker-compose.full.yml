@@ -25,6 +25,7 @@ services:
       # (Mealie → Profil utilisateur → API Tokens)
       - VITE_MEALIE_TOKEN=
       # - VITE_THEME =  light | dark | system ( optional )
+      # - VITE_ACCENT_COLORS = orange | blue | violet | green | rose | teal | amber | indigo ( optional )
     depends_on:
       - mealie
     restart: unless-stopped
