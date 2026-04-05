@@ -68,9 +68,9 @@ export function AuthPage() {
             <UtensilsCrossed className="h-6 w-6 text-primary" />
           </div>
           <div className="space-y-1.5">
-            <CardTitle className="text-2xl">Connexion à Mealie</CardTitle>
+            <CardTitle className="text-2xl">Bienvenue sur Bonap</CardTitle>
             <CardDescription>
-              Entrez vos identifiants pour accéder à votre espace
+              Entrez vos identifiants Mealie pour accéder à votre espace
             </CardDescription>
           </div>
         </CardHeader>
