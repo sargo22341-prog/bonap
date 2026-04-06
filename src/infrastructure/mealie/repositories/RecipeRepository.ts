@@ -5,6 +5,7 @@ import type {
   MealieRecipe,
   MealieCategory,
   MealieTag,
+  MealieFavoritesResponse,
   RecipeFilters,
   RecipeFormData,
   Season,
@@ -13,10 +14,17 @@ import { isSeasonTag } from "../../../shared/utils/season.ts"
 import { isCalorieTag, buildCalorieTag } from "../../../shared/utils/calorie.ts"
 import { generateId } from "../../../shared/utils/id.ts"
 import { mealieApiClient } from "../api/index.ts"
+import { AuthService } from "../auth/AuthService.ts"
 
 interface MealieTagObject { id?: string; name: string; slug: string }
 
 export class RecipeRepository implements IRecipeRepository {
+
+  private authService: AuthService
+
+  constructor(authService: AuthService) {
+    this.authService = authService
+  }
   /** Resolves season tags by including their id if they already exist in Mealie. */
   private async resolveSeasonTags(seasons: Season[]): Promise<MealieTagObject[]> {
     const response = await mealieApiClient.get<{ items: MealieTag[] }>("/api/organizers/tags")
@@ -116,7 +124,7 @@ export class RecipeRepository implements IRecipeRepository {
         return {
           ...(original ?? {}),
           quantity,
-          unit: hasUnit ? { id: ing.unitId, name: ing.unit } : (original?.unit ?? null),
+          unit: hasUnit ? { id: ing.unitId, name: ing.unit } : undefined,
           food: hasFood ? { id: ing.foodId, name: ing.food } : (original?.food ?? null),
           note: ing.note || (!hasFood && !hasUnit ? ing.food : "") || "",
         }
@@ -172,24 +180,57 @@ export class RecipeRepository implements IRecipeRepository {
   }
 
   async updateCalorieTags(slug: string, calories: number): Promise<MealieRecipe> {
-  const current = await this.getBySlug(slug)
+    const current = await this.getBySlug(slug)
 
-  const calorieTag = {
-    name: buildCalorieTag(calories),
-    slug: buildCalorieTag(calories),
+    const calorieTag = {
+      name: buildCalorieTag(calories),
+      slug: buildCalorieTag(calories),
+    }
+
+    const nonCalorieTags = (current.tags ?? [])
+      .filter(t => !isCalorieTag(t))
+      .map(t => ({
+        id: t.id,
+        name: t.name,
+        slug: t.slug,
+      }))
+
+    return mealieApiClient.patch<MealieRecipe>(`/api/recipes/${slug}`, {
+      name: current.name,
+      tags: [...nonCalorieTags, calorieTag],
+    })
   }
 
-  const nonCalorieTags = (current.tags ?? [])
-    .filter(t => !isCalorieTag(t))
-    .map(t => ({
-      id: t.id,
-      name: t.name,
-      slug: t.slug,
-    }))
+  async updateRating(slug: string, rating: number): Promise<void> {
+    const userId = await this.authService.getUserId()
+    await mealieApiClient.post(
+      `/api/users/${userId}/ratings/${slug}`,
+      {
+        rating,
+        isFavorite: false,
+      }
+    )
+  }
 
-  return mealieApiClient.patch<MealieRecipe>(`/api/recipes/${slug}`, {
-    name: current.name,
-    tags: [...nonCalorieTags, calorieTag],
-  })
-}
+  async getFavorites(): Promise<MealieFavoritesResponse> {
+    const userId = await this.authService.getUserId()
+    const res = await mealieApiClient.get<MealieFavoritesResponse>(
+      `/api/users/${userId}/favorites`,
+    )
+    return res
+  }
+
+  async toggleFavorite(slug: string, isFavorite: boolean): Promise<void> {
+    const userId = await this.authService.getUserId()
+    if (isFavorite) {
+      await mealieApiClient.delete(
+        `/api/users/${userId}/favorites/${slug}`,
+      )
+    } else {
+      await mealieApiClient.post(
+        `/api/users/${userId}/favorites/${slug}`,
+        {},
+      )
+    }
+  }
 }

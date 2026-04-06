@@ -1,50 +1,22 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react"
-import { useNavigate, Link } from "react-router-dom"
-import { CookingMode } from "../components/CookingMode.tsx"
+import { useNavigate } from "react-router-dom"
 import { useRecipesInfinite } from "../hooks/useRecipesInfinite.ts"
 import { useCategories } from "../hooks/useCategories.ts"
 import { useTags } from "../hooks/useTags.ts"
-import { useRecipe } from "../hooks/useRecipe.ts"
-import { useUpdateSeasons } from "../hooks/useUpdateSeasons.ts"
-import { useUpdateCalorieTag } from "../../presentation/hooks/useUpdateCalorieTag.ts"
-import { getCaloriesFromTags, isCalorieTag } from "../../shared/utils/calorie.ts"
-import { useUpdateCategories } from "../hooks/useUpdateCategories.ts"
+import { getCaloriesFromTags } from "../../shared/utils/calorie.ts"
 import { useGridColumns } from "../hooks/useGridColumns.ts"
 import { RecipeCard } from "../components/RecipeCard.tsx"
-import { Badge } from "../components/ui/badge.tsx"
 import { Button } from "../components/ui/button.tsx"
-import { Input } from "../components/ui/input.tsx"
-import {
-  Loader2, AlertCircle, UtensilsCrossed, Search, X, RotateCcw,
-  Plus, PenLine, ExternalLink, Clock, CalendarPlus, CookingPot,
-} from "lucide-react"
-import type { MealieRecipe, MealieCategory, Season } from "../../shared/types/mealie.ts"
-import { SEASONS, SEASON_LABELS } from "../../shared/types/mealie.ts"
-import { getRecipeSeasonsFromTags, isSeasonTag } from "../../shared/utils/season.ts"
+import {Loader2, AlertCircle, UtensilsCrossed, Plus, PenLine, } from "lucide-react"
+import type { MealieRecipe, Season } from "../../shared/types/mealie.ts"
+import { getRecipeSeasonsFromTags } from "../../shared/utils/season.ts"
 import { getEnv } from "../../shared/utils/env.ts"
-import { getRecipesUseCase, getRecipeUseCase, addMealUseCase, deleteMealUseCase } from "../../infrastructure/container.ts"
-import { PlanningSlotPicker } from "../components/PlanningSlotPicker.tsx"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip.tsx"
-import { RecipeIngredientsList } from "../components/RecipeIngredientsList.tsx"
-import { RecipeInstructionsList } from "../components/RecipeInstructionsList.tsx"
+import { getRecipesUseCase, getRecipeUseCase } from "../../infrastructure/container.ts"
 import { cn } from "../../lib/utils.ts"
-import { recipeImageUrl } from "../../shared/utils/image.ts"
-import { formatDuration, formatDurationToNumber } from "../../shared/utils/duration.ts"
+import { formatDurationToNumber } from "../../shared/utils/duration.ts"
+import { RecipeDrawer } from "../components/RecipeDrawer.tsx"
+import { RecipeFilters } from "../components/RecipeFilters.tsx"
 
-const TIME_OPTIONS = [
-  { label: "< 15 min", value: 15 },
-  { label: "< 30 min", value: 30 },
-  { label: "< 45 min", value: 45 },
-  { label: "< 1h", value: 60 },
-  { label: "1h+", value: undefined },
-] as const
-
-const CALORIES_OPTIONS = [
-  { label: "< 200 kcal", value: 200 },
-  { label: "< 400 kcal", value: 400 },
-  { label: "< 600 kcal", value: 600 },
-  { label: "< 800 kcal", value: 800 },
-] as const
 
 export function RecipesPage() {
   const [search, setSearch] = useState("")
@@ -344,322 +316,47 @@ export function RecipesPage() {
         </div>
 
         {/* Barre de filtres */}
-        <div className="space-y-2.5">
 
-          {/* Recherche + tri + bouton filtres */}
-          <div className="flex items-center gap-2">
+        <RecipeFilters
+          search={search}
+          setSearch={setSearch}
 
-            {/* Recherche */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
-              <Input
-                placeholder="Rechercher une recette..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 pr-9"
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
+          orderBy={orderBy}
+          setOrderBy={setOrderBy}
 
-            {/* ===================== */}
-            {/* ORDER BY SELECT */}
-            {/* ===================== */}
-            <select
-              value={orderBy}
-              onChange={(e) => setOrderBy(e.target.value)}
-              className="
-      h-9 px-3 rounded-[var(--radius-lg)]
-      border border-border bg-background
-      text-xs text-foreground
-      outline-none
-      hover:bg-secondary
-      transition-colors
-    "
-            >
-              <option value="createdAt">Création</option>
-              <option value="updatedAt">Modification</option>
-              <option value="name">Nom</option>
-              <option value="rating">Note</option>
-              <option value="totalTime">Temps total</option>
-              <option value="prepTime">Préparation</option>
-              <option value="performTime">Cuisson</option>
-            </select>
+          orderDirection={orderDirection}
+          setOrderDirection={setOrderDirection}
 
-            {/* ===================== */}
-            {/* ORDER DIRECTION */}
-            {/* ===================== */}
-            <button
-              type="button"
-              onClick={() =>
-                setOrderDirection((prev) => (prev === "asc" ? "desc" : "asc"))
-              }
-              className="
-      h-9 w-9 flex items-center justify-center
-      rounded-[var(--radius-lg)]
-      border border-border bg-background
-      hover:bg-secondary
-      transition-colors
-    "
-              title={orderDirection === "asc" ? "Ascendant" : "Descendant"}
-            >
-              {orderDirection === "asc" ? (
-                <span className="text-xs">↑</span>
-              ) : (
-                <span className="text-xs">↓</span>
-              )}
-            </button>
+          filtersOpen={filtersOpen}
+          setFiltersOpen={setFiltersOpen}
 
-            {/* Toggle filtres */}
-            <Button
-              size="sm"
-              type="button"
-              onClick={() => setFiltersOpen((v) => !v)}
-              className="gap-1.5"
-            >
-              Filtres
-            </Button>
+          hasActiveFilters={hasActiveFilters}
+          resetFilters={resetFilters}
 
-            {/* reset */}
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={resetFilters}
-                className={cn(
-                  "shrink-0 flex items-center gap-1",
-                  "text-xs text-muted-foreground hover:text-foreground",
-                  "transition-colors"
-                )}
-              >
-                <RotateCcw className="h-3 w-3" />
-              </button>
-            )}
-          </div>
+          categories={categories}
+          tags={tags}
 
+          selectedCategories={selectedCategories}
+          toggleCategory={toggleCategory}
 
-          {/* FILTRES COLLAPSIBLES */}
-          {filtersOpen && (
-            <div className="flex flex-col gap-4">
+          selectedTags={selectedTags}
+          toggleTag={toggleTag}
 
-              {/* ===================== */}
-              {/* 1. CONTEXTE */}
-              {/* ===================== */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          selectedSeasons={selectedSeasons}
+          toggleSeason={toggleSeason}
 
-                {/* ================= */}
-                {/* SAISON */}
-                {/* ================= */}
-                <div className="flex flex-col gap-2">
+          maxTotalTime={maxTotalTime}
+          handleTimeFilter={handleTimeFilter}
 
-                  <div className="text-xs text-muted-foreground font-medium">
-                    Saison
-                  </div>
+          maxCalories={maxCalories}
+          handleCaloriesFilter={handleCaloriesFilter}
 
-                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 min-w-0">
+          noIngredients={noIngredients}
+          setNoIngredients={setNoIngredients}
 
-                    {SEASONS.map((season: Season) => {
-                      const active = selectedSeasons.includes(season)
-                      return (
-                        <Badge
-                          key={season}
-                          variant={active ? "default" : "outline"}
-                          className="cursor-pointer whitespace-nowrap shrink-0"
-                          onClick={() => toggleSeason(season)}
-                        >
-                          {SEASON_LABELS[season]}
-                        </Badge>
-                      )
-                    })}
-
-                  </div>
-                </div>
-
-                {/* ================= */}
-                {/* TEMPS */}
-                {/* ================= */}
-                <div className="flex flex-col gap-2">
-
-                  <div className="text-xs text-muted-foreground font-medium">
-                    Temps de préparation
-                  </div>
-
-                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 min-w-0">
-
-                    {TIME_OPTIONS
-                      .filter(opt => opt.value !== undefined)
-                      .map(opt => {
-                        const active = maxTotalTime === opt.value
-                        return (
-                          <Badge
-                            key={opt.label}
-                            variant={active ? "default" : "outline"}
-                            className="cursor-pointer whitespace-nowrap shrink-0"
-                            onClick={() => handleTimeFilter(opt.value)}
-                          >
-                            {opt.label}
-                          </Badge>
-                        )
-                      })}
-
-                  </div>
-                </div>
-
-                {/* CALORIES */}
-                <div className="flex flex-col gap-2">
-                  <div className="text-xs text-muted-foreground font-medium">
-                    Calories
-                  </div>
-
-                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 min-w-0">
-                    {CALORIES_OPTIONS.map((opt) => {
-                      const active = maxCalories === opt.value
-
-                      return (
-                        <Badge
-                          key={opt.value}
-                          variant={active ? "default" : "outline"}
-                          className="cursor-pointer whitespace-nowrap shrink-0"
-                          onClick={() => handleCaloriesFilter(opt.value)}
-                        >
-                          {opt.label}
-                        </Badge>
-                      )
-                    })}
-                  </div>
-                </div>
-
-              </div>
-
-              {/* ===================== */}
-              {/* 2. OPTIONS RAPIDES */}
-              {/* ===================== */}
-              <div className="flex flex-col gap-1">
-
-                <div className="text-xs text-muted-foreground font-medium">
-                  Options rapides
-                </div>
-
-                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 min-w-0">
-
-                  <Badge
-                    variant={noIngredients ? "default" : "outline"}
-                    className="cursor-pointer whitespace-nowrap shrink-0"
-                    onClick={() => setNoIngredients(v => !v)}
-                  >
-                    Sans ingrédients
-                  </Badge>
-
-                </div>
-              </div>
-
-              {/* ===================== */}
-              {/* 3. CATÉGORIES */}
-              {/* ===================== */}
-              <div className="flex flex-col gap-1">
-
-                <div className="text-xs text-muted-foreground font-medium">
-                  Catégories
-                </div>
-
-                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide px-2 py-1 min-w-0">
-                  <div className="flex items-center gap-2 min-w-max">
-
-                    {categories.length > 0 &&
-                      categories.map(cat => {
-                        const active = selectedCategories.includes(cat.slug)
-                        return (
-                          <Badge
-                            key={cat.id}
-                            variant={active ? "default" : "outline"}
-                            className="cursor-pointer whitespace-nowrap shrink-0"
-                            onClick={() => toggleCategory(cat.slug)}
-                          >
-                            {cat.name}
-                          </Badge>
-                        )
-                      })
-                    }
-
-                  </div>
-                </div>
-              </div>
-
-              {/* ===================== */}
-              {/* 4. TAGS + SEARCH */}
-              {/* ===================== */}
-              <div className="flex flex-col gap-2">
-
-                <div className="text-xs text-muted-foreground font-medium">
-                  Tags
-                </div>
-
-                {/* INPUT + TAGS SUR LA MÊME LIGNE */}
-                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide px-2 py-1 min-w-0">
-
-                  {/* INPUT */}
-                  <input
-                    value={tagSearch}
-                    onChange={(e) => setTagSearch(e.target.value)}
-                    placeholder="Rechercher..."
-                    className="
-        h-7 px-3 rounded-full
-        border border-border
-        bg-background
-        text-xs text-foreground
-        outline-none
-        focus:ring-1 focus:ring-primary
-        min-w-[140px]
-        shrink-0
-      "
-                  />
-
-                  {/* TAGS */}
-                  <div className="flex items-center gap-2 min-w-max">
-
-                    {tags
-                      .filter(t => !isSeasonTag(t))
-                      .filter(t => !isCalorieTag(t))
-                      .filter(t =>
-                        t.name.toLowerCase().includes(tagSearch.toLowerCase())
-                      )
-                      .map(tag => {
-                        const active = selectedTags.includes(tag.slug)
-                        return (
-                          <Badge
-                            key={tag.id}
-                            variant={active ? "default" : "outline"}
-                            className="cursor-pointer whitespace-nowrap shrink-0"
-                            onClick={() => toggleTag(tag.slug)}
-                          >
-                            {tag.name}
-                          </Badge>
-                        )
-                      })}
-
-                    {tags
-                      .filter(t => !isSeasonTag(t))
-                      .filter(t => !isCalorieTag(t))
-                      .filter(t =>
-                        t.name.toLowerCase().includes(tagSearch.toLowerCase())
-                      ).length === 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          Aucun tag trouvé
-                        </span>
-                      )}
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+          tagSearch={tagSearch}
+          setTagSearch={setTagSearch}
+        />
       </div>
 
       {/* Erreur */}
@@ -693,7 +390,6 @@ export function RecipesPage() {
       )}
 
       {/* Grille */}
-      {console.log(recipes)}
       {filteredRecipes.length > 0 && (
         <div
           className="grid gap-3"
@@ -743,355 +439,3 @@ export function RecipesPage() {
   )
 }
 
-// ─── Drawer recette ────────────────────────────────────────────────────────────
-
-
-interface RecipeDrawerProps {
-  slug: string
-  allCategories: MealieCategory[]
-  closing: boolean
-  onClose: () => void
-}
-
-function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDrawerProps) {
-  const { recipe, setRecipe, loading } = useRecipe(slug)
-  const { updateSeasons, loading: seasonsLoading } = useUpdateSeasons()
-  const { updateCategories, loading: categoriesLoading } = useUpdateCategories()
-  const { updateCalorieTag } = useUpdateCalorieTag()
-  const [cookingMode, setCookingMode] = useState(false)
-  const [planningPickerOpen, setPlanningPickerOpen] = useState(false)
-  const syncLock = useRef(false)
-
-  useEffect(() => {
-    if (!recipe) return
-    if (syncLock.current) return
-
-    const caloriesString = recipe.nutrition?.calories
-    if (!caloriesString) return
-
-    const match = caloriesString.match(/[\d.]+/)
-    if (!match) return
-
-    const calories = Number(match[0])
-    if (isNaN(calories)) return
-
-    const existingTag = recipe.tags?.find(t =>
-      t.slug.startsWith("calorie-")
-    )
-
-    const existingCalories = existingTag
-      ? Number(existingTag.slug.replace("calorie-", ""))
-      : null
-
-    // déjà OK → stop
-    if (existingCalories === calories) return
-
-    const run = async () => {
-      try {
-        syncLock.current = true   // 🔥 LOCK IMMÉDIAT
-
-        const updated = await updateCalorieTag(recipe.slug, calories)
-
-        if (updated) {
-          setRecipe(updated)
-        }
-
-      } finally {
-        syncLock.current = false  // 🔓 UNLOCK
-      }
-    }
-
-    run()
-  }, [recipe?.slug]) // 🔥 IMPORTANT: PAS recipe complet
-
-  const handleSlotSelect = async (date: string, entryType: string, existingMealId?: number) => {
-    if (!recipe) return
-    if (existingMealId !== undefined) {
-      await deleteMealUseCase.execute(existingMealId)
-    }
-    await addMealUseCase.execute(date, entryType, recipe.id)
-    setPlanningPickerOpen(false)
-  }
-
-  const handleToggleSeason = async (season: Season) => {
-    if (!recipe) return
-    const current = getRecipeSeasonsFromTags(recipe.tags)
-    const newSeasons = current.includes(season)
-      ? current.filter((s) => s !== season)
-      : [...current, season]
-    const updated = await updateSeasons(recipe.slug, newSeasons)
-    if (updated) setRecipe(updated)
-  }
-
-  const handleToggleCategory = async (cat: MealieCategory) => {
-    if (!recipe) return
-    const current = recipe.recipeCategory ?? []
-    const isActive = current.some((c) => c.id === cat.id)
-    const newCats = isActive
-      ? current.filter((c) => c.id !== cat.id)
-      : [...current, cat]
-    const updated = await updateCategories(recipe.slug, newCats)
-    if (updated) setRecipe(updated)
-  }
-
-  return (
-    <>
-      {cookingMode && recipe && (
-        <CookingMode
-          recipeName={recipe.name}
-          ingredients={recipe.recipeIngredient ?? []}
-          instructions={recipe.recipeInstructions ?? []}
-          onClose={() => setCookingMode(false)}
-        />
-      )}
-      <PlanningSlotPicker
-        open={planningPickerOpen}
-        onOpenChange={setPlanningPickerOpen}
-        recipeName={recipe?.name ?? ""}
-        onSelect={handleSlotSelect}
-      />
-      <div
-        className={cn(
-          "fixed inset-y-0 right-0 z-50",
-          "flex w-full max-w-md flex-col",
-          "bg-card border-l border-border/40",
-          "shadow-warm-lg",
-          closing ? "animate-slide-out-right" : "animate-slide-in-right",
-        )}
-      >
-        {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-border/40 px-5 py-3.5">
-          <span className="font-heading text-base font-bold tracking-tight">Recette</span>
-          <div className="flex items-center gap-1.5">
-            {recipe && (
-              <>
-                <TooltipProvider delayDuration={300}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={() => setPlanningPickerOpen(true)}
-                        className={cn(
-                          "flex items-center gap-1.5 rounded-[var(--radius-md)]",
-                          "border border-border px-2.5 py-1.5",
-                          "text-xs font-semibold text-muted-foreground",
-                          "hover:text-foreground hover:border-border/80 hover:bg-secondary",
-                          "transition-all duration-150",
-                        )}
-                      >
-                        <CalendarPlus className="h-3.5 w-3.5" />
-                        <span className="sm:hidden">Planifier</span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="hidden sm:block">Planifier</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={() => setCookingMode(true)}
-                        className={cn(
-                          "flex items-center gap-1.5 rounded-[var(--radius-md)]",
-                          "border border-border px-2.5 py-1.5",
-                          "text-xs font-semibold text-muted-foreground",
-                          "hover:text-foreground hover:border-border/80 hover:bg-secondary",
-                          "transition-all duration-150",
-                        )}
-                      >
-                        <UtensilsCrossed className="h-3.5 w-3.5" />
-                        <span className="sm:hidden">Mode cuisine</span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="hidden sm:block">Mode cuisine</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Link
-                        to={`/recipes/${recipe.slug}`}
-                        className={cn(
-                          "flex items-center gap-1.5 rounded-[var(--radius-md)]",
-                          "border border-border px-2.5 py-1.5",
-                          "text-xs font-semibold text-muted-foreground",
-                          "hover:text-foreground hover:border-border/80 hover:bg-secondary",
-                          "transition-all duration-150",
-                        )}
-                      >
-                        <CookingPot className="h-3.5 w-3.5" />
-                        <span className="sm:hidden">Page complète</span>
-                      </Link>
-                    </TooltipTrigger>
-                    <TooltipContent className="hidden sm:block">Page complète</TooltipContent>
-                  </Tooltip>
-
-                  {recipe.orgURL && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <a
-                          href={recipe.orgURL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={cn(
-                            "flex items-center gap-1.5 rounded-[var(--radius-md)]",
-                            "border border-border px-2.5 py-1.5",
-                            "text-xs font-semibold text-muted-foreground",
-                            "hover:text-foreground hover:border-border/80 hover:bg-secondary",
-                            "transition-all duration-150",
-                          )}
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          <span className="sm:hidden">Recette originale</span>
-                        </a>
-                      </TooltipTrigger>
-
-                      <TooltipContent className="hidden sm:block">
-                        Recette originale
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-
-                </TooltipProvider>
-              </>
-            )}
-            <button
-              type="button"
-              onClick={onClose}
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-[var(--radius-md)]",
-                "text-muted-foreground hover:text-foreground hover:bg-secondary",
-                "transition-colors",
-              )}
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Contenu scrollable */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin">
-          {loading && (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-6 w-6 animate-spin text-primary/60" />
-            </div>
-          )}
-
-          {recipe && (
-            <article className="space-y-5 pb-24">
-              {/* Image */}
-              <div className="relative">
-                <img
-                  src={recipeImageUrl(recipe, "original")}
-                  alt={recipe.name}
-                  className="aspect-video w-full object-cover"
-                />
-                {/* Dégradé bas pour transition vers le contenu */}
-                <div className="absolute bottom-0 inset-x-0 h-12 bg-gradient-to-t from-card to-transparent" />
-              </div>
-
-              <div className="space-y-4 px-5">
-                {/* Nom */}
-                <h1 className="font-heading text-xl font-bold leading-snug tracking-tight">{recipe.name}</h1>
-
-                {/* Temps */}
-                {(recipe.prepTime || recipe.performTime || recipe.totalTime) && (
-                  <div className="flex flex-wrap gap-3">
-                    {recipe.prepTime && (
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5 text-primary/60" />
-                        <span className="font-medium">Prép.</span> {formatDuration(recipe.prepTime)}
-                      </span>
-                    )}
-                    {recipe.performTime && (
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5 text-primary/60" />
-                        <span className="font-medium">Cuisson</span> {formatDuration(recipe.performTime)}
-                      </span>
-                    )}
-                    {recipe.totalTime && (
-                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5 text-primary/60" />
-                        <span className="font-medium">Total</span> {formatDuration(recipe.totalTime)}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Toggle catégories */}
-                {allCategories.length > 0 && (
-                  <div className={cn(
-                    "space-y-2.5 rounded-[var(--radius-xl)]",
-                    "border border-border/50 bg-secondary/30 p-3.5",
-                  )}>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.10em] text-muted-foreground/60">
-                      Catégories
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {allCategories.map((cat) => {
-                        const active = (recipe.recipeCategory ?? []).some((c) => c.id === cat.id)
-                        return (
-                          <Badge
-                            key={cat.id}
-                            variant={active ? "default" : "outline"}
-                            className="cursor-pointer select-none"
-                            onClick={() => void handleToggleCategory(cat)}
-                          >
-                            {categoriesLoading ? "…" : cat.name}
-                          </Badge>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Toggle saisons */}
-                <div className={cn(
-                  "space-y-2.5 rounded-[var(--radius-xl)]",
-                  "border border-border/50 bg-secondary/30 p-3.5",
-                )}>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.10em] text-muted-foreground/60">
-                    Saisons
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {SEASONS.filter((s) => s !== "sans").map((season: Season) => {
-                      const active = getRecipeSeasonsFromTags(recipe.tags).includes(season)
-                      return (
-                        <Badge
-                          key={season}
-                          variant={active ? "default" : "outline"}
-                          className="cursor-pointer select-none"
-                          onClick={() => void handleToggleSeason(season)}
-                        >
-                          {seasonsLoading ? "…" : SEASON_LABELS[season]}
-                        </Badge>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Séparateur éditorial */}
-              {((recipe.recipeIngredient ?? []).length > 0 || (recipe.recipeInstructions ?? []).length > 0) && (
-                <div className="px-5">
-                  <div className="divider-editorial" />
-                </div>
-              )}
-
-              {/* Ingrédients */}
-              {(recipe.recipeIngredient ?? []).length > 0 && (
-                <div className="px-5">
-                  <RecipeIngredientsList ingredients={recipe.recipeIngredient ?? []} headingSize="text-base" />
-                </div>
-              )}
-
-              {/* Instructions */}
-              {(recipe.recipeInstructions ?? []).length > 0 && (
-                <div className="px-5">
-                  <RecipeInstructionsList instructions={recipe.recipeInstructions ?? []} headingSize="text-base" />
-                </div>
-              )}
-            </article>
-          )}
-        </div>
-      </div>
-    </>
-  )
-}

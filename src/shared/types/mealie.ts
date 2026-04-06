@@ -116,6 +116,7 @@ export interface MealieRecipe {
   extras?: Record<string, string>
   orgURL?: string
   nutrition?: MealieNutrition
+  rating?: number
 }
 
 export interface MealieNutrition {
@@ -242,4 +243,15 @@ export interface MealieRawPaginatedShoppingItems {
   page: number
   per_page: number
   total_pages: number
+}
+
+export interface MealieFavorite {
+  recipeId: string
+  isFavorite: boolean
+  userId: string
+  id: string
+}
+
+export interface MealieFavoritesResponse {
+  ratings: MealieFavorite[]
 }
