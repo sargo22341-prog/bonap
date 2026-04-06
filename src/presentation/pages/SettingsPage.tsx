@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { getEnv, getIngressBasename } from "../../shared/utils/env.ts"
-import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, Check, Sun, Moon, Monitor, Palette, Bot, Server, Info, Lock } from "lucide-react"
+import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, Check, Sun, Moon, Monitor, Palette, Bot, Server, Info, Lock, AlertTriangle } from "lucide-react"
 import { Button } from "../components/ui/button.tsx"
 import { Input } from "../components/ui/input.tsx"
 import { Label } from "../components/ui/label.tsx"
@@ -153,6 +153,19 @@ export function SettingsPage() {
             </p>
           </div>
         </div>
+
+        {/* Bannière localStorage */}
+        {envFields.size === 0 && (
+          <div className="flex items-start gap-3 rounded-[var(--radius-lg)] border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900/50 dark:bg-amber-950/30">
+            <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+              Ces paramètres sont <span className="font-semibold">stockés localement</span> sur cet appareil uniquement.
+              Pour les appliquer sur tous vos appareils, définissez les variables d'environnement correspondantes dans votre{" "}
+              <span className="font-semibold">docker-compose.yml</span> ou la{" "}
+              <span className="font-semibold">configuration de l'addon Home Assistant</span>, puis redémarrez.
+            </p>
+          </div>
+        )}
 
         {/* Bannière env */}
         {envFields.size > 0 && (
