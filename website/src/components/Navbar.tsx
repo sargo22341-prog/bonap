@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Github, Menu, X } from 'lucide-react'
 import { useWebsiteTheme } from '../hooks/useWebsiteTheme'
 import ThemeToggle from './ThemeToggle'
@@ -8,15 +8,13 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const { theme, toggle } = useWebsiteTheme()
-  const location = useLocation()
+  const handleNavigate = () => setMobileOpen(false)
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-
-  useEffect(() => { setMobileOpen(false) }, [location])
 
   const navBg = scrolled
     ? theme === 'dark'
@@ -34,18 +32,20 @@ export default function Navbar() {
     }}>
       <nav style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px' }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', textDecoration: 'none' }}>
+          <Link to="/" onClick={handleNavigate} style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', textDecoration: 'none' }}>
             <img src="/bonap.png" alt="Bonap" width={32} height={32} style={{ display: 'block', borderRadius: '8px' }} />
             <span style={{ fontWeight: 700, fontSize: '1.125rem', color: 'var(--text)' }}>Bonap</span>
           </Link>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }} className="hidden-mobile">
             <Link to="/docs" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500, transition: 'color 0.2s' }}
+              onClick={handleNavigate}
               onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
               onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}>
               Documentation
             </Link>
             <a href="https://github.com/AymericLeFeyer/bonap" target="_blank" rel="noopener noreferrer"
+              onClick={handleNavigate}
               style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 500, transition: 'color 0.2s' }}
               onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
               onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}>
