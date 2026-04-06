@@ -480,22 +480,24 @@ export function SettingsPage() {
         </div>
       </section>
 
-      <section className="rounded-[var(--radius-2xl)] border border-border/50 bg-card shadow-subtle space-y-5 p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-lg)] bg-destructive/8">
-            <LogOut className="h-4 w-4 text-destructive" />
+      {import.meta.env.VITE_PROTECTED_ROUTE === 'true' && (
+        <section className="rounded-[var(--radius-2xl)] border border-border/50 bg-card shadow-subtle space-y-5 p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-lg)] bg-destructive/8">
+              <LogOut className="h-4 w-4 text-destructive" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold leading-none">Déconnexion</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Déconnecter le compte actuellement connecté.
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-base font-bold leading-none">Déconnexion</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Déconnecter le compte actuellement connecté.
-            </p>
-          </div>
-        </div>
-        <Button variant="destructive" onClick={handleLogout}>
-          Se déconnecter
-        </Button>
-      </section>
+          <Button variant="destructive" onClick={handleLogout}>
+            Se déconnecter
+          </Button>
+        </section>
+      )}
     </div>
   )
 }

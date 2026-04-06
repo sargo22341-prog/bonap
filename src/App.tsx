@@ -15,6 +15,8 @@ const STORAGE_KEYS = {
   MEALIE_TOKEN: 'bonap-mealie-token',
 }
 
+const isProtectedRoute = import.meta.env.VITE_PROTECTED_ROUTE === 'true'
+
 function ProtectedRoute() {
   const token = localStorage.getItem(STORAGE_KEYS.MEALIE_TOKEN)
   if (!token) {
@@ -26,8 +28,8 @@ function ProtectedRoute() {
 function App() {
   return (
     <Routes>
-      <Route path="login" element={<AuthPage />} />
-      <Route element={<ProtectedRoute />}>
+      {isProtectedRoute && <Route path="login" element={<AuthPage />} />}
+      <Route element={isProtectedRoute ? <ProtectedRoute /> : <Outlet />}>
         <Route element={<Layout />}>
           <Route index element={<Navigate to="/recipes" replace />} />
           <Route path="recipes" element={<RecipesPage />} />
