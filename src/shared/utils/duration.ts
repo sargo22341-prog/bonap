@@ -26,7 +26,7 @@ export function formatDuration(value: string | number | null | undefined): strin
   if (typeof value === "number") {
     totalMinutes = value
   } else if (typeof value === "string") {
-    let v = value
+    const v = value
       .trim()
       .toLowerCase()
       .replace(/\./g, "")        // enlève les points (ex: "min.")
