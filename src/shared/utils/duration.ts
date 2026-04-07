@@ -95,21 +95,6 @@ export function formatDurationFromMinutes(totalMinutes: number): string {
  *    - → "—"
  */
 export function formatDuration(value: string | number | null | undefined): string {
-<<<<<<< HEAD
-  const minutes = parseDuration(value)
-  return formatDurationFromMinutes(minutes)
-}
-
-/**
- * Retourne uniquement la durée en minutes.
- *
- * - "1h10" → 70
- * - "45 min" → 45
- * - "PT1H30M" → 90
- */
-export function formatDurationToNumber(value?: string | number | null): number {
-  return parseDuration(value)
-=======
   if (value === null || value === undefined || value === "") return "—"
 
   let totalMinutes: number
@@ -233,5 +218,4 @@ export function formatDurationToNumber(value?: string): number {
   }
 
   return 0
->>>>>>> f905814d36a40f0fea940f73a355cdfbad52ab11
 }

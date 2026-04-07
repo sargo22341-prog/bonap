@@ -31,7 +31,6 @@ export function formatDayFr(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00")
   return d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })
 }
-<<<<<<< HEAD
 
 export function formatDayDate(date: Date): string {
   return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
@@ -50,5 +49,3 @@ export function addDays(date: Date, n: number): Date {
   d.setHours(0, 0, 0, 0)
   return d
 }
-=======
->>>>>>> f905814d36a40f0fea940f73a355cdfbad52ab11

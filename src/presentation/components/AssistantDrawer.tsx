@@ -9,12 +9,6 @@ import { llmConfigService } from "../../infrastructure/llm/LLMConfigService.ts"
 
 
 export function AssistantDrawer() {
-<<<<<<< HEAD
-
-  const isConfigured = llmConfigService.isConfigured()
-
-=======
->>>>>>> f905814d36a40f0fea940f73a355cdfbad52ab11
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -36,12 +30,7 @@ export function AssistantDrawer() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-<<<<<<< HEAD
-  if (!isConfigured) return null
-=======
   if (!configured) return null
->>>>>>> f905814d36a40f0fea940f73a355cdfbad52ab11
-
   const handleSend = async () => {
     const text = input.trim()
     if (!text || loading) return

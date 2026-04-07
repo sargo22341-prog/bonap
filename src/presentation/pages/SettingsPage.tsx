@@ -1,9 +1,6 @@
-<<<<<<< HEAD
+
 import { useState, useRef } from "react"
-=======
-import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
->>>>>>> f905814d36a40f0fea940f73a355cdfbad52ab11
 import { getEnv, getIngressBasename } from "../../shared/utils/env.ts"
 import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, Check, Sun, Moon, Monitor, Palette, Bot, Server, Info, Lock, AlertTriangle, LogOut } from "lucide-react"
 import { Button } from "../components/ui/button.tsx"
@@ -166,7 +163,7 @@ export function SettingsPage() {
                   'transition-all duration-150 hover:scale-110',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                   accentColor.id === color.id &&
-                    'ring-2 ring-offset-2 ring-foreground/25 scale-110',
+                  'ring-2 ring-offset-2 ring-foreground/25 scale-110',
                 )}
                 style={{ backgroundColor: `oklch(${color.oklch})` }}
               >
@@ -277,12 +274,6 @@ export function SettingsPage() {
                 }
                 value={config.apiKey}
                 onChange={(e) =>
-<<<<<<< HEAD
-                  updateConfig((prev) => ({ ...prev, apiKey: e.target.value }))
-                }
-                readOnly={envFields.has("apiKey")}
-                className={cn("pr-10", envFields.has("apiKey") && "bg-secondary/40")}
-=======
                   setConfig((prev) => ({ ...prev, apiKey: e.target.value }))
                 }
                 readOnly={envFields.has('apiKey')}
@@ -290,7 +281,6 @@ export function SettingsPage() {
                   'pr-10',
                   envFields.has('apiKey') && 'bg-secondary/40',
                 )}
->>>>>>> f905814d36a40f0fea940f73a355cdfbad52ab11
                 autoComplete="off"
               />
               <button
@@ -323,12 +313,6 @@ export function SettingsPage() {
                 placeholder="http://localhost:11434"
                 value={config.ollamaBaseUrl}
                 onChange={(e) =>
-<<<<<<< HEAD
-                  updateConfig((prev) => ({ ...prev, ollamaBaseUrl: e.target.value }))
-                }
-                readOnly={envFields.has("ollamaBaseUrl")}
-                className={cn(envFields.has("ollamaBaseUrl") && "bg-secondary/40")}
-=======
                   setConfig((prev) => ({
                     ...prev,
                     ollamaBaseUrl: e.target.value,
@@ -338,7 +322,6 @@ export function SettingsPage() {
                 className={cn(
                   envFields.has('ollamaBaseUrl') && 'bg-secondary/40',
                 )}
->>>>>>> f905814d36a40f0fea940f73a355cdfbad52ab11
               />
             </div>
             <div className="space-y-2.5">
@@ -349,11 +332,7 @@ export function SettingsPage() {
                 placeholder="llama3.2, mistral, …"
                 value={config.model}
                 onChange={(e) =>
-<<<<<<< HEAD
-                  updateConfig((prev) => ({ ...prev, model: e.target.value }))
-=======
                   setConfig((prev) => ({ ...prev, model: e.target.value }))
->>>>>>> f905814d36a40f0fea940f73a355cdfbad52ab11
                 }
               />
             </div>
@@ -373,16 +352,10 @@ export function SettingsPage() {
                   key={m}
                   type="button"
                   onClick={() =>
-<<<<<<< HEAD
-                    updateConfig((prev) => ({ ...prev, model: m }))
-                  }
-                  disabled={envFields.has("model")}
-=======
                     !envFields.has('model') &&
                     setConfig((prev) => ({ ...prev, model: m }))
                   }
                   disabled={envFields.has('model')}
->>>>>>> f905814d36a40f0fea940f73a355cdfbad52ab11
                   className={cn(
                     'rounded-[var(--radius-lg)] border px-3 py-1.5',
                     'text-xs font-mono font-semibold transition-all duration-150',
