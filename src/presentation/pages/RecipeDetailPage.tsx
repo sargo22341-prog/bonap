@@ -18,7 +18,7 @@ import {
   InlineEditText,
   InlineEditDuration,
 } from "../components/RecipeEditorShared.tsx"
-import { parsePrepTimeToMinutes } from "../../shared/utils/duration.ts"
+import { formatDuration } from "../../shared/utils/duration.ts"
 import {
   Loader2,
   Plus,
@@ -40,6 +40,7 @@ import type {
   RecipeFormData,
   RecipeFormIngredient,
   RecipeFormInstruction,
+  MealieRatings
 } from "../../shared/types/mealie.ts"
 import { SEASONS, SEASON_LABELS } from "../../shared/types/mealie.ts"
 import { getRecipeSeasonsFromTags, isSeasonTag } from "../../shared/utils/season.ts"
@@ -48,7 +49,6 @@ import { cn } from "../../lib/utils.ts"
 import { useUpdateRating } from "../../presentation/hooks/useUpdateRating"
 import { useGetFavorites } from "../../presentation/hooks/useGetFavorites"
 import { useToggleFavorite } from "../../presentation/hooks/useToggleFavorite"
-import type { MealieFavorite } from "../../shared/types/mealie.ts"
 
 function buildFormData(recipe: MealieRecipe): RecipeFormData {
   const structured =
@@ -70,9 +70,9 @@ function buildFormData(recipe: MealieRecipe): RecipeFormData {
   return {
     name: recipe.name,
     description: recipe.description ?? "",
-    prepTime: parsePrepTimeToMinutes(recipe.prepTime),
-    performTime: parsePrepTimeToMinutes(recipe.performTime),
-    totalTime: parsePrepTimeToMinutes(recipe.totalTime),
+    prepTime: formatDuration(recipe.prepTime),
+    performTime: formatDuration(recipe.performTime),
+    totalTime: formatDuration(recipe.totalTime),
     recipeIngredient: [
       ...structured,
       { quantity: "1", unit: "", unitId: undefined, food: "", foodId: undefined, note: "" },
@@ -136,27 +136,31 @@ export function RecipeDetailPage() {
   // ─── Local editable state (initialized from recipe) ────────────────────────
 
   const [formData, setFormData] = useState<RecipeFormData | null>(null)
-  const [isDirty, setIsDirty] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isDirty, setIsDirty] = useState(false)
   const [cookingMode, setCookingMode] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { getFavorites } = useGetFavorites()
-  const [ratings, setRatings] = useState<MealieFavorite[]>([])
-
+  const [ratings, setRatings] = useState<MealieRatings[]>([])
   // Initialise formData once recipe is loaded
   if (recipe && !formData) {
     setFormData(buildFormData(recipe))
     setImagePreview(recipeImageUrl(recipe, "original"))
   }
 
-  // Get favorites
+  // Take Favorite
   useEffect(() => {
-    void (async () => {
+    let mounted = true
+    const load = async () => {
       const data = await getFavorites()
+      if (!mounted) return
       setRatings(data.ratings)
-    })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    }
+    void load()
+    return () => {
+      mounted = false
+    }
+  }, [getFavorites])
 
   const patch = useCallback((partial: Partial<RecipeFormData>) => {
     setFormData((prev) => (prev ? { ...prev, ...partial } : prev))
