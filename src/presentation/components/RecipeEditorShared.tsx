@@ -1,17 +1,13 @@
 /**
- * Composants partagés entre RecipeDetailPage (édition)
- * et RecipeFormPage (création).
- *
- * InlineEditText + InlineEditDuration
+ * Composants partagés entre RecipeDetailPage (édition) et RecipeFormPage (création).
+ * InlineEditText et InlineEditDuration — champs éditables inline WYSIWYG.
  */
 
 import { useState, useRef, useEffect, type ReactNode } from "react"
 import { Input } from "./ui/input.tsx"
-import { formatDuration } from "../../shared/utils/duration.ts"
+import { formatDuration, formatMinutes } from "../../shared/utils/duration.ts"
 import { cn } from "../../lib/utils.ts"
 
-// ─────────────────────────────────────────────────────────────
-// InlineEditText
 // ─── InlineEditText ───────────────────────────────────────────────────────────
 
 export interface InlineEditTextProps {
@@ -46,18 +42,16 @@ export function InlineEditText({
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!editing) return
-
-    if (multiline && textareaRef.current) {
-      textareaRef.current.focus()
-      const len = textareaRef.current.value.length
-      textareaRef.current.setSelectionRange(len, len)
-    }
-
-    if (!multiline && inputRef.current) {
-      inputRef.current.focus()
-      const len = inputRef.current.value.length
-      inputRef.current.setSelectionRange(len, len)
+    if (editing) {
+      if (multiline && textareaRef.current) {
+        textareaRef.current.focus()
+        const len = textareaRef.current.value.length
+        textareaRef.current.setSelectionRange(len, len)
+      } else if (!multiline && inputRef.current) {
+        inputRef.current.focus()
+        const len = inputRef.current.value.length
+        inputRef.current.setSelectionRange(len, len)
+      }
     }
   }, [editing, multiline])
 
@@ -123,13 +117,7 @@ export interface InlineEditDurationProps {
   disabled?: boolean
 }
 
-export function InlineEditDuration({
-  label,
-  value,
-  displayRaw,
-  onChange,
-  disabled,
-}: InlineEditDurationProps) {
+export function InlineEditDuration({ label, value, displayRaw, onChange, disabled }: InlineEditDurationProps) {
   const [editing, setEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -166,7 +154,7 @@ export function InlineEditDuration({
       )}
       title={disabled ? undefined : "Cliquer pour modifier"}
     >
-      {label} : {formatDuration(displayRaw ?? value)}
+      {label} : {displayRaw ? formatDuration(displayRaw) : (value ? formatMinutes(value) : "—")}
     </span>
   )
 }

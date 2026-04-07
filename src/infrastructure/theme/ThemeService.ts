@@ -60,9 +60,7 @@ export class ThemeService {
     try {
       const stored = localStorage.getItem(THEME_KEY)
       if (isTheme(stored)) return stored
-    } catch{
-      // nothing
-    }
+    } catch { /* localStorage unavailable */ }
 
     // 3. fallback
     return "system"
@@ -71,9 +69,7 @@ export class ThemeService {
   setTheme(theme: Theme): void {
     try {
       localStorage.setItem(THEME_KEY, theme)
-    } catch{
-      // nothing
-    }
+    } catch { /* localStorage unavailable */ }
     this.apply()
   }
 
@@ -84,18 +80,14 @@ export class ThemeService {
         const found = ACCENT_COLORS.find((c) => c.id === stored)
         if (found) return found
       }
-    } catch{
-      // nothing
-    }
+    } catch { /* localStorage unavailable */ }
     return DEFAULT_ACCENT
   }
 
   setAccentColor(color: AccentColor): void {
     try {
       localStorage.setItem(ACCENT_KEY, color.id)
-    } catch{
-      // nothing
-    }
+    } catch { /* localStorage unavailable */ }
     this.apply()
   }
 
