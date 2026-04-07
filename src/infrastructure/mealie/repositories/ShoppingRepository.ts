@@ -30,6 +30,9 @@ function mapItem(raw: MealieShoppingItem, recipeById: Map<string, string> = new 
       ? { id: raw.label.id, name: raw.label.name, color: raw.label.color }
       : undefined,
     display: raw.display,
+    foodId: raw.foodId,
+    unitId: raw.unitId,
+    recipeReferences: raw.recipeReferences,
     recipeNames: recipeNames.length > 0 ? recipeNames : undefined,
     source: "mealie",
   }

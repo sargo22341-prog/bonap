@@ -324,6 +324,12 @@ export function RecipeDetailPage() {
     label: u.useAbbreviation && u.abbreviation ? u.abbreviation : u.name,
   }))
 
+  // ─── Auto Resize textarea ──────────────────────────────────────────────────
+  const autoResize = (el: HTMLTextAreaElement, minRows = 3) => {
+    el.style.height = "auto"
+    el.style.height = Math.max(el.scrollHeight, 20 * minRows) + "px"
+  }
+
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -786,19 +792,21 @@ export function RecipeDetailPage() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <textarea
+                        ref={(el) => {
+                          if (el) autoResize(el, 3)
+                        }}
                         value={step.text}
-                        onChange={(e) => updateInstruction(index, e.target.value)}
-                        placeholder={`Étape ${index + 1}…`}
-                        disabled={saving}
-                        rows={2}
+                        onChange={(e) => {
+                          updateInstruction(index, e.target.value)
+                          autoResize(e.target, 3)
+                        }}
+                        onInput={(e) => autoResize(e.currentTarget, 3)}
+                        rows={1}
                         className={cn(
                           "w-full rounded-md border-transparent bg-transparent px-2 py-1 text-sm text-muted-foreground leading-relaxed",
-                          "placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:border-input",
-                          "focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-ring",
-                          "hover:bg-muted/30 transition-colors resize-none",
-                          "disabled:cursor-not-allowed disabled:opacity-50",
+                          "resize-none overflow-hidden",
+                          "hover:bg-muted/30 transition-colors",
                         )}
-                        aria-label={`Étape ${index + 1}`}
                       />
                     </div>
                     <Button

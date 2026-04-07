@@ -38,10 +38,16 @@ export interface MealieIngredient {
   title?: string
 }
 
+export interface MealieIngredientReference {
+  referenceId: string
+}
+
 export interface MealieInstruction {
   id: string
   title?: string
+  summary?: string
   text: string
+  ingredientReferences?: MealieIngredientReference[]
 }
 
 export interface MealieCategory {
@@ -64,6 +70,7 @@ export interface RecipeFilters {
   seasons?: Season[]
   orderBy?: string
   orderDirection?: string
+  paginationSeed?: string // Obligatoire pour order by Random
 }
 
 export interface RecipeFormIngredient {
@@ -200,6 +207,8 @@ export interface MealieShoppingItem {
   food?: { id: string; name: string }
   label?: MealieShoppingLabel
   display?: string
+  foodId?: string
+  unitId?: string,
   recipeReferences?: MealieShoppingItemRecipeRef[]
 }
 
@@ -227,6 +236,7 @@ export interface MealieShoppingItemUpdate {
   foodId?: string
   labelId?: string
   display?: string
+  recipeReferences?: MealieShoppingItemRecipeRef[]
 }
 
 export interface MealieRawPaginatedShoppingLists {

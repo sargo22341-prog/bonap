@@ -19,7 +19,17 @@ export interface ShoppingItem {
   display?: string
   /** Names of recipes that require this item */
   recipeNames?: string[]
+  foodId?: string
+  unitId?: string,
+  recipeReferences?: recipeReferences[]
   source: "mealie"
+}
+
+export interface recipeReferences {
+  recipeId?: string
+  recipeQuantity?: number
+  recipeScale?: number
+  recipeNote?: string
 }
 
 export interface ShoppingList {

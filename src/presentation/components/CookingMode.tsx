@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { X, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "./ui/button.tsx"
-import { cn } from "../../lib/utils.ts"
 import type { MealieIngredient, MealieInstruction } from "../../shared/types/mealie.ts"
 
 interface CookingModeProps {
@@ -25,10 +24,10 @@ export function CookingMode({ recipeName, ingredients, instructions, onClose }: 
     if ("wakeLock" in navigator) {
       navigator.wakeLock.request("screen").then((lock) => {
         wakeLockRef.current = lock
-      }).catch(() => {})
+      }).catch(() => { })
     }
     return () => {
-      wakeLockRef.current?.release().catch(() => {})
+      wakeLockRef.current?.release().catch(() => { })
     }
   }, [])
 
@@ -48,7 +47,6 @@ export function CookingMode({ recipeName, ingredients, instructions, onClose }: 
   }, [step, isLast, onClose])
 
   const currentInstruction = !isIngredients ? instructions[step] : null
-
   return (
     <div className="fixed inset-x-0 top-0 z-[100] flex flex-col bg-background" style={{ height: "100dvh" }}>
       {/* Header */}
@@ -82,6 +80,7 @@ export function CookingMode({ recipeName, ingredients, instructions, onClose }: 
               step={step + 1}
               total={totalSteps}
               instruction={currentInstruction!}
+              ingredients={ingredients}
             />
           )}
         </div>
@@ -146,32 +145,62 @@ function IngredientsScreen({ ingredients }: { ingredients: MealieIngredient[] })
 // ─── Instruction screen ───────────────────────────────────────────────────────
 
 function InstructionScreen({
-  step,
-  total,
   instruction,
+  ingredients,
 }: {
   step: number
   total: number
   instruction: MealieInstruction
+  ingredients: MealieIngredient[]
 }) {
+
+  const linkedIngredients = (instruction.ingredientReferences ?? [])
+    .map((ref) =>
+      ingredients.find((ing) => ing.referenceId === ref.referenceId),
+    )
+    .filter(Boolean)
+
   return (
     <div className="space-y-8">
-      <div className="flex items-center gap-4">
-        <span
-          className={cn(
-            "flex h-14 w-14 shrink-0 items-center justify-center rounded-full",
-            "bg-primary text-primary-foreground font-heading text-2xl font-bold",
-          )}
-        >
-          {step}
-        </span>
-        <span className="text-base text-muted-foreground">sur {total}</span>
-      </div>
 
-      {instruction.title && (
-        <h3 className="font-heading text-2xl font-semibold">{instruction.title}</h3>
+      {linkedIngredients.length > 0 && (
+        <div className="mb-6 pb-4 border-b border-border/40 space-y-2">
+          <p className="text-sm font-medium text-muted-foreground">
+            Ingrédients utilisés
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {linkedIngredients.map((ing, i) => (
+              <span
+                key={i}
+                className="rounded-full bg-primary/10 px-3 py-1 text-sm text-primary font-medium"
+              >
+                {ing?.quantity && ing.quantity !== 0 && (
+                  <span className="font-semibold tabular-nums mr-1">
+                    {ing.quantity}
+                  </span>
+                )}
+
+                {ing?.unit?.name && (
+                  <span className="text-primary/70 mr-1">
+                    {ing.unit.name}
+                  </span>
+                )}
+
+                {ing?.food?.name}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
-      <p className="text-2xl leading-relaxed text-foreground">{instruction.text}</p>
+
+      {instruction.summary && (
+        <h3 className="font-heading text-2xl font-semibold">{instruction.summary}</h3>
+      )}
+      <p
+        className="text-2xl leading-relaxed text-foreground space-y-4 [&_img]:rounded-xl [&_img]:mt-4 [&_img]:max-w-full"
+        dangerouslySetInnerHTML={{ __html: instruction.text }}
+      />
     </div>
   )
 }

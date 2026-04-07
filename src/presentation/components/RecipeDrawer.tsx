@@ -197,63 +197,66 @@ export function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDr
                         {recipe && (
                             <>
                                 <TooltipProvider delayDuration={300}>
+                                    {/* Planifier */}
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <button
                                                 type="button"
                                                 onClick={() => setPlanningPickerOpen(true)}
                                                 className={cn(
-                                                    "flex items-center gap-1.5 rounded-[var(--radius-md)]",
-                                                    "border border-border px-2.5 py-1.5",
-                                                    "text-xs font-semibold text-muted-foreground",
+                                                    "flex items-center justify-center rounded-[var(--radius-md)]",
+                                                    "border border-border p-2",
+                                                    "text-muted-foreground",
                                                     "hover:text-foreground hover:border-border/80 hover:bg-secondary",
                                                     "transition-all duration-150",
                                                 )}
                                             >
-                                                <CalendarPlus className="h-3.5 w-3.5" />
-                                                <span className="sm:hidden">Planifier</span>
+                                                <CalendarPlus className="h-4 w-4" />
                                             </button>
                                         </TooltipTrigger>
-                                        <TooltipContent className="hidden sm:block">Planifier</TooltipContent>
+                                        <TooltipContent>Planifier</TooltipContent>
                                     </Tooltip>
+
+                                    {/* Mode cuisine */}
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <button
                                                 type="button"
                                                 onClick={() => setCookingMode(true)}
                                                 className={cn(
-                                                    "flex items-center gap-1.5 rounded-[var(--radius-md)]",
-                                                    "border border-border px-2.5 py-1.5",
-                                                    "text-xs font-semibold text-muted-foreground",
+                                                    "flex items-center justify-center rounded-[var(--radius-md)]",
+                                                    "border border-border p-2",
+                                                    "text-muted-foreground",
                                                     "hover:text-foreground hover:border-border/80 hover:bg-secondary",
                                                     "transition-all duration-150",
                                                 )}
                                             >
-                                                <UtensilsCrossed className="h-3.5 w-3.5" />
-                                                <span className="sm:hidden">Mode cuisine</span>
+                                                <UtensilsCrossed className="h-4 w-4" />
                                             </button>
                                         </TooltipTrigger>
-                                        <TooltipContent className="hidden sm:block">Mode cuisine</TooltipContent>
+                                        <TooltipContent>Mode cuisine</TooltipContent>
                                     </Tooltip>
+
+                                    {/* Page complète */}
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Link
                                                 to={`/recipes/${recipe.slug}`}
                                                 className={cn(
-                                                    "flex items-center gap-1.5 rounded-[var(--radius-md)]",
-                                                    "border border-border px-2.5 py-1.5",
-                                                    "text-xs font-semibold text-muted-foreground",
+                                                    "flex items-center justify-center rounded-[var(--radius-md)]",
+                                                    "border border-border p-2",
+                                                    "text-muted-foreground",
                                                     "hover:text-foreground hover:border-border/80 hover:bg-secondary",
                                                     "transition-all duration-150",
                                                 )}
                                             >
-                                                <CookingPot className="h-3.5 w-3.5" />
-                                                <span className="sm:hidden">Page complète</span>
+                                                <CookingPot className="h-4 w-4" />
                                             </Link>
                                         </TooltipTrigger>
-                                        <TooltipContent className="hidden sm:block">Page complète</TooltipContent>
+                                        <TooltipContent>Page complète</TooltipContent>
                                     </Tooltip>
 
+                                    {/* Recette originale */}
                                     {recipe.orgURL && (
                                         <Tooltip>
                                             <TooltipTrigger asChild>
@@ -262,24 +265,20 @@ export function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDr
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className={cn(
-                                                        "flex items-center gap-1.5 rounded-[var(--radius-md)]",
-                                                        "border border-border px-2.5 py-1.5",
-                                                        "text-xs font-semibold text-muted-foreground",
+                                                        "flex items-center justify-center rounded-[var(--radius-md)]",
+                                                        "border border-border p-2",
+                                                        "text-muted-foreground",
                                                         "hover:text-foreground hover:border-border/80 hover:bg-secondary",
                                                         "transition-all duration-150",
                                                     )}
                                                 >
-                                                    <ExternalLink className="h-3.5 w-3.5" />
-                                                    <span className="sm:hidden">Recette originale</span>
+                                                    <ExternalLink className="h-4 w-4" />
                                                 </a>
                                             </TooltipTrigger>
 
-                                            <TooltipContent className="hidden sm:block">
-                                                Recette originale
-                                            </TooltipContent>
+                                            <TooltipContent>Recette originale</TooltipContent>
                                         </Tooltip>
                                     )}
-
                                 </TooltipProvider>
                             </>
                         )}

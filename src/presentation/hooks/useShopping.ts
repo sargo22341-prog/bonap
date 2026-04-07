@@ -75,7 +75,7 @@ export function useShopping() {
         display: existing.display,
       })
     } else {
-      await addItemUseCase.execute(list.id, note, 1, effectiveLabelId)
+      await addItemUseCase.execute(list.id, note, _quantity, effectiveLabelId)
     }
     const result = await getShoppingItemsUseCase.execute()
     setList(result.list)
@@ -95,6 +95,11 @@ export function useShopping() {
         isFood: item.isFood,
         note: item.note,
         quantity,
+        foodId: item.foodId,
+        unitId: item.unitId,
+        recipeReferences: item.recipeReferences
+          ?.filter((r): r is { recipeId: string } => !!r.recipeId)
+          .map((r) => ({ recipeId: r.recipeId })),
         labelId: item.label?.id,
         display: item.display,
       })
@@ -116,6 +121,11 @@ export function useShopping() {
         isFood: item.isFood,
         note: newNote,
         quantity: item.quantity,
+        foodId: item.foodId,
+        unitId: item.unitId,
+        recipeReferences: item.recipeReferences
+          ?.filter((r): r is { recipeId: string } => !!r.recipeId)
+          .map((r) => ({ recipeId: r.recipeId })),
         labelId: item.label?.id,
         display: item.display,
       })
@@ -145,6 +155,11 @@ export function useShopping() {
         isFood: item.isFood,
         note: item.note,
         quantity: item.quantity,
+        foodId: item.foodId,
+        unitId: item.unitId,
+        recipeReferences: item.recipeReferences
+          ?.filter((r): r is { recipeId: string } => !!r.recipeId)
+          .map((r) => ({ recipeId: r.recipeId })),
         labelId: labelId || undefined,
         display: item.display,
       })

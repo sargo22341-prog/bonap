@@ -1,14 +1,6 @@
 import type { IShoppingRepository } from "../../../domain/shopping/repositories/IShoppingRepository.ts"
-import type { MealieIngredient } from "../../../shared/types/mealie.ts"
-import { foodLabelStore } from "../../../infrastructure/shopping/FoodLabelStore.ts"
+import type { MealieRecipe } from "../../../shared/types/mealie.ts"
 import { recipeSlugStore } from "../../../infrastructure/shopping/RecipeSlugStore.ts"
-import { extractFoodKey } from "../../../shared/utils/food.ts"
-
-interface RecipeEntry {
-  recipeName: string
-  recipeSlug: string
-  ingredients: MealieIngredient[]
-}
 
 export class AddRecipesToListUseCase {
   private repository: IShoppingRepository
@@ -23,27 +15,55 @@ export class AddRecipesToListUseCase {
    * so duplicates across meals are kept separate (no quantity merging).
    * Applies saved label from the food reference if available.
    */
-  async execute(listId: string, entries: RecipeEntry[]): Promise<void> {
-    // Save name → slug for later use in the recipe detail modal
-    for (const { recipeName, recipeSlug } of entries) {
-      recipeSlugStore.set(recipeName, recipeSlug)
+  async execute(listId: string, entries: MealieRecipe[]): Promise<void> {
+    // Save name → slug for later use in recipe detail modal
+    for (const recipe of entries) {
+      recipeSlugStore.set(recipe.name, recipe.slug)
     }
 
-    const items = entries.flatMap(({ recipeName, ingredients }) =>
-      ingredients
-        .map((ing) => ing.food?.name ?? ing.note ?? ing.originalText)
-        .filter((display): display is string => Boolean(display?.trim()))
-        .map((display) => {
-          const foodKey = extractFoodKey(display)
-          const labelId = foodKey ? foodLabelStore.lookup(foodKey) : undefined
+    const items = entries
+      .flatMap((recipe) => {
+        const ingredients = recipe.recipeIngredient ?? []
+
+        return ingredients.map((ing) => {
+          const parts: string[] = []
+
+          // unit
+          if (ing.unit?.name) {
+            parts.push(ing.unit.name)
+          }
+
+          // food / note / fallback
+          if (ing.food?.name) {
+            parts.push(ing.food.name)
+          } else if (ing.note) {
+            parts.push(ing.note)
+          } else if (ing.originalText) {
+            parts.push(ing.originalText)
+          }
+
+          const display = parts.join(" ").trim()
+          if (!display) return null
+
           return {
+            quantity: ing.quantity,
+            referencedRecipe: recipe,
             shoppingListId: listId,
-            isFood: false,
-            note: `${display} — ${recipeName}`,
-            labelId,
+            foodId: ing.food?.id,
+            unitId: ing.unit?.id,
+            recipeReferences: [
+              {
+                recipeId: recipe.id,
+                recipeQuantity: 1,
+                recipeScale: 1,
+                recipeNote: recipe.name,
+              },
+            ]
           }
         })
-    )
+      })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+
     await this.repository.addItems(listId, items)
   }
 }

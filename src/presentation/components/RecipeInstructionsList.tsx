@@ -4,13 +4,19 @@ interface RecipeInstructionsListProps {
   instructions: MealieInstruction[]
   /** Heading size class — defaults to "text-lg" */
   headingSize?: "text-lg" | "text-base"
+  renderHtml?: true | false
 }
 
 export function RecipeInstructionsList({
   instructions,
   headingSize = "text-lg",
+  renderHtml = true,
 }: RecipeInstructionsListProps) {
   if (instructions.length === 0) return null
+
+  // helper pour supprimer le HTML
+  const stripHtml = (html: string) =>
+    html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim()
 
   return (
     <section className="space-y-4">
@@ -26,7 +32,16 @@ export function RecipeInstructionsList({
               {step.title && (
                 <p className="text-sm font-semibold">{step.title}</p>
               )}
-              <p className="text-sm text-muted-foreground leading-relaxed">{step.text}</p>
+              {renderHtml ? (
+                <div
+                  className="text-sm text-muted-foreground leading-relaxed space-y-2 [&_img]:rounded-lg [&_img]:mt-2 [&_img]:max-w-full"
+                  dangerouslySetInnerHTML={{ __html: step.text }}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {stripHtml(step.text)}
+                </p>
+              )}
             </div>
           </li>
         ))}

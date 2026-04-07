@@ -31,3 +31,21 @@ export function formatDayFr(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00")
   return d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })
 }
+
+export function formatDayDate(date: Date): string {
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
+}
+
+export function formatDateRange(days: Date[]): string {
+  if (days.length === 0) return ""
+  const first = days[0]
+  const last = days[days.length - 1]
+  return `${first.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} — ${last.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`
+}
+
+export function addDays(date: Date, n: number): Date {
+  const d = new Date(date)
+  d.setDate(d.getDate() + n)
+  d.setHours(0, 0, 0, 0)
+  return d
+}

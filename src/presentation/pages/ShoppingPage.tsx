@@ -222,25 +222,24 @@ interface MealieItemRowProps {
 function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onUpdateNote, onUpdateLabel, onViewRecipe }: MealieItemRowProps) {
   // For items added from planning, the note is "ingredient — RecipeName"
   const noteParts = item.note?.split(" — ") ?? []
-  const displayName = item.foodName ?? (noteParts.length >= 2 ? noteParts[0] : item.note) ?? "Article sans nom"
   const recipeSuffix = noteParts.length >= 2 ? noteParts.slice(1).join(" — ") : null
   const recipeNamesFromNote = recipeSuffix ? [recipeSuffix] : []
   const allRecipeNames = item.recipeNames?.length ? item.recipeNames : recipeNamesFromNote
   const qty = item.quantity ?? 0
 
   const [editing, setEditing] = useState(false)
-  const [editValue, setEditValue] = useState(displayName)
+  const [editValue, setEditValue] = useState(item.note ?? item.foodName ??  "Article sans nom")
   const inputRef = useRef<HTMLInputElement>(null)
 
   const startEdit = () => {
-    setEditValue(displayName)
+    setEditValue(item.note ?? item.foodName ??  "Article sans nom")
     setEditing(true)
     setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   const saveEdit = () => {
     const trimmed = editValue.trim()
-    if (trimmed && trimmed !== displayName) {
+    if (trimmed && trimmed !== item.foodName) {
       const newNote = recipeSuffix ? `${trimmed} — ${recipeSuffix}` : trimmed
       onUpdateNote(item, newNote)
     }
@@ -309,27 +308,54 @@ function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onU
           className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none border-b border-primary"
         />
       ) : (
-        <span className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-          <span
-            onDoubleClick={startEdit}
-            className={cn(
-              "text-sm font-medium leading-tight cursor-text",
-              item.checked && "line-through opacity-40",
-            )}
-          >
-            {displayName}
-          </span>
-          {allRecipeNames.map((recipeName) => (
-            <button
-              key={recipeName}
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onViewRecipe?.(recipeName) }}
-              className="text-[10px] text-muted-foreground/40 hover:text-primary transition-colors leading-tight"
-            >
-              {recipeName}
-            </button>
-          ))}
-        </span>
+<span className="flex-1 min-w-0 flex flex-col gap-1">
+  <span className="flex items-center gap-2 flex-wrap">
+    {/* unité */}
+    {item.unitName && (
+      <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+        {item.unitName}
+      </span>
+    )}
+    {/* nom */}
+    <span
+      onDoubleClick={startEdit}
+      className={cn(
+        "text-sm font-medium leading-tight cursor-text",
+        item.checked && "line-through opacity-40",
+      )}
+    >
+      {item.foodName ??
+        (noteParts.length >= 2 ? noteParts[0] : item.note) ??
+        "Article sans nom"}
+    </span>
+    {/* recettes */}
+    {allRecipeNames.map((recipeName) => (
+      <button
+        key={recipeName}
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          onViewRecipe?.(recipeName)
+        }}
+        className="text-[10px] text-muted-foreground/40 hover:text-primary transition-colors leading-tight"
+      >
+        {recipeName}
+      </button>
+    ))}
+  </span>
+
+  {/* note */}
+  {item.note && (
+    <span
+      className={cn(
+        "text-xs text-muted-foreground leading-tight",
+        item.checked && "line-through opacity-40",
+      )}
+    >
+      {item.note}
+    </span>
+  )}
+</span>
       )}
 
       {/* Catégorie (toujours visible) + suppression (au survol) */}

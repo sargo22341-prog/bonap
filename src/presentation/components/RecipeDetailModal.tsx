@@ -147,6 +147,7 @@ export function RecipeDetailModal({ slug, onOpenChange }: RecipeDetailModalProps
               <RecipeInstructionsList
                 instructions={recipe.recipeInstructions ?? []}
                 headingSize="text-base"
+                renderHtml={false}
               />
             </article>
           )}
