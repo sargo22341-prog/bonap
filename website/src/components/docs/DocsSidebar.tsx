@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { ChevronDown, ChevronRight, BookOpen, Package, Settings, Puzzle, Menu, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, BookOpen, Package, Settings, Puzzle, LayoutGrid, Menu, X } from 'lucide-react'
 
 interface NavItem {
   label: string
@@ -36,6 +36,19 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Variables d'environnement", to: '/docs/configuration' },
       { label: 'IA / LLM', to: '/docs/configuration/llm' },
+    ],
+  },
+  {
+    label: 'Fonctionnalités',
+    icon: <LayoutGrid size={14} />,
+    items: [
+      { label: 'Recettes', to: '/docs/features/recipes' },
+      { label: 'Planning', to: '/docs/features/planning' },
+      { label: 'Liste de courses', to: '/docs/features/shopping' },
+      { label: 'Statistiques', to: '/docs/features/stats' },
+      { label: 'Suggestions IA', to: '/docs/features/suggestions' },
+      { label: 'Assistant IA', to: '/docs/features/assistant' },
+      { label: 'Thème & personnalisation', to: '/docs/features/theme' },
     ],
   },
   {
