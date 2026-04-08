@@ -64,7 +64,8 @@ export class RecipeRepository implements IRecipeRepository {
     if (filters.orderBy !== undefined) {
       params.set("orderBy", String(filters.orderBy))
       if (filters.orderBy === "random") {
-        const seed = Date.now().toString()
+        const seed =
+          filters.paginationSeed?.trim() || Date.now().toString()
         params.set("paginationSeed", seed)
       }
     }

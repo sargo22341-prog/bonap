@@ -141,7 +141,7 @@ export function RecipeFilters({
                     <option value="totalTime">Temps total</option>
                     <option value="prepTime">Préparation</option>
                     <option value="performTime">Cuisson</option>
-                    <option value="random">random</option>
+                    <option value="random">Aléatoire</option>
                 </select>
 
                 {/* ===================== */}

@@ -4,7 +4,7 @@ interface RecipeInstructionsListProps {
   instructions: MealieInstruction[]
   /** Heading size class — defaults to "text-lg" */
   headingSize?: "text-lg" | "text-base"
-  renderHtml?: true | false
+  renderHtml?: boolean
 }
 
 export function RecipeInstructionsList({
@@ -17,6 +17,22 @@ export function RecipeInstructionsList({
   // helper pour supprimer le HTML
   const stripHtml = (html: string) =>
     html.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim()
+
+
+  const sanitizeInstructionHtml = (html: string) => {
+    const doc = new DOMParser().parseFromString(html, "text/html")
+
+    // supprimer tous les éléments sauf img
+    const all = doc.body.querySelectorAll("*")
+
+    all.forEach((el) => {
+      if (el.tagName.toLowerCase() !== "img") {
+        el.replaceWith(...Array.from(el.childNodes))
+      }
+    })
+
+    return doc.body.innerHTML
+  }
 
   return (
     <section className="space-y-4">
@@ -35,7 +51,9 @@ export function RecipeInstructionsList({
               {renderHtml ? (
                 <div
                   className="text-sm text-muted-foreground leading-relaxed space-y-2 [&_img]:rounded-lg [&_img]:mt-2 [&_img]:max-w-full"
-                  dangerouslySetInnerHTML={{ __html: step.text }}
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeInstructionHtml(step.text),
+                  }}
                 />
               ) : (
                 <p className="text-sm text-muted-foreground leading-relaxed">

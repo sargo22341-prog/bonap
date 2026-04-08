@@ -125,6 +125,7 @@ export function MealCell({
                   <button
                     type="button"
                     onClick={() => onView(meal.recipe!.slug)}
+                    aria-label="Voir la recette"
                     title="Voir la recette"
                     className="flex flex-1 items-center justify-center py-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                   >
@@ -134,6 +135,7 @@ export function MealCell({
                 <button
                   type="button"
                   onClick={() => onDelete(meal.id)}
+                  aria-label="Supprimer du planning"
                   title="Supprimer du planning"
                   className="flex flex-1 items-center justify-center py-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive border-l border-border/30"
                 >

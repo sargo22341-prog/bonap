@@ -1,5 +1,4 @@
-
-import { useState, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { getEnv, getIngressBasename } from "../../shared/utils/env.ts"
 import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, Check, Sun, Moon, Monitor, Palette, Bot, Server, Info, Lock, AlertTriangle, LogOut } from "lucide-react"
@@ -43,24 +42,19 @@ export function SettingsPage() {
   const [showKey, setShowKey] = useState(false)
   const [testStatus, setTestStatus] = useState<TestStatus>({ state: 'idle' })
   const [saved, setSaved] = useState(false)
-  const timeoutRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    llmConfigService.save(config)
+    setSaved(true)
+    const t = setTimeout(() => setSaved(false), 1500)
+    return () => clearTimeout(t)
+  }, [config])
 
   const providerInfo = LLM_PROVIDERS[config.provider]
 
-  const updateConfig = (updater: (prev: LLMConfig) => LLMConfig) => {
-    setConfig((prev) => {
-      const next = updater(prev)
-      llmConfigService.save(next)
-      setSaved(true)
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      timeoutRef.current = setTimeout(() => setSaved(false), 1500)
-      return next
-    })
-  }
-
   const handleProviderChange = (provider: LLMProvider) => {
     const info = LLM_PROVIDERS[provider]
-    updateConfig((prev) => ({
+    setConfig((prev) => ({
       ...prev,
       provider,
       model: info.models[0] ?? '',
@@ -163,7 +157,7 @@ export function SettingsPage() {
                   'transition-all duration-150 hover:scale-110',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                   accentColor.id === color.id &&
-                  'ring-2 ring-offset-2 ring-foreground/25 scale-110',
+                    'ring-2 ring-offset-2 ring-foreground/25 scale-110',
                 )}
                 style={{ backgroundColor: `oklch(${color.oklch})` }}
               >

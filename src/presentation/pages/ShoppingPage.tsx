@@ -221,27 +221,21 @@ interface MealieItemRowProps {
 
 function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onUpdateNote, onUpdateLabel, onViewRecipe }: MealieItemRowProps) {
   // For items added from planning, the note is "ingredient — RecipeName"
-  const noteParts = item.note?.split(" — ") ?? []
-  const recipeSuffix = noteParts.length >= 2 ? noteParts.slice(1).join(" — ") : null
-  const recipeNamesFromNote = recipeSuffix ? [recipeSuffix] : []
-  const allRecipeNames = item.recipeNames?.length ? item.recipeNames : recipeNamesFromNote
-  const qty = item.quantity ?? 0
-
+  const itemQuantity = item.quantity ?? 0
   const [editing, setEditing] = useState(false)
-  const [editValue, setEditValue] = useState(item.note ?? item.foodName ??  "Article sans nom")
+  const [editValue, setEditValue] = useState(item.note ?? item.foodName ?? "Article sans nom")
   const inputRef = useRef<HTMLInputElement>(null)
 
   const startEdit = () => {
-    setEditValue(item.note ?? item.foodName ??  "Article sans nom")
+    setEditValue(item.note ?? "")
     setEditing(true)
     setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   const saveEdit = () => {
     const trimmed = editValue.trim()
-    if (trimmed && trimmed !== item.foodName) {
-      const newNote = recipeSuffix ? `${trimmed} — ${recipeSuffix}` : trimmed
-      onUpdateNote(item, newNote)
+    if (trimmed && trimmed !== item.note) {
+      onUpdateNote(item, trimmed)
     }
     setEditing(false)
   }
@@ -272,15 +266,15 @@ function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onU
       <div className="flex shrink-0 items-center gap-0.5">
         <button
           type="button"
-          onClick={() => onUpdateQuantity(item, Math.max(0, qty - 1))}
+          onClick={() => onUpdateQuantity(item, Math.max(0, itemQuantity - 1))}
           aria-label="Diminuer"
           className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-foreground transition-all"
         >
           <Minus className="h-3 w-3" />
         </button>
-        {qty > 0 ? (
+        {itemQuantity > 0 ? (
           <span className="rounded-full bg-secondary px-2 py-0.5 text-xs tabular-nums font-semibold min-w-[1.5rem] text-center">
-            {qty}
+            {itemQuantity}
           </span>
         ) : (
           <span className="opacity-0 group-hover:opacity-100 rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground transition-all min-w-[1.5rem] text-center">
@@ -289,7 +283,7 @@ function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onU
         )}
         <button
           type="button"
-          onClick={() => onUpdateQuantity(item, qty + 1)}
+          onClick={() => onUpdateQuantity(item, itemQuantity + 1)}
           aria-label="Augmenter"
           className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-foreground transition-all"
         >
@@ -308,54 +302,52 @@ function MealieItemRow({ item, labels, onToggle, onDelete, onUpdateQuantity, onU
           className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none border-b border-primary"
         />
       ) : (
-<span className="flex-1 min-w-0 flex flex-col gap-1">
-  <span className="flex items-center gap-2 flex-wrap">
-    {/* unité */}
-    {item.unitName && (
-      <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-        {item.unitName}
-      </span>
-    )}
-    {/* nom */}
-    <span
-      onDoubleClick={startEdit}
-      className={cn(
-        "text-sm font-medium leading-tight cursor-text",
-        item.checked && "line-through opacity-40",
-      )}
-    >
-      {item.foodName ??
-        (noteParts.length >= 2 ? noteParts[0] : item.note) ??
-        "Article sans nom"}
-    </span>
-    {/* recettes */}
-    {allRecipeNames.map((recipeName) => (
-      <button
-        key={recipeName}
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          onViewRecipe?.(recipeName)
-        }}
-        className="text-[10px] text-muted-foreground/40 hover:text-primary transition-colors leading-tight"
-      >
-        {recipeName}
-      </button>
-    ))}
-  </span>
+        <span className="flex-1 min-w-0 flex flex-col gap-1">
+          <span className="flex items-center gap-2 flex-wrap">
+            {/* unité */}
+            {item.unitName && (
+              <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                {item.unitName}
+              </span>
+            )}
+            {/* nom */}
+            <span
+              onDoubleClick={startEdit}
+              className={cn(
+                "text-sm font-medium leading-tight cursor-text",
+                item.checked && "line-through opacity-40",
+              )}
+            >
+              {item.foodName ?? "Article sans nom"}
+            </span>
+            {/* recettes */}
+            {item.recipeNames?.map((recipeName) => (
+              <button
+                key={recipeName}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onViewRecipe?.(recipeName)
+                }}
+                className="text-[10px] text-muted-foreground/40 hover:text-primary transition-colors leading-tight"
+              >
+                {recipeName}
+              </button>
+            ))}
+          </span>
 
-  {/* note */}
-  {item.note && (
-    <span
-      className={cn(
-        "text-xs text-muted-foreground leading-tight",
-        item.checked && "line-through opacity-40",
-      )}
-    >
-      {item.note}
-    </span>
-  )}
-</span>
+          {/* note */}
+          {item.note && (
+            <span
+              className={cn(
+                "text-xs text-muted-foreground leading-tight",
+                item.checked && "opacity-40",
+              )}
+            >
+              {item.note}
+            </span>
+          )}
+        </span>
       )}
 
       {/* Catégorie (toujours visible) + suppression (au survol) */}

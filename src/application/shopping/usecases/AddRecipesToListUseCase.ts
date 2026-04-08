@@ -26,28 +26,8 @@ export class AddRecipesToListUseCase {
         const ingredients = recipe.recipeIngredient ?? []
 
         return ingredients.map((ing) => {
-          const parts: string[] = []
-
-          // unit
-          if (ing.unit?.name) {
-            parts.push(ing.unit.name)
-          }
-
-          // food / note / fallback
-          if (ing.food?.name) {
-            parts.push(ing.food.name)
-          } else if (ing.note) {
-            parts.push(ing.note)
-          } else if (ing.originalText) {
-            parts.push(ing.originalText)
-          }
-
-          const display = parts.join(" ").trim()
-          if (!display) return null
-
           return {
             quantity: ing.quantity,
-            referencedRecipe: recipe,
             shoppingListId: listId,
             foodId: ing.food?.id,
             unitId: ing.unit?.id,

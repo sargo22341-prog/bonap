@@ -160,6 +160,22 @@ function InstructionScreen({
     )
     .filter(Boolean)
 
+
+  const sanitizeInstructionHtml = (html: string) => {
+    const doc = new DOMParser().parseFromString(html, "text/html")
+
+    // supprimer tous les éléments sauf img
+    const all = doc.body.querySelectorAll("*")
+
+    all.forEach((el) => {
+      if (el.tagName.toLowerCase() !== "img") {
+        el.replaceWith(...Array.from(el.childNodes))
+      }
+    })
+
+    return doc.body.innerHTML
+  }
+
   return (
     <div className="space-y-8">
 
@@ -199,7 +215,9 @@ function InstructionScreen({
       )}
       <p
         className="text-2xl leading-relaxed text-foreground space-y-4 [&_img]:rounded-xl [&_img]:mt-4 [&_img]:max-w-full"
-        dangerouslySetInnerHTML={{ __html: instruction.text }}
+        dangerouslySetInnerHTML={{
+          __html: sanitizeInstructionHtml(instruction.text),
+        }}
       />
     </div>
   )

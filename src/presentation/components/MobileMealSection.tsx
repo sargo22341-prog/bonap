@@ -1,4 +1,4 @@
-import { Plus,Eye, Trash2 } from "lucide-react"
+import { Plus, Eye, Trash2 } from "lucide-react"
 import type { MealieMealPlan } from "../../shared/types/mealie.ts"
 import { cn } from "../../lib/utils.ts"
 import { recipeImageUrl } from "../../shared/utils/image.ts"
@@ -54,6 +54,8 @@ export function MobileMealSection({
                   type="button"
                   onTouchStart={(e) => e.stopPropagation()}
                   onClick={() => onView(meal.recipe!.slug)}
+                  aria-label="Voir la recette"
+                  title="Voir la recette"
                   className="flex flex-1 items-center justify-center py-2"
                 >
                   <Eye className="h-4 w-4" />
@@ -64,6 +66,8 @@ export function MobileMealSection({
                 type="button"
                 onTouchStart={(e) => e.stopPropagation()}
                 onClick={() => onDelete(meal.id)}
+                aria-label="Supprimer du planning"
+                title="Supprimer du planning"
                 className="flex flex-1 items-center justify-center py-2 border-l border-border/30"
               >
                 <Trash2 className="h-4 w-4" />

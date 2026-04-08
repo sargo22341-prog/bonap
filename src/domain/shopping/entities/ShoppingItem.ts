@@ -21,11 +21,11 @@ export interface ShoppingItem {
   recipeNames?: string[]
   foodId?: string
   unitId?: string,
-  recipeReferences?: recipeReferences[]
+  recipeReferences?: RecipeReference[]
   source: "mealie"
 }
 
-export interface recipeReferences {
+export interface RecipeReference {
   recipeId?: string
   recipeQuantity?: number
   recipeScale?: number

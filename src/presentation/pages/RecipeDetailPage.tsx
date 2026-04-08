@@ -795,6 +795,9 @@ export function RecipeDetailPage() {
                         ref={(el) => {
                           if (el) autoResize(el, 3)
                         }}
+                        aria-label={`Instruction ${index + 1}`}
+                        placeholder="Décrivez cette étape"
+                        disabled={saving}
                         value={step.text}
                         onChange={(e) => {
                           updateInstruction(index, e.target.value)

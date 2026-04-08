@@ -202,6 +202,8 @@ export function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDr
                                         <TooltipTrigger asChild>
                                             <button
                                                 type="button"
+                                                aria-label="Planifier"
+                                                title="Planifier"
                                                 onClick={() => setPlanningPickerOpen(true)}
                                                 className={cn(
                                                     "flex items-center justify-center rounded-[var(--radius-md)]",
@@ -222,6 +224,8 @@ export function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDr
                                         <TooltipTrigger asChild>
                                             <button
                                                 type="button"
+                                                aria-label="Mode cuisine"
+                                                title="Mode cuisine"
                                                 onClick={() => setCookingMode(true)}
                                                 className={cn(
                                                     "flex items-center justify-center rounded-[var(--radius-md)]",
@@ -241,6 +245,8 @@ export function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDr
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Link
+                                                aria-label="Page complète"
+                                                title="Page complète"
                                                 to={`/recipes/${recipe.slug}`}
                                                 className={cn(
                                                     "flex items-center justify-center rounded-[var(--radius-md)]",
@@ -261,6 +267,8 @@ export function RecipeDrawer({ slug, allCategories, closing, onClose }: RecipeDr
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <a
+                                                    aria-label="Recette originale"
+                                                    title="Recette originale"
                                                     href={recipe.orgURL}
                                                     target="_blank"
                                                     rel="noopener noreferrer"

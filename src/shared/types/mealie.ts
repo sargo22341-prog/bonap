@@ -222,6 +222,7 @@ export interface MealieShoppingItemCreate {
   unitId?: string
   foodId?: string
   labelId?: string
+  recipeReferences?: MealieShoppingItemRecipeRef[]
 }
 
 export interface MealieShoppingItemUpdate {
