@@ -1,7 +1,7 @@
 {
   "name": "bonap",
   "private": true,
-  "version": "1.0.69",
+  "version": "1.0.66",
   "type": "module",
   "scripts": {
     "dev": "vite",
