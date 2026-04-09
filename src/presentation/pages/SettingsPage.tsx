@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { getEnv, getIngressBasename } from "../../shared/utils/env.ts"
-import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, Check, Sun, Moon, Monitor, Palette, Bot, Server, Info, Lock, AlertTriangle, LogOut } from "lucide-react"
+import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, Check, Sun, Moon, Monitor, Palette, Bot, Server, Info, Lock, AlertTriangle, LogOut, ExternalLink } from "lucide-react"
 import { Button } from "../components/ui/button.tsx"
 import { Input } from "../components/ui/input.tsx"
 import { Label } from "../components/ui/label.tsx"
@@ -196,7 +196,7 @@ export function SettingsPage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-lg)] bg-[oklch(0.93_0.04_290)] dark:bg-[oklch(0.22_0.04_290)]">
             <Bot className="h-4 w-4 text-[oklch(0.50_0.14_290)] dark:text-[oklch(0.72_0.14_290)]" />
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="text-base font-bold leading-none">Fournisseur IA</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               {envFields.size > 0
@@ -204,6 +204,15 @@ export function SettingsPage() {
                 : "Utilisé pour l'assistant, les suggestions et la vision. La clé est stockée localement."}
             </p>
           </div>
+          <a
+            href="https://bonap.aylabs.fr/docs/configuration/llm"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors shrink-0"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Aide
+          </a>
         </div>
 
         {/* Bannière localStorage */}
@@ -276,6 +285,15 @@ export function SettingsPage() {
             <div className="flex items-center gap-2">
               <Label htmlFor="api-key">Clé API</Label>
               {envFields.has('apiKey') && <EnvBadge />}
+              <a
+                href="https://bonap.aylabs.fr/docs/configuration/llm"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Comment obtenir une clé ?
+              </a>
             </div>
             <div className="relative">
               <Input
